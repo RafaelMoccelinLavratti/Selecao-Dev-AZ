@@ -49,7 +49,7 @@ Exemplos:
 ![alt_arquitetura][arquitetura]
 
 
-##Exercício 4
+## Exercício 4
 
 Crie a tela principal do sistema no arquivo App.vue. Esta tela deve ter um menu para navegar de uma página para outra. 
 O menu deve ter links com as opções: unidades, empresas e leilões. 
