@@ -1,24 +1,26 @@
 # AZ Avaliação
 
-Projeto para avaliação e seleção de candidatos a vaga de programador full stack da empresa AZ informática. 
-Nesta avaliação você deve criar uma aplicação completa utilizando os frameworks:
+Projeto para avaliação e seleção de candidatos a vaga de programador full stack da empresa AZ Tecnologia em Gestão. 
+Nesta avaliação você deverá criar uma aplicação completa utilizando os frameworks e banco de dados abaixo:
 
-**Cliente**: Vue
+**Client**: Vue
  
-**Server**: Spring Boot. Banco de dados: PostgreSQL
+**Server**: Spring Boot. 
+
+**Banco de dados**: PostgreSQL
 
 ## Exercício 1
-Crie um script para a criação de banco de dados (DDL) contendo todas as tables, columns, constraints (primary key, foreing key e unique) e sequence.
+Crie um script para a criação do banco de dados (DDL) contendo todas as tables, columns, constraints (primary key, foreing key e unique) e sequence.
 
 Não esqueça de observar as colunas NOT NULL que estão marcadas com asterisco no diagrama e os campos únicos, sublinhados.
 
 ![alt Banco de dados][database]
 
 ## Exercício 2
-Prepare uma massa de dados inicial para permitir que a aplicação seja testada. Adicione pelo menos 10 registros em cada tabela.
+Prepare script (DML) com uma massa de dados inicial para permitir que a aplicação seja testada. Adicione pelo menos 10 registros em cada tabela.
 
 ## Exercício 3
-Prepare os serviços restfull responsáveis pelas operações CRUD (Create, Read, Update e Delete) de **todas as tabelas**.
+Prepare os serviços rest responsáveis pelas operações CRUD (Create, Read, Update e Delete) de **todas as tabelas**.
 Utilize o seguinte padrão:
 
 - GET /nomedatabela: Recupera todos os registros da tabela.
