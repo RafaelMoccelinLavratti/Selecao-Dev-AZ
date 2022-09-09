@@ -2,9 +2,10 @@ package br.com.selecao.locadora.service;
 
 import br.com.selecao.locadora.business.UnidadeBO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -14,8 +15,8 @@ public class UnidadeService {
     @Autowired
     private UnidadeBO unidadeBO;
 
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<?> buscarTodos() {
-        return ResponseEntity.ok().body(unidadeBO.buscarTodos());
+    @GetMapping
+    public ResponseEntity<Object> buscarTodos() {
+        return new ResponseEntity<>(unidadeBO.buscarTodos(), HttpStatus.OK);
     }
 }
