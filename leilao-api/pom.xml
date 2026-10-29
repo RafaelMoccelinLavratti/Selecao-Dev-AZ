@@ -9,7 +9,7 @@
     <packaging>jar</packaging>
 
     <name>leilao-api</name>
-    <description>Projeto Rest seleção de programador.</description>
+    <description>Projeto Rest selecao de programador.</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -26,6 +26,11 @@
     </properties>
 
     <dependencies>
+        <!-- ===================================================================
+             WEB + PERSISTENCIA
+             starter-web        : brings Spring MVC, Tomcat, JSON (Jackson)
+             starter-data-jpa   : brings Hibernate + repositorios automaticos
+             =================================================================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -34,16 +39,72 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!-- ===================================================================
+             VALIDACAO DE ENTRADA  (exercicio 8)
+             A partir do Spring Boot 2.3, a validacao foi REMOVIDA do
+             starter-web. Sem esta dependencia, as anotacoes @NotBlank,
+             @Size, @Email e @Pattern dos DTOs nao seriam verificadas - e o
+             frontend sozinho nao protege a API (qualquer um pode chamar
+             a API direto, sem passar pela tela).
+             =================================================================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- ===================================================================
+             SEGURANCA - PARTE 1: CODIFICACAO DE SENHA (BCrypt)
+             Usamos APENAS o artefato "crypto" da Spring Security, que traz
+             o BCryptPasswordEncoder sem ativar autenticacao por conta
+             propria. Com isso a senha e gravada como hash, e o
+             spring-boot-starter-security (abaixo) continua controlando
+             se as rotas exigem login.
+             =================================================================== -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
+        <!-- ===================================================================
+             SEGURANCA - PARTE 2: AUTENTICACAO E CABECALHOS
+             Com o perfil padrao de desenvolvimento, os endpoints ficam
+             ABERTOS (exatamente como o enunciado do teste pede). Ao ativar
+             o perfil "prod" (application-prod.properties), a API passa a
+             EXIGIR autenticacao HTTP Basic. E assim que se demonstra
+             "seguranca por configuracao" sem quebrar a avaliacao.
+             =================================================================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- ===================================================================
+             MONITORAMENTO
+             Actuator expoe o endpoint /actuator/health, que e o que um
+             "orchestrator" (Kubernetes, Docker) consulta para saber se a
+             aplicacao esta viva. Exposicao restrita em
+             application.properties (apenas health e info).
+             =================================================================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
         </dependency>
+
+        <!-- Lombok: escreve getters, setters e construtores. Reduz o
+             "boilerplate" (codigo repetitivo) das entidades e DTOs. -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
