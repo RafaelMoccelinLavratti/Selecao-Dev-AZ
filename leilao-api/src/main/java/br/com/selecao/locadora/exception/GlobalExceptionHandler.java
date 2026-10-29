@@ -72,6 +72,22 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Credencial invalida (senha errada, token vencido, token forjado)
+     * -> HTTP 401.
+     *
+     *  A mensagem devolvida e SEMPRE a mesma, qualquer que seja o motivo
+     *  real (usuario inexistente, senha errada, token expirado, token
+     *  adulterado). Isso e proposital: se o servidor respondesse "usuario
+     *  nao encontrado" em um caso e "senha incorreta" em outro, um
+     *  atacante conseguiria descobrir quais usuarios existem - basta
+     *  tentar logins e observar o texto da resposta.
+     */
+    @ExceptionHandler(TokenInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> tratarTokenInvalido(TokenInvalidoException ex) {
+        return montarErro(HttpStatus.UNAUTHORIZED, "Nao autorizado", ex.getMessage());
+    }
+
+    /**
      * Regra de negocio violada -> HTTP 409 (conflito).
      */
     @ExceptionHandler(RegraNegocioException.class)
