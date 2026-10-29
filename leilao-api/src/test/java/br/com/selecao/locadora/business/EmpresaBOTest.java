@@ -89,6 +89,13 @@ class EmpresaBOTest {
     /**
      * Monta um cadastro valido, com os campos mascarados como o usuario
      * digitaria na tela.
+     *
+     * Repare que o CNPJ vem como "11.555.999/0001-11" - com a mascara.
+     * O teste 1 verifica que a camada de negocio normaliza isso antes
+     * de gravar. Montar o dado "do jeito do usuario" e o que torna o
+     * teste realista.
+     *
+     * @return um pedido de cadastro valido
      */
     private EmpresaRequest requestValido() {
         EmpresaRequest request = new EmpresaRequest();
@@ -103,6 +110,24 @@ class EmpresaBOTest {
         return request;
     }
 
+    /**
+     * Teste 1: CNPJ, CEP e telefone sao normalizados (gravados so com digitos).
+     *
+     * Este e um dos testes mais importantes do arquivo, porque ele
+     * verifica a DECISAO DE MODELO do projeto inteiro:
+     *
+     * O banco guarda o CNPJ **sem pontuacao** ("11555999000111"), e a
+     * tela aplica a mascara **so na exibicao** ("11.555.999/0001-11").
+     *
+     * Se o banco guardasse o valor como o usuario digitou, existiriam
+     * varias representacoes do mesmo dado ("11.555.999/0001-11",
+     * "11.555.999000111", "11555999000111") - e a busca por CNPJ
+     * deixaria de funcionar, porque a comparacao seria de texto.
+     *
+     * A canonicalizacao acontece no BACKEND, e nao so no frontend,
+     * porque o frontend pode ser contornado: qualquer um pode chamar a
+     * API direto, sem passar pela tela.
+     */
     @Test
     @DisplayName("CNPJ, CEP e telefone sao normalizados (gravados so com digitos)")
     void normalizaOsCamposFormatados() {
@@ -113,6 +138,14 @@ class EmpresaBOTest {
         assertEquals("1130001100", response.getTelefone());
     }
 
+    /**
+     * Teste 2: CNPJ duplicado e recusado com mensagem clara.
+     *
+     * Alem de verificar que a excecao correta foi lancada, o teste
+     * verifica que a MENSAGEM cita o campo envolvido ("CNPJ"). Isso
+     * importa para quem usa o sistema: uma mensagem generica
+     * ("dados invalidos") nao ajuda ninguem a entender o que houve.
+     */
     @Test
     @DisplayName("CNPJ duplicado e recusado com mensagem clara")
     void recusaCnpjDuplicado() {
@@ -124,6 +157,13 @@ class EmpresaBOTest {
         assertTrue(erro.getMessage().contains("CNPJ"), "a mensagem deve citar o CNPJ");
     }
 
+    /**
+     * Teste 3: usuario duplicado e recusado com mensagem clara.
+     *
+     * O usuario e a credencial de acesso da empresa. Duas empresas com o
+     * mesmo usuario criariam ambiguidade sobre quem esta entrando -
+     * por isso a unicidade e exigida.
+     */
     @Test
     @DisplayName("Usuario duplicado e recusado com mensagem clara")
     void recusaUsuarioDuplicado() {
@@ -135,6 +175,21 @@ class EmpresaBOTest {
         assertTrue(erro.getMessage().contains("usuario"), "a mensagem deve citar o usuario");
     }
 
+    /**
+     * Teste 4: a senha e gravada como hash BCrypt, nunca em texto puro.
+     *
+     * Este teste usa o **ArgumentCaptor** do Mockito, que e a forma de
+     * inspecionar o objeto que foi realmente passado ao repositorio:
+     * em vez de so conferir o que o duble devolve, ele captura o
+     * ARGUMENTO da chamada.
+     *
+     * As tres verificacoes juntas cobrem o ciclo completo:
+     *   1) o valor gravado NAO e a senha digitada;
+     *   2) o valor gravado TEM o formato de um hash BCrypt;
+     *   3) a senha original ainda e conferivel a partir do hash -
+     *      ou seja, o hash nao e "a senha embaralhada", e sim um valor
+     *      que o sistema sabe verificar depois.
+     */
     @Test
     @DisplayName("A senha e gravada como hash BCrypt, nunca em texto puro")
     void gravaASenhaComoHash() {
@@ -151,6 +206,23 @@ class EmpresaBOTest {
                 "a senha original precisa ser conferivel a partir do hash");
     }
 
+    /**
+     * Teste 5: na alteracao, uma senha vazia mantem o hash gravado.
+     *
+     * Este e o teste do comportamento mais sutil do cadastro de
+     * empresa: **"deixar o campo da senha em branco" significa
+     * "manter a senha atual"**.
+     *
+     * Sem esse comportamento, toda vez que o usuario editasse o
+     * telefone de uma empresa, seria obrigado a redigitar a senha - e,
+     * pior, a tela nao poderia mostrar a senha (a API nunca a devolve),
+     * entao ele nao teria como saber qual era.
+     *
+     * O teste verifica as duas metades do comportamento:
+     *   1) o hash ANTERIOR foi preservado intacto;
+     *   2) o valor preservado continua sendo um hash - nao a senha em
+     *      texto puro que "deu certo" por acidente.
+     */
     @Test
     @DisplayName("Na alteracao, uma senha vazia mantem o hash que ja estava gravado")
     void alteracaoSemSenhaMantemOHash() {
@@ -181,6 +253,24 @@ class EmpresaBOTest {
                 "o hash preservado continua sendo um hash, nao a senha em texto puro");
     }
 
+    /**
+     * Teste 6: a resposta da API NUNCA contem o campo senha.
+     *
+     * Este teste usa **reflexao** para olhar a estrutura da classe
+     * `EmpresaResponse` e verificar, campo a campo, que nenhum se chama
+     * "senha".
+     *
+     * E uma garantia de **estrutura**, e nao de comportamento: mesmo
+     * que ninguem preencha o campo hoje, a simples existencia dele no
+     * DTO de saida seria um risco - qualquer preenchimento futuro
+     * passaria a vazar a senha. Verificar a ESTRUTURA impede a
+     * regressao na origem.
+     *
+     * A forma mais simples e mais forte de proteger isso seria o
+     * inverso: um DTO de saida que NAO tem o campo. E o que o projeto
+     * faz - e este teste existe para garantir que ninguem o adicione
+     * depois sem perceber.
+     */
     @Test
     @DisplayName("A resposta da API nunca contem o campo senha")
     void respostaNaoExpoeASenha() {

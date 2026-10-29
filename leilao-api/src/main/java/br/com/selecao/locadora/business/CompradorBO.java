@@ -25,34 +25,78 @@ import java.util.stream.Collectors;
  *  CAMADA DE NEGOCIO (business): COMPRADOR
  * ============================================================================
  *
- *  ESTA TABELA E DIFERENTE DAS OUTRAS PORQUE NAO TEM "id" PROPRIO:
- *  a chave primaria e o PAR (empresa, leilao). Por isso os metodos
- *  recebem os dois ids.
+ *  ------------------------------------------------------
+ *  O QUE ESTA TABELA REPRESENTA
+ *  ------------------------------------------------------
+ *  O vinculo entre uma EMPRESA e um LEILAO, no papel de compradora. E
+ *  uma tabela de relacionamento: ela nao tem dados proprios, apenas
+ *  liga duas outras tabelas.
  *
- *  SOBRE O PUT (alterar) NESSA TABELA:
+ *  ------------------------------------------------------
+ *  POR QUE ESTA TABELA E DIFERENTE DAS OUTRAS?
+ *  ------------------------------------------------------
+ *  Porque ela nao tem "id" PROPRIO. A chave primaria e o PAR
+ *  (empresa, leilao) - uma chave primaria COMPOSTA.
+ *
+ *  Consequencias praticas em todo o codigo:
+ *    - todo metodo recebe DOIS ids, e nao um;
+ *    - o "findById" recebe um objeto "CompradorId" (e nao um Integer);
+ *    - o mapeamento da entidade usa @EmbeddedId (veja a classe
+ *      CompradorId e a anotacao @MapsId nas entidades).
+ *
+ *  O que a chave composta garante: a mesma empresa nao pode estar duas
+ *  vezes no mesmo leilao. Isso nao e uma validacao do negocio - e uma
+ *  garantia do proprio banco de dados.
+ *
+ *  ------------------------------------------------------
+ *  SOBRE O PUT (alterar) NESSA TABELA
+ *  ------------------------------------------------------
  *  Como a chave primaria e o proprio relacionamento, "alterar" um
- *  comprador significa trocar o par - por exemplo, a empresa 3 comprou o
+ *  comprador significa TROCAR O PAR - por exemplo, a empresa 3 comprou o
  *  leilao 1, e agora o registro passa a dizer "empresa 3 no leilao 2".
- *  Tecnicamente isso e apagar + inserir, e e isso que o codigo faz
- *  (dentro de uma transacao: ou os dois passos acontecem, ou nenhum).
+ *
+ *  Tecnicamente isso e apagar + inserir. E e isso que o codigo faz,
+ *  dentro de uma transacao: ou os dois passos acontecem, ou nenhum.
+ *  Sem a transacao, um erro no meio deixaria o vinculo antigo apagado
+ *  e o novo nao criado - perda de dados sem possibilidade de recuperacao.
  * ============================================================================
  */
 @Service
 public class CompradorBO {
 
+    /**
+     * Logger da camada de negocio.
+     *
+     * O SLF4J e a fachada de logging usada no Java. O padrao e
+     * "private static final", porque:
+     *   - "static": o logger pertence a CLASSE, e nao a cada objeto
+     *     (evita criar um por instancia);
+     *   - "final": a referencia nao muda depois de criada.
+     */
     private static final Logger LOG = LoggerFactory.getLogger(CompradorBO.class);
 
+    /** Repositorio do vinculo comprador. */
     @Autowired
     private CompradorRepository compradorRepository;
 
+    /** Repositorio das empresas (para validar e para enriquecer a resposta). */
     @Autowired
     private EmpresaRepository empresaRepository;
 
+    /** Repositorio dos leiloes (idem). */
     @Autowired
     private LeilaoRepository leilaoRepository;
 
     /**
      * Lista todos os vinculos empresa-leilao.
+     *
+     * O padrao "stream" traduz o SQL:
+     *      findAll()   -> busca todos
+     *      .stream()   -> percorrer
+     *      .map(...)   -> transformar cada um
+     *      .collect()  -> juntar numa lista
+     *
+     * @return lista de todos os vinculos
      */
     public List<CompradorResponse> buscarTodos() {
         return compradorRepository.findAll()
@@ -63,6 +107,17 @@ public class CompradorBO {
 
     /**
      * Busca um vinculo especifico pela chave composta.
+     *
+     * O "orElseThrow" e o "optional" do Java 8+: quando o repositorio
+     * devolve um Optional vazio (nao encontrou), lancamos a excecao de
+     * negocio em vez de devolver null. Devolver null espalharia a
+     * verificacao de "existe?" por toda a aplicacao - e o
+     * GlobalExceptionHandler ja sabe transformar essa excecao em um
+     * HTTP 404 padronizado.
+     *
+     * @param empresaId id da empresa compradora
+     * @param leilaoId  id do leilao
+     * @return o vinculo encontrado
      */
     public CompradorResponse buscarPorId(Integer empresaId, Integer leilaoId) {
         Comprador comprador = compradorRepository.findById(new CompradorId(empresaId, leilaoId))
@@ -73,6 +128,14 @@ public class CompradorBO {
 
     /**
      * Registra a participacao de uma empresa em um leilao como compradora.
+     *
+     * @Transactional garante que a gravacao seja ATOMICA: ou o vinculo e
+     * criado inteiro, ou nada e criado. Tambem garante que a regra de
+     * negocio (validar empresa, validar leilao, checar duplicidade) e
+     * avaliada com o banco consistente.
+     *
+     * @param request empresa e leilao do vinculo
+     * @return o vinculo criado, com os nomes legiveis
      */
     @Transactional
     public CompradorResponse salvar(CompradorRequest request) {
@@ -81,6 +144,11 @@ public class CompradorBO {
 
     /**
      * Altera o vinculo existente (troca o par empresa/leilao).
+     *
+     * @param empresaId id da empresa do vinculo ATUAL
+     * @param leilaoId  id do leilao do vinculo ATUAL
+     * @param request   empresa e leilao do vinculo NOVO
+     * @return o vinculo novo
      */
     @Transactional
     public CompradorResponse atualizar(Integer empresaId, Integer leilaoId, CompradorRequest request) {
@@ -98,13 +166,16 @@ public class CompradorBO {
 
         // Trocar a chave primaria = apagar o vinculo antigo e criar o novo.
         // A anotacao @Transactional garante que os dois passos sejam um so:
-        // se o segundo falhar, o primeiro e desfeito.
+        // se o segundo falhar, o primeiro e desfeito (rollback).
         compradorRepository.deleteById(new CompradorId(empresaId, leilaoId));
         return criar(novoId);
     }
 
     /**
      * Remove o vinculo.
+     *
+     * @param empresaId id da empresa compradora
+     * @param leilaoId  id do leilao
      */
     @Transactional
     public void excluir(Integer empresaId, Integer leilaoId) {
@@ -117,6 +188,14 @@ public class CompradorBO {
 
     /**
      * Metodo auxiliar que grava um vinculo novo, validando as regras.
+     *
+     * E "privado" porque nao faz sentido chamar de fora: ele sempre
+     * cria, e a criacao e publica por "salvar" (e usada internamente
+     * por "atualizar"). Manter o metodo privado impede que alguem
+     * insira um vinculo sem passar pela validacao.
+     *
+     * @param id chave composta (empresa + leilao)
+     * @return o vinculo criado
      */
     private CompradorResponse criar(CompradorId id) {
 

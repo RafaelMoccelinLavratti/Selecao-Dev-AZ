@@ -66,6 +66,13 @@ public class EmpresaService {
 
     /**
      * POST /empresas - inclui uma nova empresa.
+     *
+     * O "@Valid" valida o corpo ANTES do negocio rodar. A senha, por
+     * exemplo, tem @Size(min = 8) - se vier menor, o pedido e
+     * recusado com HTTP 400.
+     *
+     * @param request dados da nova empresa
+     * @return a empresa criada (sem a senha)
      */
     @PostMapping
     public ResponseEntity<EmpresaResponse> incluir(@Valid @RequestBody EmpresaRequest request) {

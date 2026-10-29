@@ -37,6 +37,8 @@ public class LoteService {
 
     /**
      * GET /lotes - lista todos os lotes.
+     *
+     * @return a lista de lotes
      */
     @GetMapping
     public ResponseEntity<List<LoteResponse>> buscarTodos() {
@@ -45,6 +47,9 @@ public class LoteService {
 
     /**
      * GET /lotes/leilao/{leilaoId} - lista os lotes de um leilao.
+     *
+     * @param leilaoId id do leilao
+     * @return os lotes desse leilao
      */
     @GetMapping("/leilao/{leilaoId}")
     public ResponseEntity<List<LoteResponse>> buscarPorLeilao(@PathVariable Integer leilaoId) {
@@ -53,6 +58,9 @@ public class LoteService {
 
     /**
      * GET /lotes/{id} - busca um lote pelo id.
+     *
+     * @param id id do lote
+     * @return o lote encontrado
      */
     @GetMapping("/{id}")
     public ResponseEntity<LoteResponse> buscarPorId(@PathVariable Integer id) {
@@ -61,6 +69,9 @@ public class LoteService {
 
     /**
      * POST /lotes - inclui um novo lote.
+     *
+     * @param request dados do novo lote
+     * @return o lote criado
      */
     @PostMapping
     public ResponseEntity<LoteResponse> incluir(@Valid @RequestBody LoteRequest request) {
@@ -70,6 +81,10 @@ public class LoteService {
 
     /**
      * PUT /lotes/{id} - altera o lote do id informado.
+     *
+     * @param id      id do lote a alterar
+     * @param request novos dados
+     * @return o lote alterado
      */
     @PutMapping("/{id}")
     public ResponseEntity<LoteResponse> alterar(@PathVariable Integer id,
@@ -79,6 +94,8 @@ public class LoteService {
 
     /**
      * DELETE /lotes/{id} - remove o lote do id informado.
+     *
+     * @param id id do lote a remover
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Integer id) {

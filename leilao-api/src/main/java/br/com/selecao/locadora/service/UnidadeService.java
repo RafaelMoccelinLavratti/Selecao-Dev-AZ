@@ -70,6 +70,11 @@ public class UnidadeService {
 
     /**
      * GET /unidades - lista todas as unidades.
+     *
+     * O codigo 200 (OK) e o esperado. Se a lista vier vazia, ainda e
+     * 200 - uma lista vazia e um resultado valido, nao um erro.
+     *
+     * @return a lista de unidades
      */
     @GetMapping
     public ResponseEntity<List<UnidadeResponse>> buscarTodos() {

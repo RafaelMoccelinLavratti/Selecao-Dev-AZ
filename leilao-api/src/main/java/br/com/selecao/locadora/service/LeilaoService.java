@@ -63,6 +63,9 @@ public class LeilaoService {
 
     /**
      * POST /leiloes - inclui um novo leilao.
+     *
+     * @param request dados do novo leilao
+     * @return o leilao criado
      */
     @PostMapping
     public ResponseEntity<LeilaoResponse> incluir(@Valid @RequestBody LeilaoRequest request) {
