@@ -189,6 +189,35 @@ leilao-app/src/
 
 ## 5. Modelo de dados
 
+### Estrutura da pasta `sql/`
+
+```
+leilao-api/src/main/resources/sql/
+├── 01_ddl.sql          estrutura das 5 tabelas   ← executado pelo Docker
+├── 02_dml.sql          massa de dados inicial    ← executado pelo Docker
+├── database.png        o diagrama do enunciado
+├── segurca/
+│   └── 03_permissoes.sql   papel de menor privilégio (OPCIONAL, manual)
+└── exemplos/
+    └── spcript.sql      script original do starter (NÃO é executado)
+```
+
+> **Por que `spcript.sql` e `03_permissoes.sql` estão em subpastas?**
+> O container do PostgreSQL executa automaticamente **apenas** os arquivos
+> `.sql` que estão **diretamente** na pasta montada em
+> `/docker-entrypoint-initdb.d` (o utilitário do container usa `maxdepth 1`
+> e não entra em subpastas).
+>
+> O `spcript.sql` do starter criaria a tabela `tb_unidade` e a sequence
+> `seq_unidade` — que o `01_ddl.sql` **já cria**. Se ele fosse executado
+> automaticamente, o container abortaria a inicialização com
+> `relation tb_unidade already exists` e **o banco nem subiria**. Por isso
+> foi para a subpasta `exemplos/`, onde fica como referência.
+>
+> O `03_permissoes.sql` também é opcional e manual (ver seção 7.3).
+
+### Tabelas
+
 ```
 empresa ──< leilao ──< lote
    │           │
