@@ -4,109 +4,113 @@
  *
  *  O QUE E ISTO?
  *  A paleta oficial e a tipografia oficial da AZ Tecnologia em Gestao,
- *  extraidas do proprio tema do site institucional (efcaz.com.br). Nao sao
- *  cores "aproximadas": sao os valores exatos que a empresa usa nas
- *  variveis CSS do tema WordPress.
- *
- *  POR QUE UM ARQUIVO SO?
- *  Porque cor espalhada em varios arquivos e a forma classica de a marca
- *  se perder. Um valor alterado em um componente e esquecido em outro
- *  produz uma interface que "parece" da empresa mas nao e. Concentrar os
- *  tokens em um unico lugar faz o padrao virar o caminho mais facil, e
- *  nao o mais dificil.
+ *  extraidas do proprio tema do site institucional (azi.com.br, tema
+ *  "aztheme"). Nao sao cores "aproximadas": sao os valores exatos que a
+ *  empresa usa nas variaveis CSS do tema.
  *
  *  ------------------------------------------------------
  *  DE ONDE VIERAM OS VALORES
  *  ------------------------------------------------------
  *  Extraidos de:
- *    https://www.efcaz.com.br/wp-content/themes/efcaz/style.css
+ *    https://www.azi.com.br/wp-content/themes/aztheme/style.css
+ *  (o WordPress entrega esse arquivo minificado em
+ *   /wp-content/cache/min/1/74ab08738a3f428bc1966ccd6c994daf.css)
  *
  *  O logo (logo-az.svg) tambem veio de la:
- *    https://www.efcaz.com.br/wp-content/themes/efcaz/assets-new-theme/img/logo.svg
+ *    https://www.azi.com.br/wp-content/uploads/2023/06/logo_az_white.svg
  *
- *  Efcaz e uma empresa do Grupo AZ Tecnologia em Gestao
- *  (AZ TECNOLOGIA EM GESTAO LTDA - CNPJ 24.598.492/0001-27).
+ *  A AZ Tecnologia em Gestao LTDA (CNPJ 24.598.492/0001-27) e de Campo
+ *  Grande/MS e opera o portal azi.com.br.
  *
  *  ------------------------------------------------------
  *  A PALETA
  *  ------------------------------------------------------
  *  | Token                  | Valor                    | Uso                |
  *  |------------------------|--------------------------|--------------------|
- *  | --az-cyan-400          | #14b3cc                  | PRIMARIA (logo)    |
- *  | --az-cyan-500          | #0ba2b9                  | hover              |
- *  | --az-cyan-600          | #0e8fa3                  | pressed / escura   |
- *  | --az-navy-700          | #153c5c                  | SECUNDARIA         |
- *  | --az-navy-800          | #112f47                  | navy escuro        |
- *  | --az-neutral-0         | #ffffff                  | superficie         |
- *  | --az-neutral-50        | #f9f9f9                  | fundo suave        |
- *  | --az-neutral-100       | #f2f2f2                  | fundo alternado    |
- *  | --az-neutral-200       | #eeeeee                  | borda              |
- *  | --az-neutral-500       | #adb5bd                  | texto terciario    |
- *  | --az-neutral-700       | #636363                  | texto secundario   |
- *  | --az-neutral-900       | #333333                  | texto principal    |
- *  | --az-red-500           | #ff5f56                  | erro               |
- *  | --az-green-500         | #25d366                  | sucesso            |
+ *  | --az-laranja-500       | #EA4F24                  | PRIMARIA (destaque) |
+ *  | --az-azul-900          | #002436                  | SECONDARIA (fundo) |
+ *  | --az-cinza-600         | #575756                  | texto do corpo     |
+ *  | --az-branco            | #ffffff                  | superficie         |
+ *  | --az-cinza-100         | #f8f9fa                  | fundo suave        |
+ *  | --az-cinza-200         | #eeeeee                  | borda              |
+ *  | --az-cinza-300         | #dee2e6                  | borda              |
+ *  | --az-cinza-400         | #ced4da                  | placeholder        |
+ *  | --az-cinza-500         | #adb5bd                  | texto terciario    |
+ *  | --az-cinza-700         | #6c757d                  | texto secundario   |
+ *  | --az-cinza-900         | #212529                  | texto principal    |
+ *  | --az-vermelho-600      | #dc3545                  | erro               |
+ *  | --az-verde-600         | #198754                  | sucesso            |
+ *  | --az-amarelo-600       | #ffc107                  | atencao            |
  *
- *  A familia de cyan nao e solida: o tema usa a mesma cor com opacidade
- *  para as versoes suaves (a 50 usa 8%, a 100 usa 15%, a 200 usa 20% e a
- *  300 usa 30%). Mantemos essa convencao aqui.
+ *  ------------------------------------------------------
+ *  A REGRA DE COR QUE O TEMA USA
+ *  ------------------------------------------------------
+ *  Repare que o tema INVERTE as cores no hover:
+ *
+ *      a        { color: #EA4F24; }   <- link em laranja
+ *      a:hover  { color: #002436; }   <- no hover, azul-escuro
+ *
+ *  E o botao principal e laranja, enquanto a barra de navegacao e o
+ *  rodape sao azul-escuro. A combinacao laranja + azul-marinho e o
+ *  par de cores da marca - e a mesma ordem de trabalho aqui: fundo
+ *  escuro, acao em laranja.
  * ========================================================================== */
 
 :root {
-  /* ---- CIANO: a cor da marca (mesma do logo) ---- */
-  --az-cyan-50: rgba(20, 179, 204, 0.08);
-  --az-cyan-100: rgba(20, 179, 204, 0.15);
-  --az-cyan-200: rgba(20, 179, 204, 0.2);
-  --az-cyan-300: rgba(20, 179, 204, 0.3);
-  --az-cyan-400: #14b3cc;
-  --az-cyan-500: #0ba2b9;
-  --az-cyan-600: #0e8fa3;
+  /* ---- LARANJA: a cor de destaque (botoes, links, acoes) ---- */
+  --az-laranja-500: #ea4f24;
+  --az-laranja-600: #d4401a;
+  --az-laranja-100: rgba(234, 79, 36, 0.12);
+  --az-laranja-200: rgba(234, 79, 36, 0.22);
+  --az-laranja-300: rgba(234, 79, 36, 0.35);
 
-  /* ---- NAVY: a cor de apoio (texto e superficies escuras) ---- */
-  --az-navy-700: #153c5c;
-  --az-navy-800: #112f47;
+  /* ---- AZUL-MARINHO: o fundo institucional (navbar, rodape) ---- */
+  --az-azul-900: #002436;
+  --az-azul-800: #00334a;
+  --az-azul-700: #0d4a68;
+  --az-azul-100: rgba(0, 36, 54, 0.10);
+  --az-azul-200: rgba(0, 36, 54, 0.20);
+  --az-azul-300: rgba(0, 36, 54, 0.32);
 
-  /* ---- NEUTROS: superficies e texto ---- */
-  --az-neutral-0: #ffffff;
-  --az-neutral-50: #f9f9f9;
-  --az-neutral-100: #f2f2f2;
-  --az-neutral-150: #fcfcfc;
-  --az-neutral-200: #eeeeee;
-  --az-neutral-300: #dadada;
-  --az-neutral-400: #ced4da;
-  --az-neutral-500: #adb5bd;
-  --az-neutral-600: #696969;
-  --az-neutral-700: #636363;
-  --az-neutral-800: #3f3f3f;
-  --az-neutral-900: #333333;
+  /* ---- NEUTROS ---- */
+  --az-branco: #ffffff;
+  --az-cinza-50: #f8f9fa;
+  --az-cinza-100: #f1f3f4;
+  --az-cinza-200: #eeeeee;
+  --az-cinza-300: #dee2e6;
+  --az-cinza-400: #ced4da;
+  --az-cinza-500: #adb5bd;
+  --az-cinza-600: #6c757d;
+  --az-cinza-700: #575756;
+  --az-cinza-800: #3f4142;
+  --az-cinza-900: #212529;
 
-  /* ---- SEMANTICOS ---- */
-  --az-red-500: #ff5f56;
-  --az-red-50: rgba(255, 95, 86, 0.1);
-  --az-green-500: #25d366;
-  --az-green-600: #1db153;
+  /* ---- SEMANTICAS ---- */
+  --az-vermelho-600: #dc3545;
+  --az-verde-600: #198754;
+  --az-amarelo-600: #ffc107;
 
-  /* ---- TIPOGRAFIA: Poppins (fonte institucional) ---- */
-  --az-font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
-  --az-font-size-xs: 0.75rem;
-  --az-font-size-sm: 0.8125rem;
-  --az-font-size-base: 0.875rem;
-  --az-font-size-md: 0.9375rem;
-  --az-font-size-lg: 1rem;
-  --az-font-size-xl: 1.125rem;
+  /* ---- TIPOGRAFIA ----
+     O tema usa DUAS fontes: Barlow no corpo do texto e Tomorrow nos
+     titulos (h1 ate h5). A Tomorrow e servida localmente pelo tema
+     (/themes/aztheme/fonts/Tomorrow-Medium.ttf); aqui vem do Google
+     Fonts, que e' a forma pratica de usar a mesma fonte. */
+  --az-fonte-corpo: 'Barlow', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --az-fonte-titulo: 'Tomorrow', 'Barlow', 'Segoe UI', sans-serif;
 
-  /* ---- RAIOS: os mesmos do tema institucional ---- */
-  --az-radius-sm: 4px;
-  --az-radius-md: 6px;
-  --az-radius-lg: 10px;
-  --az-radius-xl: 20px;
+  /* ---- RAIOS ----
+     Os raios que o tema usa de fato: 3px (elementos pequenos),
+     30px (indicadores do carrossel), 100px (pontos da linha do tempo)
+     e 0 nos botoes de icone. */
+  --az-raio-sm: 3px;
+  --az-raio-md: 6px;
+  --az-raio-lg: 10px;
+  --az-raio-pill: 100px;
 
-  /* ---- SOMBRAS: com tom ciano, como no tema ---- */
-  --az-shadow-sm: 0 0 25px rgba(0, 0, 0, 0.05);
-  --az-shadow-md: 0 4px 15px rgba(20, 179, 204, 0.2);
-  --az-shadow-lg: 0 6px 20px rgba(20, 179, 204, 0.3);
-
-  /* ---- TRANSICOES ---- */
-  --az-transition-fast: 0.2s ease;
-  --az-transition-base: 0.3s ease;
+  /* ---- SOMBRAS ----
+     As sombras do tema sao as padroes do Bootstrap (neutras, com
+     baixa opacidade) - ao contrario de muitos temas, a AZ nao tinge
+     as sombras com a cor da marca. */
+  --az-sombra-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --az-sombra-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }

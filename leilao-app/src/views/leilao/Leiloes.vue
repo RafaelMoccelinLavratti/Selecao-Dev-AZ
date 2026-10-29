@@ -40,7 +40,7 @@
       <v-col cols="12" sm="4" md="3">
         <v-card outlined class="pa-4">
           <div class="text-caption text--secondary">Quantidade de leiloes</div>
-          <div class="text-h4 font-weight-bold" style="color: #0f4c75;">
+          <div class="text-h4 font-weight-bold" style="color: var(--az-azul-900);">
             {{ leiloes.length }}
           </div>
         </v-card>
@@ -49,7 +49,7 @@
       <v-col cols="12" sm="8" md="5">
         <v-card outlined class="pa-4">
           <div class="text-caption text--secondary">Valor total Involved</div>
-          <div class="text-h4 font-weight-bold" style="color: #0f4c75;">
+          <div class="text-h4 font-weight-bold" style="color: var(--az-azul-900);">
             {{ formatarDinheiro(valorTotalGeral) }}
           </div>
         </v-card>

@@ -30,7 +30,7 @@
     </h1>
     <p class="subtitulo-tela">
       <v-icon small color="grey">mdi-information</v-icon>
-      Os campos marcados com <span style="color: var(--az-red-500);">*</span> sao obrigatorios.
+      Os campos marcados com <span style="color: var(--az-vermelho-600);">*</span> sao obrigatorios.
     </p>
 
     <v-card elevation="2">
@@ -43,7 +43,7 @@
       <v-form ref="formulario" v-model="formularioValido" @submit.prevent="salvar">
         <v-card-text>
           <!-- ============ DADOS DA EMPRESA ============ -->
-          <div class="text-subtitle-1 font-weight-medium mb-3" style="color: var(--az-navy-700);">
+          <div class="text-subtitle-1 font-weight-medium mb-3" style="color: var(--az-azul-900);">
             <v-icon small left color="primary">mdi-domain</v-icon>
             Dados da empresa
           </div>
@@ -173,7 +173,7 @@
           </v-row>
 
           <!-- ============ CONTATO ============ -->
-          <div class="text-subtitle-1 font-weight-medium mt-4 mb-3" style="color: var(--az-navy-700);">
+          <div class="text-subtitle-1 font-weight-medium mt-4 mb-3" style="color: var(--az-azul-900);">
             <v-icon small left color="primary">mdi-card-text</v-icon>
             Contato
           </div>
@@ -225,7 +225,7 @@
           </v-row>
 
           <!-- ============ ACESSO ============ -->
-          <div class="text-subtitle-1 font-weight-medium mt-4 mb-3" style="color: var(--az-navy-700);">
+          <div class="text-subtitle-1 font-weight-medium mt-4 mb-3" style="color: var(--az-azul-900);">
             <v-icon small left color="primary">mdi-lock</v-icon>
             Acesso
           </div>

@@ -1,6 +1,6 @@
 # Sistema de Leilões — Avaliação AZ Tecnologia
 
-Aplicação **full stack** para consulta e gestão de leiloes, developed para a
+Aplicação **full stack** para consulta e gestão de leilões, desenvolvida para a
 avaliação técnica da **AZ Tecnologia em Gestão**.
 
 Construída sobre o *starter* fornecido, seguindo a arquitetura em camadas
@@ -39,7 +39,7 @@ exigida pelo enunciado e cobrindo **todos os 8 exercícios**.
 | Frontend | Vuetify | 2.7 |
 | Frontend | Axios | 1.6 |
 | Frontend | Vue CLI / webpack | 5.0 / 5.x |
-| Frontend | Tipografia | Poppins (a oficial da AZ) |
+| Frontend | Tipografia | Barlow + Tomorrow (as oficiais da AZ) |
 
 > A **identidade visual** (paleta, fonte e logo, extraídos do site
 > institucional da empresa) está registrada em

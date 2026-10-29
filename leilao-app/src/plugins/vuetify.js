@@ -14,36 +14,51 @@
  *  ---------------------------------------------------------------------------
  *  A IDENTIDADE VISUAL NAO FOI INVENTADA: FOI EXTRAIDA
  *  ---------------------------------------------------------------------------
- *  As cores deste tema NAO foram escolhidas por gosto pessoal. elas foram
+ *  As cores deste tema NAO foram escolhidas por gosto pessoal. Elas foram
  *  extraidas do proprio tema do site institucional da AZ Tecnologia em
- *  Gestao (efcaz.com.br), das variaveis CSS:
+ *  Gestao (azi.com.br, tema "aztheme"), das regras CSS:
  *
- *      https://www.efcaz.com.br/wp-content/themes/efcaz/style.css
+ *      https://www.azi.com.br/wp-content/themes/aztheme/style.css
  *
- *  A cor principal (#14b3cc) e a MESMA cor do logo SVG da empresa - o que
- *  faz a interface parecer com a marca sem nenhum esforco, porque a paleta
- *  ja era coerente.
+ *  As duas cores de marca sao:
  *
- *  A fonte institucional e a **Poppins** (Google Fonts). Ela e carregada
- *  em public/index.html e aplicada nos estilos globais de App.vue.
+ *      .bg-primary   { background-color: #EA4F24; }   <- laranja
+ *      .bg-secondary { background-color: #002436; }   <- azul-marinho
+ *
+ *  O logo que usamos e o arquivo original da empresa:
+ *
+ *      https://www.azi.com.br/wp-content/uploads/2023/06/logo_az_white.svg
+ *
+ *  Ele e' branco (o site o usa sobre a navbar azul-marinho) - por isso,
+ *  na barra superior escura da aplicacao ele ja aparece na cor certa,
+ *  sem nenhum filtro.
+ *
+ *  A tipografia institucional tem DUAS fontes: **Barlow** no corpo do
+ *  texto e **Tomorrow** nos titulos (h1 ate h5). As duas entram pelo
+ *  Google Fonts em public/index.html.
  *
  *  O codigo hexadecimal completo de cada cor, com o comentario de onde
  *  veio, esta em src/assets/brand/tokens.css.
  *
  *  ---------------------------------------------------------------------------
- *  POR QUE A PRIMARIA E CIANO E A SECUNDARIA E NAVY?
+ *  POR QUE LARANJA E AZUL-MARINHO?
  *  ---------------------------------------------------------------------------
- *  Sao as duas cores de maior peso no tema da empresa. O ciano (#14b3cc)
- *  e a cor de marca e usa acao (botoes, abas ativas, foco). O navy
- *  (#153c5c) e a cor de estrutura e usa texto e superficies escuras.
+ *  Sao as duas cores de maior peso no tema da empresa. O laranja (#EA4F24)
+ *  e' a cor de ACAO - botao principal, link, item ativo de menu. O
+ *  azul-marinho (#002436) e' a cor de ESTRUTURA - barra de navegacao,
+ *  rodape, superficies escuras.
  *
- *  Importante para acessibilidade: o ciano #14b3cc sobre branco tem
- *  contraste de aproximadamente 2.4:1 - ABAIXO do minimo de 4.5:1 da
- *  WCAG AA para texto normal. Por isso o ciano nunca e usado como cor
- *  de texto pequeno: ele e a cor de fundo de botao (com texto branco) ou
- *  de elemento grafico. Para texto, usamos o navy e o neutral-900, que
- *  passam folgadamente no contraste. O tema original da empresa usa a
- *  mesma logica.
+ *  Repare que o tema INVERTE no hover: o link normal e' laranja e, ao
+ *  passar o mouse, vira azul-marinho. E' a mesma logica aqui: a acao
+ *  "acende" em laranja, e o descanso fica no azul.
+ *
+ *  Importante para acessibilidade: o laranja #EA4F24 sobre branco tem
+ *  contraste de aproximadamente 3,7:1 - atende o minimo de 3:1 da WCAG
+ *  AA para texto GRANDE, mas nao o de 4,5:1 para texto normal. Por isso
+ *  o laranja nunca e' usado como cor de texto pequeno: ele e' cor de
+ *  fundo de botao (com texto branco, 3,7:1) ou de elemento grafico.
+ *  Para texto, usamos o cinza #575756 (7,2:1, AAA) e o azul-marinho
+ *  #002436 (16,1:1, AAA).
  * ============================================================================
  */
 import Vue from 'vue';
@@ -56,7 +71,7 @@ import 'vuetify/dist/vuetify.min.css';
 import '@mdi/font/css/materialdesignicons.css';
 
 // Os tokens de marca ficam disponiveis como variaveis CSS globais
-// (--az-cyan-400, --az-navy-700, ...).
+// (--az-laranja-500, --az-azul-900, ...).
 import '@/assets/brand/tokens.css';
 
 Vue.use(Vuetify);
@@ -88,22 +103,22 @@ export default new Vuetify({
     },
     themes: {
       light: {
-        // CIANO DE MARCA - mesma cor do logo SVG da AZ.
-        primary: '#14b3cc',
-        // Variacao mais escura do ciano, usada no estado "pressed".
-        primaryDark: '#0e8fa3',
-        // NAVY DE ESTRUTURA - cor de apoio da marca.
-        secondary: '#153c5c',
-        // NAVY MAIS ESCURO - usado em superficies de alta hierarquia.
-        accent: '#112f47',
-        // Vermelho de erro da marca.
-        error: '#ff5f56',
-        // Azul de aviso (mesmo valor do tema institucional).
-        info: '#0ba2b9',
-        // Verde de sucesso da marca.
-        success: '#25d366',
-        // Laranja de atencao.
-        warning: '#ed781c'
+        // LARANJA DE MARCA - cor de acao (botao principal, link).
+        primary: '#EA4F24',
+        // Variacao mais escura, usada no estado "pressed".
+        primaryDark: '#D4401A',
+        // AZUL-MARINHO DE ESTRUTURA - navbar, rodape, superficies escuras.
+        secondary: '#002436',
+        // Um pouco mais claro, para superficies de apoio.
+        accent: '#0D4A68',
+        // Vermelho de erro.
+        error: '#DC3545',
+        // Azul de aviso.
+        info: '#0D4A68',
+        // Verde de sucesso.
+        success: '#198754',
+        // Amarelo de atencao.
+        warning: '#FFC107'
       }
     }
   }
