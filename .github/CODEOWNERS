@@ -1,0 +1,46 @@
+# ============================================================================
+#  CODEOWNERS
+# ============================================================================
+#
+#  O QUE E ISSO?
+#  Um arquivo que diz QUEM deve revisar cada parte do repositorio. O
+#  GitHub pede a revisao dessas pessoas automaticamente a cada pull
+#  request que mexe naqueles arquivos.
+#
+#  POR QUE IMPORTA?
+#  Porque a revisao de codigo so funciona se o revisor entende o que
+#  esta olhando. Uma mudanca no filtro de autenticacao, por exemplo,
+#  deveria passar por alguem que conhece a camada de seguranca - nao por
+#  qualquer pessoa que estiver disponivel na hora.
+#
+#  COMO FUNCIONA
+#  O arquivo fica na raiz do repositorio, no caminho .github/CODEOWNERS.
+#  As linhas seguem o formato:
+#
+#      <caminho>  <usuario-ou-equipe>  <usuario-ou-equipe> ...
+#
+#  O ULTIMO padrao que casa e o que vale. Por isso a regra mais geral
+#  vem no fim do arquivo.
+# ============================================================================
+
+# ---- API Java: a camada mais sensivel do projeto ---------------------------
+/leilao-api/src/main/java/br/com/selecao/locadora/config/     @cleitonalmeida1
+/leilao-api/src/main/java/br/com/selecao/locadora/business/   @cleitonalmeida1
+/leilao-api/src/main/java/br/com/selecao/locadora/exception/  @cleitonalmeida1
+
+# ---- Seguranca, scripts e infraestrutura -----------------------------------
+/leilao-api/src/main/resources/sql/                          @cleitonalmeida1
+/leilao-api/pom.xml                                          @cleitonalmeida1
+/leilao-api/Dockerfile                                       @cleitonalmeida1
+/docker-database.yml                                         @cleitonalmeida1
+/scripts/                                                    @cleitonalmeida1
+/.github/                                                    @cleitonalmeida1
+
+# ---- Documentacao ----------------------------------------------------------
+/*.md                                                        @cleitonalmeida1
+
+# ---- Frontend --------------------------------------------------------------
+/leilao-app/src/                                            @cleitonalmeida1
+
+# ---- Regra geral (por ultimo, como no .gitignore) --------------------------
+*                                                             @cleitonalmeida1
