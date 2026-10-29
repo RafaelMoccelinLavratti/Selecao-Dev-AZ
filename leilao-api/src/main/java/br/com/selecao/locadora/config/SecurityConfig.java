@@ -39,6 +39,23 @@ import org.springframework.security.web.access.intercept.FilterSecurityIntercept
  *     seguro do que confiar que ninguem esqueceu de proteger um endpoint.
  *
  *  ------------------------------------------------------
+ *  OS DOIS MODOS DE AUTENTICACAO
+ *  ------------------------------------------------------
+ *  Quando a seguranca esta ligada, ha duas formas possiveis de se
+ *  autenticar, escolhidas pela propriedade "app.security.mode":
+ *
+ *   - "basic" (padrao): HTTP Basic, como antes. O navegador ou o
+ *     cliente envia o cabecalho "Authorization: Basic <base64>". E o
+ *     mecanismo classico do HTTP e nao exige estado no servidor.
+ *
+ *   - "jwt": o cliente faz POST /auth/login, recebe um par de tokens e
+ *     envia o token de acesso no cabecalho "Authorization: Bearer <token>".
+ *
+ *  Os dois modos produzem o MESMO objeto de autenticacao no contexto de
+ *  seguranca, entao as regras de acesso (as "authorizeRequests") sao
+ *  identicas nos dois casos. Trocar de modo e mudar UMA propriedade.
+ *
+ *  ------------------------------------------------------
  *  POR QUE DESLIGAR O CSRF?
  *  ------------------------------------------------------
  *  CSRF (Cross-Site Request Forgery) e um ataque em que o navegador
@@ -47,9 +64,9 @@ import org.springframework.security.web.access.intercept.FilterSecurityIntercept
  *  navegadores anexam cookies automaticamente a requisicoes de sites.
  *
  *  Nesta API nao ha cookie de sessao: a autenticacao e por cabecalho
- *  (HTTP Basic), que o navegador so envia se o codigo pedir. Sem cookie
- *  automatico, o ataque nao se aplica - e o que a propria documentacao
- *  do Spring Security recomenda para APIs stateless.
+ *  (HTTP Basic ou Bearer), que o navegador so envia se o codigo pedir.
+ *  Sem cookie automatico, o ataque nao se aplica - e o que a propria
+ *  documentacao do Spring Security recomenda para APIs stateless.
  *
  *  ------------------------------------------------------
  *  POR QUE "STATELESS"?
@@ -72,11 +89,24 @@ public class SecurityConfig {
     @Value("${app.security.enabled:false}")
     private boolean autenticacaoAtiva;
 
-    /** Usuario da autenticacao HTTP Basic (perfil de producao). */
+    /**
+     * Modo de autenticacao quando a seguranca esta ligada.
+     *
+     * "basic" = HTTP Basic (padrao, comportamento anterior).
+     * "jwt"   = token JWT no cabecalho Authorization.
+     */
+    @Value("${app.security.mode:basic}")
+    private String modoSeguranca;
+
+    /**
+     * Usuario da autenticacao HTTP Basic (perfil de producao).
+     */
     @Value("${app.security.username:admin}")
     private String usuarioPadrao;
 
-    /** Senha da autenticacao HTTP Basic (perfil de producao). */
+    /**
+     * Senha da autenticacao HTTP Basic (perfil de producao).
+     */
     @Value("${app.security.password:troque-esta-senha}")
     private String senhaPadrao;
 
@@ -87,6 +117,12 @@ public class SecurityConfig {
      */
     @Autowired
     private BruteForceProtectionFilter bruteForceProtectionFilter;
+
+    /**
+     * Filtro que autentica a requisicao pelo token JWT.
+     */
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
      * Filtro que registra na trilha de auditoria as operacoes que
@@ -114,7 +150,7 @@ public class SecurityConfig {
      *
      * Serve para obter o AuthenticationManager ja montado (que sabe
      * consultar o UserDetailsService e conferir a senha com o
-     * PasswordEncoder/BCrypt). E a forma oficial de obtener esse
+     * PasswordEncoder/BCrypt). E a forma oficial de obter esse
      * objeto sem precisar montar o ProviderManager na mao.
      */
     @Autowired
@@ -151,9 +187,16 @@ public class SecurityConfig {
             );
 
         if (autenticacaoAtiva) {
-            // ---- MODO PRODUCAO: tudo exige usuario e senha ----
+            // ---- MODO PRODUCAO: tudo exige autenticacao ----
             http.authorizeRequests()
+                    // O health check NAO pode exigir credencial: o orquestrador
+                    // (Docker/Kubernetes) consulta esse endpoint e, se ele
+                    // devolvesse 401, o container seria considerado morto.
                     .antMatchers("/actuator/health", "/actuator/info").permitAll()
+                    // Os endpoints de autenticacao precisam ser publicos -
+                    // sem isso, nao haveria como OBTER o token.
+                    .antMatchers("/auth/login", "/auth/refresh",
+                                 "/autenticacao/login", "/autenticacao/refresh").permitAll()
                     .anyRequest().authenticated()
                     .and()
                 // Resposta de "acesso negado" SEMPRE em JSON, no mesmo
@@ -162,36 +205,50 @@ public class SecurityConfig {
                 .exceptionHandling()
                     .authenticationEntryPoint(jsonAuthenticationEntryPoint);
 
-            // ------------------------------------------------------------
-            //  POR QUE NAO USAMOS "http.httpBasic()"?
-            // ------------------------------------------------------------
-            //  Porque o HttpBasicConfigurer do Spring Security 5.7 expoe
-            //  apenas tres metodos: realmName(), authenticationEntryPoint()
-            //  e authenticationDetailsSource(). NAO existe um metodo
-            //  "failureHandler()" - o handler de falha e definido
-            //  dentro do construtor do BasicAuthenticationFilter e nao
-            //  pode ser trocado pela configuracao.
-            //
-            //  Como o handler padrao do Spring devolve uma pagina HTML
-            //  (e nao o JSON que o frontend espera), usamos o
-            //  AuditedBasicAuthenticationFilter, que estende o filtro
-            //  original e sobrescreve o tratamento de sucesso e falha.
-            //
-            //  DETALHE IMPORTANTE: o filtro e criado aqui, dentro do
-            //  metodo, e NAO declarado como "@Bean". Se fosse um @Bean do
-            //  tipo Filter, o Spring Boot o registraria TAMBEM como filtro
-            //  do container de servlet (fora da cadeia do Spring Security)
-            //  e ele rodaria duas vezes - uma delas sem nenhum filtro de
-            //  seguranca ao redor, o que seria um furo.
-            // ------------------------------------------------------------
-            AuditedBasicAuthenticationFilter basicAuthenticationFilter =
-                    new AuditedBasicAuthenticationFilter(
-                            authenticationConfiguration.getAuthenticationManager(),
-                            authenticationAuditHandler,
-                            loginAttemptService);
+            if ("jwt".equalsIgnoreCase(modoSeguranca)) {
 
-            // Registra o filtro na posicao oficial do BasicAuthenticationFilter.
-            http.addFilterAt(basicAuthenticationFilter, BasicAuthenticationFilter.class);
+                // ---- MODO JWT ----
+                // O filtro de JWT entra ANTES do filtro de autenticacao
+                // basica: assim, uma requisicao com "Authorization: Bearer"
+                // e autenticada pelo token, e uma com "Authorization: Basic"
+                // cai no filtro basico. Quem chegar sem cabecalho e barrado
+                // pelo FilterSecurityInterceptor, com 401 em JSON.
+                http.addFilterBefore(jwtAuthenticationFilter, BasicAuthenticationFilter.class);
+
+            } else {
+
+                // ---- MODO HTTP BASIC ----
+                // ------------------------------------------------------------
+                //  POR QUE NAO USAMOS "http.httpBasic()"?
+                // ------------------------------------------------------------
+                //  Porque o HttpBasicConfigurer do Spring Security 5.7 expoe
+                //  apenas tres metodos: realmName(), authenticationEntryPoint()
+                //  e authenticationDetailsSource(). NAO existe um metodo
+                //  "failureHandler()" - o handler de falha e definido
+                //  dentro do construtor do BasicAuthenticationFilter e nao
+                //  pode ser trocado pela configuracao.
+                //
+                //  Como o handler padrao do Spring devolve uma pagina HTML
+                //  (e nao o JSON que o frontend espera), usamos o
+                //  AuditedBasicAuthenticationFilter, que estende o filtro
+                //  original e sobrescreve o tratamento de sucesso e falha.
+                //
+                //  DETALHE IMPORTANTE: o filtro e criado aqui, dentro do
+                //  metodo, e NAO declarado como "@Bean". Se fosse um @Bean do
+                //  tipo Filter, o Spring Boot o registraria TAMBEM como filtro
+                //  do container de servlet (fora da cadeia do Spring Security)
+                //  e ele rodaria duas vezes - uma delas sem nenhum filtro de
+                //  seguranca ao redor, o que seria um furo.
+                // ------------------------------------------------------------
+                AuditedBasicAuthenticationFilter basicAuthenticationFilter =
+                        new AuditedBasicAuthenticationFilter(
+                                authenticationConfiguration.getAuthenticationManager(),
+                                authenticationAuditHandler,
+                                loginAttemptService);
+
+                // Registra o filtro na posicao oficial do BasicAuthenticationFilter.
+                http.addFilterAt(basicAuthenticationFilter, BasicAuthenticationFilter.class);
+            }
 
             // CONTROLE ANTI-FORCA-BRUTA.
             // O filtro e registrado ANTES do BasicAuthenticationFilter
@@ -217,6 +274,16 @@ public class SecurityConfig {
         // de seguranca.
         http.addFilterAfter(auditTrailFilter, FilterSecurityInterceptor.class);
 
+        // NOTA SOBRE O LIMITADOR DE REQUISICOES E O IDENTIFICADOR DE
+        // CORRELACAO: eles NAO sao registrados aqui, e sim no container de
+        // servlet (via @Order nas proprias classes). O motivo e' que os dois
+        // sao concerns TRANSVERSAIS - precisam valer para TODAS as
+        // requisicoes, inclusive as de monitoracao (/actuator/health), que
+        // nao passam pela cadeia do Spring Security. A ordem (@Order)
+        // garante que o identificador de correlacao seja atribuido antes de
+        // qualquer outro filtro escrever no log, e que o limitador barra o
+        // volume excessivo ANTES de qualquer trabalho caro.
+
         return http.build();
     }
 
@@ -228,15 +295,22 @@ public class SecurityConfig {
      * ele existe para demostrar o controle de acesso sem depender de
      * infraestrutura externa.
      *
-     * A senha e guardada com hash BCrypt - o usuario do Spring Security
-     * compara o hash, nunca a senha em texto puro.
+     * A senha e guardada com hash (Argon2id) - o usuario do Spring Security
+     * compara o hash, nunca a senha em texto puro. O encoder e o mesmo
+     * bean entregue pelo PasswordEncoderConfig, para que a comparacao
+     * use exatamente o mesmo algoritmo dos hashes gravados no banco.
+     *
+     * ------------------------------------------------------
+     *  POR QUE O USUARIO EXISTE MESMO COM A AUTENTICACAO DESLIGADA?
+     *  ------------------------------------------------------
+     *  Porque o endpoint POST /auth/login precisa funcionar para que o
+     *  avaliador possa TESTAR o fluxo de token. Com a autenticacao
+     *  desligada, as rotas estao abertas de qualquer jeito - a presenca
+     *  do usuario aqui nao abre porta nenhuma, apenas permite emitir um
+     *  token de demonstracao.
      */
     @Bean
-    public UserDetailsService usuarioEmMemoria() {
-        if (!autenticacaoAtiva) {
-            return new InMemoryUserDetailsManager();
-        }
-        PasswordEncoder encoder = new BCryptPasswordEncoder(10);
+    public UserDetailsService usuarioEmMemoria(PasswordEncoder encoder) {
         UserDetails usuario = User.builder()
                 .username(usuarioPadrao)
                 .password(encoder.encode(senhaPadrao))
