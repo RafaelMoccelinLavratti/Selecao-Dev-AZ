@@ -21,6 +21,7 @@
 - [Bloco 5 — Java e Spring](#bloco-5--java-e-spring)
 - [Bloco 6 — Problemas reais encontrados](#bloco-6--problemas-reais-encontrados)
 - [Bloco 7 — Evolução do projeto](#bloco-7--evolução-do-projeto)
+- [Bloco 8 — Segurança avançada](#bloco-8--segurança-avançada)
 - [Checklist final antes da entrevista](#checklist-final-antes-da-entrevista)
 
 ---
@@ -35,11 +36,13 @@
 >
 > **Backend** em Java 11 com Spring Boot 2.7, persistência por JPA no
 > PostgreSQL 16, e **frontend** em Vue 2 com Vuetify, falados por JSON
-> via HTTP. São 37 testes automatizados, que rodam sem banco de dados.
+> via HTTP. São 63 testes automatizados, que rodam sem banco de dados.
 >
 > O ponto que eu destaco é a **segurança**: existe autenticação
-> HTTP Basic, controle de força bruta e trilha de auditoria — mas
-> **ligados por configuração**, desligados por padrão, porque o
+> (HTTP Basic **ou** JWT), hash de senha em Argon2id com migração
+> automática, controle de força bruta, limitador de volume, trilha de
+> auditoria **à prova de adulteração** e identificador de correlação —
+> mas **ligados por configuração**, desligados por padrão, porque o
 > enunciado pede endpoints abertos para a avaliação.
 
 ### 2. Quais as camadas e por que?
@@ -836,6 +839,195 @@
 
 ---
 
+## Bloco 8 — Segurança avançada
+
+> As perguntas 45 a 52 são as que separam um projeto "com autenticação" de
+> um projeto que **entende** o que está fazendo. Todas têm resposta no
+> código — e, o mais importante, **em teste**.
+
+### 45. Por que Argon2id, e como você trocou sem quebrar ninguém?
+
+> A OWASP passou a recomendar **Argon2id** como primeira opção no *Password
+> Storage Cheat Sheet* de 2023. A diferença para o BCrypt é o **recurso
+> principal**: o Argon2id usa **memória** (64 MiB por hash), e o BCrypt usa
+> CPU. Isso importa porque uma GPU tem milhares de núcleos **e muita
+> memória** — ela é ótima em calcular em massa. Contra o Argon2id, cada
+> tentativa de ataque consome dezenas de megabytes, e o atacante não consegue
+> paralelizar. Contra o BCrypt, ele consegue.
+>
+> **E a troca não podia ser "de um dia para o outro".** A base já tinha
+> senhas em BCrypt; se o sistema passasse a aceitar só Argon2, **ninguém
+> conseguiria mais entrar**.
+>
+> A solução foi a **delegação**: o `CodificadorDeSenhaDelegado` identifica o
+> algoritmo pelo **formato** do hash gravado — `{argon2}$argon2id$…` vai para
+> o Argon2id, `$2a$…` (o formato antigo, sem prefixo) vai para o BCrypt. Ao
+> gravar, usa sempre o Argon2id. E o `upgradeEncoding()` — que o Spring
+> chama depois de um login bem-sucedido — devolve `true` para um hash
+> antigo, o que faz o sistema **reescrever aquele hash** no formato novo.
+>
+> O resultado é que **a base migra sozinha, no ritmo do uso**: sem script de
+> conversão em lote, sem janela de manutenção, sem risco de trancar
+> ninguém. É testado em `PasswordEncoderTest`.
+>
+> Detalhe honesto: o `DelegatingPasswordEncoder` oficial do Spring exige que
+> *todo* hash gravado tenha o prefixo `{id}` — um hash legado sem prefixo
+> faria ele lançar exceção. Por isso uso o DelegatingPasswordEncoder como
+> **motor** e acrescento por cima a única regra que faltava.
+
+### 46. Por que assinatura assimétrica no JWT? O que é rotação de chave?
+
+> Com uma chave **simétrica** (HS256), quem valida o token pode também
+> **forjá-lo** — porque a mesma chave serve para as duas coisas. E, se
+> vários serviços validam o mesmo token, todos precisam do mesmo segredo:
+> o "segredo" se espalha por toda a empresa.
+>
+> Com **RS256**, a chave privada fica só na aplicação (assina) e a pública
+> pode ser distribuída livremente (verifica). Quem tem só a pública não
+> consegue forjar nada.
+>
+> **Rotação de chave** é trocar a chave periodicamente sem derrubar
+> ninguém. Como a chave privada assina e a pública verifica, a aplicação
+> mantém **as duas**: a antiga (ainda valida os tokens já emitidos) e a
+> nova (já assina os novos). O truque que faz isso funcionar é o cabeçalho
+> **`kid`** (*key id*): cada token diz com qual chave foi assinado, e a
+> aplicação usa essa chave específica para verificá-lo.
+>
+> Sem o `kid`, a rotação forçaria a invalidação de todos os tokens
+> emitidos — que é exatamente o que se quer evitar.
+
+### 47. O que é rotação de token com detecção de reuso? Por que revogar a família?
+
+> O token de renovação é de **uso único**. Ao renovar, ele é marcado como
+> usado e um par novo é emitido.
+>
+> Se um token **já usado** for apresentado de novo, o sinal é de que
+> **alguém copiou** ele — o cenário clássico de roubo de token. E aqui está
+> a decisão de projeto: a resposta correta **não é** recusar só o token
+> apresentado; é **revogar a família inteira**.
+>
+> O motivo é simples. No cenário de roubo, o atacante e o usuário legítimo
+> estão usando o **mesmo** token. Revogar só o token apresentado deixaria o
+> atacante com os tokens já emitidos — e o usuário legítimo sem nenhum
+> sinal de problema. Revogar a família obriga **os dois** a se autenticarem
+> de novo, e o usuário legítimo percebe imediatamente que algo aconteceu.
+>
+> A "família" é um identificador compartilhado por todos os tokens gerados
+> a partir do mesmo login.
+
+### 48. Como uma trilha de auditoria se torna "à prova de adulteração"?
+
+> Uma trilha comum é um log — e quem tem acesso ao banco pode apagá-lo. Num
+> incidente, é exatamente quem a auditoria precisa investigar. Uma prova que
+> pode ser apagada por quem deveria estar sendo auditado não serve para
+> nada.
+>
+> A solução é uma **corrente de hashes**: cada registro guarda o hash do
+> registro **anterior**,
+>
+> `hash_N = HMAC(chave, sequência_N ‖ hash_{N-1} ‖ conteúdo_N)`
+>
+> Se alguém alterar um registro no meio, todos os hashes seguintes deixam de
+> bater — e a verificação acusa **em qual ponto** a cadeia foi rompida.
+>
+> **Por que HMAC e não SHA-256 simples?** Com hash simples, quem tivesse
+> acesso ao banco recalcularia o hash do registro alterado e gravaria o
+> resultado — o hash não provaria nada, porque a "chave" seria o próprio
+> algoritmo. Com HMAC, a verificação depende de uma chave **secreta que fica
+> fora do banco**. Quem tem o banco, mas não a chave, não consegue forjar
+> um registro válido.
+>
+> E a **sequência** (um `BIGINT` monotônico que nunca retrocede) fecha o
+> outro caso: se um registro for **removido** do meio, o hash acusaria a
+> quebra de encadeamento, mas a sequência acusa o **buraco** de forma
+> independente. Hash detecta *alteração*; sequência detecta *remoção*.
+>
+> Os testes em `AuditoriaBOTest` simulam os três ataques: alterar o
+> conteúdo, forjar um registro e apagar um do meio.
+
+### 49. Qual a diferença entre rate limiting e controle de força bruta?
+
+> Eles defendem **objetivos diferentes**, e é por isso que os dois existem.
+>
+> O **controle de força bruta** protege a **conta**: limita quantas vezes
+> se pode errar a senha do mesmo usuário (e do mesmo IP). Ele é disparado
+> por uma **falha de autenticação**.
+>
+> O **limitador de volume** protege o **recurso**: limita quantas
+> requisições o mesmo IP pode fazer, independentemente de serem de login.
+> Um atacante que não quer nem tentar logar — só quer derrubar a API —
+> nunca chega a disparar o primeiro.
+>
+> Detalhe de algoritmo: o limitador usa **janela deslizante** (120
+> requisições nos últimos 60 segundos), não bloco fixo ("100 por minuto a
+> contar do minuto cheio"). Com bloco fixo, um atacante dispararia 100
+> requisições no último segundo do minuto e mais 100 no primeiro segundo
+> do seguinte — o dobro do limite num instante.
+
+### 50. O que é identificador de correlação e por que ele importa?
+
+> É um identificador único por requisição (`X-Correlation-Id`) que liga
+> **"o erro que o usuário viu na tela"** a **"as linhas de log do
+> servidor"**.
+>
+> O cenário: o usuário clica em salvar, a tela trava, e ele liga para o
+> suporte dizendo "deu erro". O suporte olha o log — e há mil requisições
+> por segundo, de vários usuários. Como saber qual era a dele?
+>
+> A resposta é o identificador: ele entra no **MDC** (o contexto de log da
+> thread) e aparece em **todas** as linhas de log daquela requisição, e
+> volta no cabeçalho de resposta. O usuário passa o código ao suporte, e o
+> time filtra o log com um `grep`.
+>
+> O detalhe de segurança: o valor recebido do cliente é **saneado** — só
+> alfanuméricos, `-` e `_`. Sem isso, um cliente mandaria um cabeçalho com
+> quebra de linha e **injetaria linhas falsas no log** (*log forging*), e
+> ainda poderia forjar o formato das linhas reais, para o log parecer
+> legítimo. E o MDC é limpo no `finally`, para o identificador não vazar
+> de uma requisição para a seguinte (o Tomcat reaproveita threads).
+
+### 51. O que é SBOM e por que isso importa mais do que parece?
+
+> **SBOM** (*Software Bill of Materials*) é o inventário de tudo que está
+> dentro do artefato: cada biblioteca, cada versão.
+>
+> Por que importa: mais de 80% das vulnerabilidades de aplicações web não
+> estão no código que a equipe escreveu — estão em uma biblioteca de
+> terceiros. O caso do **Log4Shell** (dezembro de 2021) é o canônico: uma
+> vulnerabilidade em uma biblioteca de log afetou milhões de aplicações no
+> mundo. A única forma de saber se você é afetado é ter um inventário.
+>
+> No projeto, o `cyclonedx-maven-plugin` gera o SBOM a cada build, e o perfil
+> `security-scan` roda o OWASP Dependency-Check, que **falha o build** se
+> houver vulnerabilidade de CVSS ≥ 7. O Dependabot abre pull requests
+> semanais com as versões corrigidas.
+>
+> A ressalva honesta: a varredura **não roda no pipeline padrão**, porque
+> a base NVD exige chave de API e uma carga inicial de horas. Ela roda à
+> noite, no CI, com a chave em segredo.
+
+### 52. Por que a identidade visual não é "uma paleta azul qualquer"?
+
+> Porque eu fui buscar a paleta **real** da empresa, no tema do site
+> institucional — que expõe as cores como variáveis CSS. E a paleta real
+> **não é azul**: a primária é **ciano** (`#14b3cc`, a mesma do logo), a
+> secundária é azul-marinho (`#153c5c`), e a fonte é **Poppins** — não
+> Roboto, não Arial.
+>
+> Dois detalhes que só aparecem quando se olha a fonte: a família de ciano
+> **não é sólida** (o tema usa a mesma cor com opacidade de 8%, 15%, 20% e
+> 30% para as versões suaves), e as sombras são **tingidas de ciano**, nunca
+> cinza puro.
+>
+> E há um ponto que vale mais que a estética: o branco sobre o ciano da
+> marca fica em **2,4:1** de contraste — abaixo do mínimo AA da WCAG para
+> texto normal. Por isso o projeto **não** usa branco sobre ciano em texto
+> pequeno: usa o ciano como fundo decorativo e indicador, e o navy como
+> fundo de botão primário (9,1:1). Identidade visual e acessibilidade
+> precisam andar juntas — e isso só aparece quando alguém checa.
+
+---
+
 ## Checklist final antes da entrevista
 
 ### O que revisar na véspera
@@ -853,13 +1045,28 @@
 
 1. **Como o projeto está dividido?** — service / business / repository +
    DTOs, e o porquê de cada separação.
-2. **Como a senha é protegida?** — BCrypt com salt e custo 10, e o porquê
-   de cada uma dessas propriedades.
+2. **Como a senha é protegida?** — Argon2id (64 MiB, 2 iterações, salt de
+   16 bytes), por que memória e não só CPU, e **como a migração do BCrypt
+   foi feita sem trancar ninguém** (delegação + reescrita no login).
 3. **O que o controle de força bruta faz?** — dois limites (usuário e
    IP), por que dois, e por que o de IP roda antes da autenticação.
-4. **O que você **não** protege?** — RBAC, Redis, TLS, CVEs, alertas.
+4. **O que você **não** protege?** — RBAC, Redis, TLS, cofre de segredos,
+   revogação de token de acesso já emitido.
 5. **Qual foi o problema mais difícil?** — a resposta sobrescrita no 401
    vs 429, e o que isso ensinou sobre testes de integração.
+
+### Se houver tempo para mais uma: as 5 de segurança avançada
+
+6. **Por que RS256 e o que é rotação de chave?** — assimetria versus
+   simetria, e o papel do `kid`.
+7. **O que é rotação de token com detecção de reuso?** — e por que
+   revogar a **família**, e não só o token.
+8. **Como a trilha se torna à prova de adulteração?** — a corrente de
+   HMAC, e por que HMAC e não SHA-256 simples.
+9. **Força bruta e rate limiting protegem a mesma coisa?** — não: a conta
+   e o recurso.
+10. **O que é SBOM?** — e por que a cadeia de suprimento é parte da
+    segurança.
 
 ### Frases que ajudam a soar seguro (e são verdadeiras)
 
