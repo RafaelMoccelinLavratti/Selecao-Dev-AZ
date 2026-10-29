@@ -58,29 +58,103 @@
 </template>
 
 <script>
+/**
+ * ============================================================================
+ *  SCRIPT DO COMPONENTE: MENU DE NAVEGACAO
+ * ============================================================================
+ *
+ *  Um componente Vue 2 tem tres blocos principais:
+ *
+ *    - "template" : o HTML (marcado com etiquetas do Vue);
+ *    - "script"   : a logica (dados, metodos, ciclo de vida);
+ *    - "style"    : o CSS (scopo local ou global).
+ *
+ *  Este bloco "script" e onde ficam os DADOS do menu e nada mais - o
+ *  componente nao fala com a API e nao tem regra de negocio. Ele apenas
+ *  desenha uma lista de links.
+ *
+ *  ------------------------------------------------------
+ *  O PADRAO "v-for" USADO AQUI
+ *  ------------------------------------------------------
+ *  Em vez de escrever tres <v-list-item> na mao, escrevemos UM e pedimos
+ *  para o Vue repetir ele para cada item da lista "itens".
+ *
+ *  O ":key" e obrigatorio: o Vue precisa de um identificador unico de
+ *  cada item para saber qual elemento da tela e "o mesmo" depois que a
+ *  lista muda (reordenacao, remocao). Sem a chave, o Vue pode misturar
+ *  os elementos e mostrar dados trocados - um bug classico e muito
+ *  confuso de diagnosticar.
+ *
+ *  O ":to" e a "ponteira" com o vue-router: e o endereco de destino do
+ *  link. Como a aplicacao usa "hash routing" (modo 'hash'), o vue-router
+ *  acrescenta o "#" sozinho - por isso aqui vai "/unidades" e nao "#/unidades".
+ *
+ *  ------------------------------------------------------
+ *  POR QUE O MENU E UM COMPONENTE SEPARADO?
+ *  ------------------------------------------------------
+ *  Tres motivos, todos práticos:
+ *    1) o App.vue fica enxuto e legivel;
+ *    2) o menu pode ser reutilizado em outra tela sem copiar codigo;
+ *    3) o enunciado pede explicitamente "separe bem o codigo em
+ *       componentes".
+ * ============================================================================
+ */
 export default {
+  /**
+   * Nome do componente.
+   *
+   * Em Vue 2, um componente tambem precisa de um "name" para poder ser
+   * usado em codigo (por exemplo, dentro de um <router-view> ou
+   * referenciado pelo nome no template de outro componente).
+   */
   name: 'AppMenu',
 
+  /**
+   * ------------------------------------------------------------------
+   *  DADOS REATIVOS DO COMPONENTE (data).
+   * ------------------------------------------------------------------
+   *
+   *  Tudo que estiver aqui e REATIVO: quando um valor muda, o Vue
+   *  redesenha automaticamente os trechos de template que dependem dele.
+   *
+   *  Por isso, dados que nunca mudam (como a lista de itens do menu)
+   *  nao precisam estar em "data" - poderiam ser uma constante do
+   *  modulo. Mas deixar aqui deixa o componente mais simples de
+   *  entender e de estender (por exemplo, se um dia o menu for montado
+   *  a partir da API, o lugar ja existe).
+   */
   data() {
     return {
       /**
-       * Itens do menu.
-       * "rota" e o caminho da URL (o vue-router coloca o "#" antes).
+       * Itens do menu (um objeto por item).
+       *
+       * Cada item tem quatro campos:
+       *   rota      : o caminho da URL (o vue-router coloca o "#" antes);
+       *   titulo    : o texto principal do link;
+       *   descricao : o texto auxiliar (aparece em cinza, embaixo);
+       *   icone     : o nome do icone do Material Design Icons.
+       *
+       * Declarar os itens como DADOS (e nao escrever cada link
+       * diretamente no template) e o que permite que a lista cresca
+       * sem mexer no HTML.
        */
       itens: [
         {
+          // Tela de consulta e edicao de unidades (exercicio 5).
           rota: '/unidades',
           titulo: 'Unidades',
           descricao: 'Cadastro e edicao',
           icone: 'mdi-office-building'
         },
         {
+          // Tela de consulta de empresas (exercicio 6).
           rota: '/empresas',
           titulo: 'Empresas',
           descricao: 'Consulta de participantes',
           icone: 'mdi-domain'
         },
         {
+          // Tela de consulta de leiloes (exercicio 7).
           rota: '/leiloes',
           titulo: 'Leiloes',
           descricao: 'Consulta e totais',
@@ -88,7 +162,18 @@ export default {
         }
       ],
 
-      // Endereco da API (mostrado no rodape do menu).
+      /**
+       * Endereco da API, mostrado no rodape do menu.
+       *
+       * Vem da variavel de ambiente VUE_APP_API_BASE_URL (definida no
+       * arquivo .env da pasta leilao-app). O "||" (OU) abaixo e um
+       * plano B: se a variavel nao existir, usa o endereco local padrao.
+       *
+       * POR QUE MOSTRAR ISSO NA TELA?
+       * Para o usuario (e para quem avalia o sistema) saber com
+       * qual ambiente esta trabalhando. evita o erro classico de
+       * cadastrar dados no banco errado sem perceber.
+       */
       enderecoApi: process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081'
     };
   }

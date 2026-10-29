@@ -140,8 +140,74 @@
 </template>
 
 <script>
+/**
+ * ============================================================================
+ *  SCRIPT DA VIEW: EMPRESAS
+ * ============================================================================
+ *
+ *  ------------------------------------------------------
+ *  O QUE ESTA TELA FAZ
+ *  ------------------------------------------------------
+ *  Consulta (somente leitura) das empresas participantes dos leiloes.
+ *  E a tela do EXERCICIO 6, acrescida dos links de editar e excluir
+ *  exigidos pelo EXERCICIO 8.
+ *
+ *  ---------------------------------------------------------
+ *  UMA REGRA DE OURO QUE VALE LEMBRAR: A EXIBICAO NAO E O ARMAZENAMENTO
+ *  ---------------------------------------------------------
+ *  Repare que o CNPJ, o telefone e o CEP aparecem MASCARADOS na tela
+ *  (11.422.377/0001-55), mas sao gravados SEM pontuacao no banco
+ *  (11422377000155).
+ *
+ *  Isso e proposital e e uma pratica de seguranca de dados. Se o banco
+ *  guardasse o valor como digitado, existiriam varias representacoes
+ *  do mesmo dado ("11422377000155", "11.422.377/0001-55",
+ *  "11 422 377 0001 55") e a busca por CNPJ deixaria de funcionar,
+ *  porque a comparacao seria de texto.
+ *
+ *  A solucao adotada no projeto inteiro e:
+ *      - na ENTRADA  : o backend remove a pontuacao (canonicaliza);
+ *      - na SAIDA    : o frontend aplica a mascara so na exibicao.
+ *
+ *  Quem faz a canonicalizacao e o backend (a camada de negocio). O
+ *  frontend so decora como mostrar.
+ *
+ *  ---------------------------------------------------------
+ *  POR QUE A TABELA E SOMENTE LEITURA?
+ *  ---------------------------------------------------------
+ *  Porque o enunciado do exercicio 6 pede exatamente isso, e porque a
+ *  edicao de empresa tem muitos campos (com validacao de formato). Editar
+ *  tudo dentro da tabela deixaria a tela apertada e difficultosa de
+ *  usar. Entao a edicao acontece na tela de cadastro (#/empresa/:id),
+ *  e aqui ficam apenas o link para ela e o botao de excluir.
+ * ============================================================================
+ */
+
+/**
+ * Importacao do servico centralizado de comunicacao com a API.
+ *
+ * O axios e criado e configurado UMA vez em src/services/api.js. As
+ * telas nunca chamam o axios direto - elas usam este "api", que ja
+ * tem o endereco base, o timeout e o tratamento de erro padronizado.
+ */
 import api from '../../services/api';
+
+/**
+ * Importacao do componente de confirmacao de exclusao.
+ */
 import ConfirmDialog from '../../components/ConfirmDialog.vue';
+
+/**
+ * Importacao dos mascaradores de exibicao.
+ *
+ * O "as" no import permite renomear a funcao no momento do import.
+ * Fazemos isso porque os nomes sao genericos demais no arquivo de
+ * origem ("mascaraCnpj" viraria um metodo chamado "mascaraCnpj" na
+ * tela) e para deixar claro, aqui, que sao FORMATADORES DE EXIBICAO.
+ *
+ * O arquivo utils/mascaras.js concentra todos os mascaradores do
+ * projeto - assim a mesma mascara aparece igual em todas as telas.
+ */
 import {
   mascaraCnpj as formatarCnpj,
   mascaraTelefone as formatarTelefone,
@@ -149,25 +215,88 @@ import {
 } from '../../utils/mascaras';
 
 export default {
+  /**
+   * Nome do componente (tela).
+   */
   name: 'TelaEmpresas',
 
+  /**
+   * Componentes usados nesta tela.
+   */
   components: {
     ConfirmDialog
   },
 
+  /**
+   * ------------------------------------------------------------------
+   *  DADOS REATIVOS (data)
+   * ------------------------------------------------------------------
+   */
   data() {
     return {
+      /**
+       * A lista de empresas vinda da API.
+       *
+       * Comeca como array VAZIO (e nao como null): o Vuetify espera um
+       * array para a tabela, e um array vazio e o estado natural de
+       * "ainda nao carregou" - a tabela mostra a mensagem "Nenhuma
+       * empresa cadastrada" enquanto o carregamento acontece.
+       */
       empresas: [],
+
+      /**
+       * Texto digitado no campo de busca.
+       *
+       * O v-data-table filtra automaticamente por este valor: nao
+       * precisamos implementar busca na mao. A busca e "client side"
+       * (roda no navegador), o que e rapido para uma lista desse
+       * tamanho e nao gera trafego na rede.
+       */
       search: '',
+
+      /**
+       * Controla a barra de progresso da tabela.
+       *
+       * Enquanto for "true", o Vuetify mostra um indicador de
+       * carregamento no lugar dos dados.
+       */
       carregando: false,
+
+      /**
+       * A empresa que o usuario pediu para excluir.
+       *
+       * Fica guardada aqui enquanto o dialogo de confirmacao esta
+       * aberto. E o que permite que o metodo "confirmarExclusao" saiba
+       * QUAL registro apagar (o dialogo, por si so, nao sabe).
+       */
       paraExcluir: null
     };
   },
 
+  /**
+   * ------------------------------------------------------------------
+   *  VALORES CALCULADOS (computed)
+   * ------------------------------------------------------------------
+   */
   computed: {
     /**
      * Colunas da tabela.
-     * O enunciado pede exatamente: cnpj, razaoSocial, telefone e email.
+     *
+     * O enunciado do exercicio 6 pede exatamente quatro campos:
+     * cnpj, razaoSocial, telefone e email. Acrescentamos a coluna de
+     * acoes, exigida pelo exercicio 8.
+     *
+     * Cada coluna tem:
+     *   text  : o titulo que aparece no cabecalho;
+     *   value : o nome do campo no objeto - e por ele que o Vuetify
+     *           busca o valor de cada linha;
+     *   width : largura fixa (opcional);
+     *   align : alinhamento do conteudo ("start", "end", "center");
+     *   sortable: se pode ser ordenada (o padrao e true).
+     *
+     * A coluna "actions" nao existe como campo no objeto - ela e um
+     * "slot", um pedaco de template customizado (veja o
+     * v-slot:item.actions no template).
      */
     headers() {
       return [
@@ -180,32 +309,71 @@ export default {
     }
   },
 
+  /**
+   * ------------------------------------------------------------------
+   *  CICLO DE VIDA: mounted
+   * ------------------------------------------------------------------
+   *
+   *  "mounted" e chamado quando o componente ja foi inserido na tela.
+   *  E o lugar certo para buscar dados: a tela ja existe, o usuario
+   *  ve o indicador de carregamento e a chamada acontece em segundo
+   *  plano.
+   *
+   *  (Se a busca fosse feita no "created", ela comecaria antes da tela
+   *  aparecer - e o usuario veria uma tela em branco por um instante.)
+   */
   mounted() {
     this.carregar();
   },
 
+  /**
+   * ------------------------------------------------------------------
+   *  METODOS (methods)
+   * ------------------------------------------------------------------
+   */
   methods: {
     /**
-     * Carrega a lista de empresas.
+     * Carrega (ou recarrega) a lista de empresas.
+     *
+     * O padrao "try / catch / finally" e o tratamento de erro padrao
+     * do JavaScript:
+     *
+     *   try    : o codigo que pode falhar (a chamada HTTP);
+     *   catch  : o que fazer se falhou (mostrar a mensagem de erro);
+     *   finally: o que fazer SEMPRE, com sucesso ou erro (tirar o
+     *            indicador de carregamento).
+     *
+     * O bloco "finally" e essencial: sem ele, se a chamada falhasse, o
+     * indicador de carregamento ficaria girando para sempre na tela.
      */
     async carregar() {
       this.carregando = true;
       try {
         this.empresas = await api.get('/empresas');
       } catch (erro) {
+        // O interceptor do axios (em services/api.js) ja traduziu o erro
+        // do backend para o objeto { status, mensagem, campos }.
         this.notificar('error', erro.mensagem || 'Erro ao carregar as empresas.');
       } finally {
         this.carregando = false;
       }
     },
 
-    // Mascaradores importados de utils/mascaras.js, usados na exibicao.
+    /**
+     * Mascaradores importados de utils/mascaras.js, usados na exibicao.
+     *
+     * Sao atribuidos como metodos do componente, para poderem ser
+     * chamados no template como "mascaraCnpj(item.cnpj)".
+     */
     mascaraCnpj: formatarCnpj,
     mascaraTelefone: formatarTelefone,
     mascaraCep: formatarCep,
 
     /**
-     * Abre o dialogo de confirmacao.
+     * Abre o dialogo de confirmacao de exclusao.
+     *
+     * Guardamos o registro escolhido antes de abrir o dialogo, para
+     * que a confirmacao saiba o que apagar.
      */
     pedirExclusao(item) {
       this.paraExcluir = item;
@@ -213,7 +381,10 @@ export default {
     },
 
     /**
-     * Exclui a empresa confirmada.
+     * Executa a exclusao (o usuario ja confirmou no dialogo).
+     *
+     * A guarda "if (!this.paraExcluir) return;" protege contra o
+     * evento de confirmacao chegar sem nenhum registro selecionado.
      */
     async confirmarExclusao() {
       if (!this.paraExcluir) {
@@ -224,6 +395,7 @@ export default {
         await api.delete('/empresas/' + this.paraExcluir.id);
         this.notificar('success', 'Empresa excluida com sucesso.');
         this.paraExcluir = null;
+        // Recarrega a lista para a linha apagada sumir da tabela.
         await this.carregar();
       } catch (erro) {
         this.notificar('error', erro.mensagem || 'Erro ao excluir a empresa.');
@@ -232,6 +404,9 @@ export default {
 
     /**
      * Atalho para exibir a notificacao global.
+     *
+     * Existe para as telas nao precisarem repetir o caminho
+     * "$root.$refs.notificacoes.exibir(...)" em cada chamada.
      */
     notificar(tipo, mensagem) {
       if (this.$root.$refs.notificacoes) {

@@ -136,22 +136,94 @@
 </template>
 
 <script>
+/**
+ * ============================================================================
+ *  SCRIPT DA VIEW: LEILOES
+ * ============================================================================
+ *
+ *  ------------------------------------------------------
+ *  O QUE ESTA TELA FAZ
+ *  ------------------------------------------------------
+ *  Consulta dos leiloes e seus totais. E a tela do EXERCICIO 7.
+ *
+ *  ---------------------------------------------------------
+ *  POR QUE ESTA TELA E "SO LEITURA"?
+ *  ---------------------------------------------------------
+ *  O enunciado do exercicio 7 pede apenas a consulta. Alem disso, um
+ *  leilao e um registro que envolve lotes, comprador e valores
+ *  financeiros - criar, editar ou excluir um leilao nao e uma operacao
+ *  de "uma tabela com duas colunas". Faz-lo aqui exigiria mais validacao
+ *  e mais cuidado do que a tela de unidades. Por isso, o escopo desta
+ *  tela e a consulta.
+ *
+ *  ---------------------------------------------------------
+ *  O QUE SAO OS "TOTAIS" AQUI?
+ *  ---------------------------------------------------------
+ *  O "total" de um leilao e o resultado de uma consulta no BANCO
+ *  (veja LeilaoRepository, a JPQL que soma quantidade x valor de cada
+ *  lote). O backend entrega o valor ja calculado - o frontend nao
+ *  inventa nem recalcula a regra de negocio, apenas formata o numero
+ *  para exibicao.
+ *
+ *  E uma divisao importante: a REGRA (como se calcula o total) mora no
+ *  backend, que e a fonte da verdade. O frontend cuida so da FORMA
+ *  (como o numero aparece na tela).
+ * ============================================================================
+ */
+
+/**
+ * Importacao do servico centralizado de comunicacao com a API.
+ */
 import api from '../../services/api';
 
 export default {
+  /**
+   * Nome do componente (tela).
+   */
   name: 'TelaLeiloes',
 
+  /**
+   * ------------------------------------------------------------------
+   *  DADOS REATIVOS (data)
+   * ------------------------------------------------------------------
+   */
   data() {
     return {
+      /**
+       * Os leiloes vindos da API.
+       */
       leiloes: [],
+
+      /**
+       * Texto do campo de busca (filtro client side do v-data-table).
+       */
       search: '',
+
+      /**
+       * Controla a barra de progresso da tabela.
+       */
       carregando: false
     };
   },
 
+  /**
+   * ------------------------------------------------------------------
+   *  VALORES CALCULADOS (computed)
+   * ------------------------------------------------------------------
+   *
+   *  Um computed e recalculado pelo Vue SO quando suas dependencias
+   *  mudam - e o resultado fica em cache ate la. Por isso ele e melhor
+   *  que um metodo para valores usados no template.
+   */
   computed: {
     /**
      * Colunas da tabela: exatamente os campos pedidos no exercicio 7.
+     *
+     * "codigo"         : o numero do leilao (ex.: "#12");
+     * "descricao"      : a descricao do leilao;
+     * "razaoSocial"    : o nome do vendedor (vem junto no DTO de resumo);
+     * "inicioPrevisto" : a data prevista de inicio;
+     * "total"          : a soma dos lotes (vem calculada do banco).
      */
     headers() {
       return [
@@ -165,6 +237,16 @@ export default {
 
     /**
      * Soma de todos os totais (para o card de resumo).
+     *
+     * O "reduce" percorre a lista somando os valores, comecando em 0
+     * (o segundo parametro). O "Number(leilao.total) || 0" protege
+     * contra valores nulos ou invalidos - que entrariam na soma como
+     * NaN e corromperiam o resultado inteiro.
+     *
+     * Repare que o resultado NAO e guardado em "data": ele e DERIVADO
+     * da lista. Se guardassemos, teriamos dois valores que precisam
+     * ficar em sincronia - e o dia em que isso falha, o usuario ve um
+     * total errado na tela.
      */
     valorTotalGeral() {
       return this.leiloes.reduce(
@@ -175,6 +257,13 @@ export default {
 
     /**
      * O proximo leilao a comecar (o de inicio previsto mais proximo).
+     *
+     * Passos:
+     *  1) se a lista esta vazia, nao ha proximo leilao (devolve null);
+     *  2) filtra os leiloes que TEM data de inicio (os demais nao
+     *     podem ser comparados por data);
+     *  3) ordena por data;
+     *  4) devolve o primeiro.
      */
     proximoLeilao() {
       if (this.leiloes.length === 0) {
@@ -189,13 +278,28 @@ export default {
     }
   },
 
+  /**
+   * ------------------------------------------------------------------
+   *  CICLO DE VIDA: mounted
+   * ------------------------------------------------------------------
+   *
+   *  Carrega a lista quando a tela entra no ar.
+   */
   mounted() {
     this.carregar();
   },
 
+  /**
+   * ------------------------------------------------------------------
+   *  METODOS (methods)
+   * ------------------------------------------------------------------
+   */
   methods: {
     /**
-     * Carrega os leiloes.
+     * Carrega (ou recarrega) os leiloes.
+     *
+     * O padrao "try / catch / finally" garante que o indicador de
+     * carregamento seja desligado mesmo em caso de erro.
      */
     async carregar() {
       this.carregando = true;
@@ -211,12 +315,24 @@ export default {
     /**
      * Formata um valor como dinheiro brasileiro.
      * Ex.: 80000 -> "R$ 80.000,00"
+     *
+     * Usamos a API nativa "Intl.NumberFormat", que ja conhece o
+     * padrao brasileiro (ponto como separador de milhar, virgula como
+     * separador decimal, prefixo "R$"). Escrever essa formatacao na
+     * mao seria trabalho inutil - e cheio de caso especial.
+     *
+     * @param {number|string} valor valor a formatar
+     * @returns {string} o valor no padrao brasileiro
      */
     formatarDinheiro(valor) {
       const numero = Number(valor);
+
+      // "isFinite" devolve false para NaN, Infinity e valores nao
+      // numericos. Nesse caso, mostramos zero em vez de "R$ NaN".
       if (!isFinite(numero)) {
         return 'R$ 0,00';
       }
+
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL'
@@ -225,6 +341,12 @@ export default {
 
     /**
      * Formata a data no padrao brasileiro.
+     *
+     * O "toLocaleString('pt-BR')" usa o padrao de data e hora do
+     * navegador do usuario.
+     *
+     * @param {string} valor data em formato ISO
+     * @returns {string} a data formatada, ou "-" se nao houver data
      */
     formatarData(valor) {
       if (!valor) {
