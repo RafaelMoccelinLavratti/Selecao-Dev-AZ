@@ -28,27 +28,23 @@
   <v-app>
     <!-- ============ BARRA SUPERIOR ============ -->
     <!--
-      A barra usa a cor de marca da AZ (#14b3cc) no papel "primary" do
-      Vuetify. O logo ao lado e o arquivo oficial da empresa
-      (src/assets/brand/logo-az.svg), extraido do site institucional.
+      A barra usa a cor de estrutura da AZ (#002436, azul-marinho) - a
+      mesma da navbar do site institucional. O logo ao lado e o arquivo
+      oficial da empresa (src/assets/brand/logo-az.svg), extraido do site.
 
-      DETALHE IMPORTANTE SOBRE A COR DO LOGO:
-      O logo oficial e ciano (#14b3cc) - a MESMA cor da barra. Um logo
-      ciano sobre uma barra ciano ficaria invisivel. Por isso aplicamos
-      um filtro CSS que converte o logo em branco ("brightness(0)" deixa
-      tudo preto, "invert(1)" inverte preto para branco). O arquivo
-      original NAO e alterado: e o navegador que faz a conversao, e o
-      logo continua com a cor oficial em qualquer outro uso.
+      DETALHE SOBRE O LOGO:
+      O arquivo oficial ja e BRANCO - o site o usa exatamente assim, sobre
+      a navbar escura. Aqui a barra tambem e escura, entao o logo aparece
+      na cor certa sem nenhum filtro. O arquivo original nao e alterado.
     -->
-    <v-app-bar app color="primary" dark elevation="2">
-      <v-img
+    <v-app-bar app color="secondary" dark elevation="2">
+      <img
         class="logo-az"
-        src="@/assets/brand/logo-az.svg"
+        :src="logoAz"
         alt="AZ Tecnologia em Gestao"
-        contain
-      ></v-img>
+      >
 
-      <v-toolbar-title class="font-weight-bold">
+      <v-toolbar-title class="titulo-barra">
         Sistema de Leiloes
         <span class="d-none d-sm-inline az-subtitulo">
           &nbsp;|&nbsp; AZ Tecnologia
@@ -128,6 +124,18 @@
 import AppMenu from './components/AppMenu.vue';
 import AppNotificacoes from './components/AppNotificacoes.vue';
 
+/**
+ * O logo oficial da AZ Tecnologia em Gestao.
+ *
+ * Por que o import e' necessario, e nao apenas "src=@/assets/...":
+ * o webpack so resolve o alias "@" dentro de um atributo `src` de um
+ * <img> nativo. No <v-img> do Vuetify, o atributo vira uma propriedade
+ * de componente, e o webpack nao a reescreve - o navegador acabaria
+ * pedindo "/@/assets/brand/logo-az.svg" e levaria 404. Importando o
+ * arquivo, o proprio webpack resolve o caminho e gera a URL correta.
+ */
+import logoAz from '@/assets/brand/logo-az.svg';
+
 export default {
   /**
    * Nome do componente raiz.
@@ -151,12 +159,15 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
-   *  DADOS REATIVOS (data)
-   * ------------------------------------------------------------------
+   * Dados expostos ao template.
    */
   data() {
     return {
+      /**
+       * URL do logo (gerada pelo webpack a partir do import acima).
+       */
+      logoAz,
+
       /**
        * Controla se o menu lateral esta aberto ou fechado.
        *
@@ -238,10 +249,10 @@ export default {
  *  (src/assets/brand/tokens.css), extraidos do tema institucional da
  *  AZ Tecnologia em Gestao. Aqui so aplicamos esses tokens.
  *
- *  A fonte institucional e a **Poppins**, carregada no public/index.html.
- *  Antes, a aplicacao usava Roboto - que e a fonte padrao do Material
- *  Design, nao a da empresa. A troca e o que faz a interface parecer
- *  com a marca de verdade.
+ *  A instituicao usa DUAS fontes: **Barlow** no corpo do texto e
+ *  **Tomorrow** nos titulos. As duas entram pelo Google Fonts em
+ *  public/index.html. Antes a aplicacao usava Roboto - que e a fonte
+ *  padrao do Material Design, nao a da empresa.
  */
 
 /**
@@ -250,8 +261,22 @@ export default {
  * sobrescrever aqui os componentes herdariam a do framework.
  */
 html {
-  font-family: var(--az-font-family);
+  font-family: var(--az-fonte-corpo);
   overflow-y: auto;
+}
+
+/**
+ * Os titulos usam a fonte de display da marca (Tomorrow), como no site
+ * institucional, onde todo h1 ate h5 e' composto nela.
+ */
+h1,
+h2,
+h3,
+h4,
+h5,
+.titulo-barra {
+  font-family: var(--az-fonte-titulo);
+  letter-spacing: 0.01em;
 }
 
 /**
@@ -259,47 +284,47 @@ html {
  * (brancas) se destacarem sem brigar com a cor de marca.
  */
 .v-application {
-  background-color: var(--az-neutral-50) !important;
+  background-color: var(--az-cinza-50) !important;
 }
 
 /**
  * O logo na barra superior.
  *
- * O arquivo oficial e ciano (#14b3cc), a mesma cor da barra. Este filtro
- * ("brightness(0) invert(1)") converte qualquer cor em branco, sem
- * alterar o arquivo original - o logo continua com a cor oficial em
- * qualquer outro lugar onde for usado.
+ * O arquivo oficial ja e branco (o site institucional o usa sobre a
+ * navbar azul-marinho, igual a esta barra), entao nao e preciso nenhum
+ * filtro nem arquivo alternativo.
  */
 .logo-az {
-  filter: brightness(0) invert(1);
-  height: 30px;
-  width: 94px;
+  height: 26px;
+  width: 112px;
   margin-right: 12px;
 }
 
 /**
  * O separador " | AZ Tecnologia" ao lado do titulo.
  *
- * Fica em branco com 80% de opacidade: presença discreta, sem competir
+ * Fica em branco com 80% de opacidade: presenca discreta, sem competir
  * com o nome do sistema.
  */
 .az-subtitulo {
   opacity: 0.8;
   font-weight: 400;
+  font-family: var(--az-fonte-corpo);
 }
 
 /**
  * Estilo do titulo de cada tela (h1 das views).
  *
- * Usa o navy de estrutura da marca (#153c5c) em vez do ciano. E uma
- * escolha de acessibilidade: o ciano sobre fundo claro tem contraste
- * de cerca de 2.4:1, abaixo do minimo de 4.5:1 exigido pela WCAG AA
- * para texto normal. O navy passa com folga.
+ * Usa o azul-marinho de estrutura da marca (#002436) em vez do laranja.
+ * E uma escolha de acessibilidade: o laranja sobre fundo claro tem
+ * contraste de cerca de 3,7:1, que atende o minimo de 3:1 da WCAG AA
+ * para texto grande mas nao o de 4,5:1 para texto normal. O azul-marinho
+ * passa com folga (16:1).
  */
 .titulo-tela {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--az-navy-700);
+  color: var(--az-azul-900);
   margin-bottom: 4px;
 }
 
@@ -308,7 +333,7 @@ html {
  */
 .subtitulo-tela {
   font-size: 0.9rem;
-  color: var(--az-neutral-700);
+  color: var(--az-cinza-600);
   margin-bottom: 16px;
 }
 </style>
