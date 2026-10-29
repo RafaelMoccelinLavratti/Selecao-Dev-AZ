@@ -1,0 +1,257 @@
+package br.com.selecao.locadora.entity;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import java.time.LocalDateTime;
+
+/**
+ * ============================================================================
+ *  ENTIDADE: REGISTRO DA TRILHA DE AUDITORIA
+ * ============================================================================
+ *
+ *  ------------------------------------------------------
+ *  O QUE TORNAR ESTA TABELA DIFERENTE DAS OUTRAS
+ *  ------------------------------------------------------
+ *  Uma trilha de auditoria comum e apenas um LOG. O usuario com acesso ao
+ *  banco pode apagar a prova - e, num incidente, e exatamente ele quem
+ *  costuma ter acesso. Uma trilha que pode ser apagada por quem deveria
+ *  ser auditado nao serve para nada.
+ *
+ *  Esta trilha e A PROVA DE ADULTERACAO (do ingles, "tamper-evident").
+ *  Cada registro guarda o hash do registro ANTERIOR, e os hashes formam
+ *  uma CORRENTE:
+ *
+ *      registro 1  hash = HMAC(chave, sequencia_1 + conteudo_1)
+ *      registro 2  hash = HMAC(chave, sequencia_2 + hash_1 + conteudo_2)
+ *      registro 3  hash = HMAC(chave, sequencia_3 + hash_2 + conteudo_3)
+ *
+ *  Se alguem alterar ou apagar um registro no MEIO da cadeia, o hash
+ *  daquele registro deixa de bater com o seu conteudo, e todos os hashes
+ *  seguintes deixam de bater tambem. A verificacao acusa, com precisao,
+ *  EM QUE PONTO a cadeia foi rompida.
+ *
+ *  ------------------------------------------------------
+ *  POR QUE HMAC E NAO "SHA-256 SIMPLES"?
+ *  ------------------------------------------------------
+ *  Um SHA-256 simples do conteudo seria facil de forjar: o atacante com
+ *  acesso ao banco recalcula o hash do registro alterado e grava o
+ *  resultado. O hash nao protege nada, porque a chave e a mesma para
+ *  todos - basta ter o algoritmo.
+ *
+ *  Com HMAC (Hash-based Message Authentication Code), a verificacao
+ *  depende de uma chave SECRETA que fica FORA do banco (variavel de
+ *  ambiente). Quem tem acesso ao banco, mas nao a chave, nao consegue
+ *  recalcular um hash valido: precisaria de uma chave de no minimo 256
+ *  bits. E, como o HMAC e um PRF (pseudo-random function), o ataque de
+ *  tabela pre-calculada (rainbow table) tambem nao se aplica.
+ *
+ *  ------------------------------------------------------
+ *  POR QUE A "SEQUENCIA" E SEPARADA DO "ID"?
+ *  ------------------------------------------------------
+ *  Porque o ID (BIGSERIAL) pode ser reatribuido: se alguem apagar o
+ *  registro 5, o proximo INSERT recebe o id 6 e a cadeia de hashes
+ *  continuaria parecendo integra - o ataque ficaria invisivel.
+ *
+ *  A SEQUENCIA e um numero que NUNCA se repete e nunca anda para tras.
+ *  Se o registro 5 some, a verificacao ve que a sequencia saltou de 4
+ *  para 6, e acusa a remocao. Os dois mecanismos (hash e sequencia) se
+ *  complementam: o hash detecta ALTERACAO, a sequencia detecta REMOCAO.
+ * ============================================================================
+ */
+@Entity
+@Table(name = "tb_auditoria")
+public class Auditoria {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+
+    /**
+     * Numero monotonico e inquebravel da trilha.
+     *
+     * E o que permite detectar a REMOCAO de um registro: os ids podem
+     * ser reatribuidos, mas a sequencia nunca retrocede.
+     */
+    @Column(name = "sequencia", nullable = false)
+    private Long sequencia;
+
+    /**
+     * Instante do evento.
+     */
+    @Column(name = "data_evento", nullable = false)
+    private LocalDateTime dataEvento;
+
+    /**
+     * Quem executou a operacao (null ou "anonimo" quando nao ha login).
+     */
+    @Column(name = "usuario", length = 100)
+    private String usuario;
+
+    /**
+     * Endereco IP de origem.
+     */
+    @Column(name = "ip_origem", length = 45)
+    private String ipOrigem;
+
+    /**
+     * Metodo HTTP (POST, PUT, PATCH, DELETE).
+     */
+    @Column(name = "metodo_http", length = 10)
+    private String metodoHttp;
+
+    /**
+     * Caminho da URL chamada.
+     */
+    @Column(name = "caminho", length = 500)
+    private String caminho;
+
+    /**
+     * Codigo de status da resposta (201, 204, 409...).
+     */
+    @Column(name = "status_http")
+    private Integer statusHttp;
+
+    /**
+     * Duracao da operacao, em milissegundos.
+     */
+    @Column(name = "duracao_ms")
+    private Long duracaoMs;
+
+    /**
+     * Acao registrada ("CRIAR", "ALTERAR", "EXCLUIR"...).
+     */
+    @Column(name = "acao", length = 100)
+    private String acao;
+
+    /**
+     * Detalhe textual da operacao.
+     *
+     * ATENCAO: NUNCA guarda o corpo da requisicao. O cadastro de empresa
+     * recebe a senha no corpo - registrar o corpo colocaria a senha em
+     * texto puro na trilha de auditoria.
+     */
+    @Column(name = "detalhe", columnDefinition = "TEXT")
+    private String detalhe;
+
+    /**
+     * Hash do registro ANTERIOR da cadeia (null no primeiro registro).
+     */
+    @Column(name = "hash_anterior", length = 64)
+    private String hashAnterior;
+
+    /**
+     * Hash deste registro - o elo seguinte da corrente.
+     */
+    @Column(name = "hash_atual", nullable = false, length = 64)
+    private String hashAtual;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getSequencia() {
+        return sequencia;
+    }
+
+    public void setSequencia(Long sequencia) {
+        this.sequencia = sequencia;
+    }
+
+    public LocalDateTime getDataEvento() {
+        return dataEvento;
+    }
+
+    public void setDataEvento(LocalDateTime dataEvento) {
+        this.dataEvento = dataEvento;
+    }
+
+    public String getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(String usuario) {
+        this.usuario = usuario;
+    }
+
+    public String getIpOrigem() {
+        return ipOrigem;
+    }
+
+    public void setIpOrigem(String ipOrigem) {
+        this.ipOrigem = ipOrigem;
+    }
+
+    public String getMetodoHttp() {
+        return metodoHttp;
+    }
+
+    public void setMetodoHttp(String metodoHttp) {
+        this.metodoHttp = metodoHttp;
+    }
+
+    public String getCaminho() {
+        return caminho;
+    }
+
+    public void setCaminho(String caminho) {
+        this.caminho = caminho;
+    }
+
+    public Integer getStatusHttp() {
+        return statusHttp;
+    }
+
+    public void setStatusHttp(Integer statusHttp) {
+        this.statusHttp = statusHttp;
+    }
+
+    public Long getDuracaoMs() {
+        return duracaoMs;
+    }
+
+    public void setDuracaoMs(Long duracaoMs) {
+        this.duracaoMs = duracaoMs;
+    }
+
+    public String getAcao() {
+        return acao;
+    }
+
+    public void setAcao(String acao) {
+        this.acao = acao;
+    }
+
+    public String getDetalhe() {
+        return detalhe;
+    }
+
+    public void setDetalhe(String detalhe) {
+        this.detalhe = detalhe;
+    }
+
+    public String getHashAnterior() {
+        return hashAnterior;
+    }
+
+    public void setHashAnterior(String hashAnterior) {
+        this.hashAnterior = hashAnterior;
+    }
+
+    public String getHashAtual() {
+        return hashAtual;
+    }
+
+    public void setHashAtual(String hashAtual) {
+        this.hashAtual = hashAtual;
+    }
+}

@@ -1,7 +1,9 @@
 package br.com.selecao.locadora.config;
 
+import br.com.selecao.locadora.business.AuditoriaBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -93,6 +95,13 @@ public class AuditTrailFilter extends OncePerRequestFilter {
     private static final String[] METODOS_DE_MUTACAO = {"POST", "PUT", "PATCH", "DELETE"};
 
     /**
+     * Camada de negocio que grava a trilha em forma A PROVA DE
+     * ADULTERACAO (cadeia de hashes com HMAC).
+     */
+    @Autowired
+    private AuditoriaBO auditoriaBO;
+
+    /**
      * Executa a trilha de auditoria em torno da requisicao.
      *
      * @param request  requisicao HTTP
@@ -137,6 +146,63 @@ public class AuditTrailFilter extends OncePerRequestFilter {
             LOG.info("AUDITORIA | MUTACAO | metodo={} caminho={} usuario={} ip={} status={} duracao_ms={}",
                     request.getMethod(), request.getRequestURI(), usuario, ip, status, duracao);
         }
+
+        // Grava na trilha selada por hash. O registro acontece em uma
+        // TRANSACAO SEPARADA (REQUIRES_NEW) da operacao de negocio: se a
+        // gravacao falhar, a operacao do usuario NAO e perdida. E uma
+        // falha na trilha tambem nao derruba a requisicao - o AuditoriaBO
+        // trata a excecao internamente e registra no log.
+        auditoriaBO.registrar(
+                usuario,
+                ip,
+                request.getMethod(),
+                request.getRequestURI(),
+                status,
+                duracao,
+                descreverAcao(request),
+                null);
+    }
+
+    /**
+     * Descreve a acao a partir do metodo HTTP e do caminho.
+     *
+     * A descricao e o que o auditor le: "CRIAR EMPRESA" e muito mais
+     * util do que "POST /empresas". A API e' porem a fonte da verdade,
+     * entao o caminho completo tambem e gravado (campo "caminho").
+     *
+     * @param request requisicao HTTP
+     * @return a descricao da acao
+     */
+    private String descreverAcao(HttpServletRequest request) {
+
+        String metodo = request.getMethod() == null ? "" : request.getMethod().toUpperCase();
+        String caminho = request.getRequestURI() == null ? "" : request.getRequestURI();
+
+        // Pega o ultimo segmento do caminho (a colecao, ex.: "empresas").
+        String recurso = caminho;
+        int ultimaBarra = caminho.lastIndexOf('/');
+        if (ultimaBarra >= 0 && ultimaBarra < caminho.length() - 1) {
+            recurso = caminho.substring(ultimaBarra + 1);
+        }
+
+        String verbo;
+
+        switch (metodo) {
+            case "POST":
+                verbo = "CRIAR";
+                break;
+            case "PUT":
+            case "PATCH":
+                verbo = "ALTERAR";
+                break;
+            case "DELETE":
+                verbo = "EXCLUIR";
+                break;
+            default:
+                verbo = metodo;
+        }
+
+        return verbo + " " + recurso.toUpperCase();
     }
 
     /**
