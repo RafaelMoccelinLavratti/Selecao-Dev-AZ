@@ -62,7 +62,9 @@ import java.util.Collections;
  *  Se o filtro devolvesse 401 ali, teriamos dois lugaresrespondevendo
  *  401 (o filtro e o entry point), com o risco de a resposta ser
  *  escrita duas vezes - exatamente o bug que o projeto ja enfrentou
- *  com o HTTP Basic (ver ENTREVISTA.md, problema 38).
+ *  com o HTTP Basic, em que o handler de falha e o entry point
+ *  escreviam a resposta e o status do segundo sobrescrevia o do
+ *  primeiro (401 no lugar do 429 de "muitas tentativas").
  *
  *  A UNICA excecao e o token malformado no cabecalho: nesse caso o
  *  cliente claramente QUERIA se autenticar e errou o formato. O filtro

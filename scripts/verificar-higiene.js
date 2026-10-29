@@ -78,6 +78,17 @@ const PALAVRAS_PERMITIDAS = [
   'leilaoId', 'mappedBy', 'nomeDaColuna', 'numeroLote', 'razaoSocial',
   'realmName', 'registrosAtivos', 'removeIf', 'securityFilterChain',
   'tipoDaAcao', 'valorInicial', 'authenticationEntryPoint', 'valueOf', 'findById', 'onlyExplicitlyIncluded', 'existsBy',
+
+  // ---- Autenticacao JWT e trilha de auditoria ----
+  // Nomes de campos do JSON de resposta, nome de parametro do construtor
+  // do codificador e a chave do MDC. Sao contrato da API e nomes de
+  // codigo - nao prosa.
+  'tokenAcesso', 'tokenRenovacao', 'tipoToken', 'expiraEmSegundos',
+  'saltLength', 'hashLength', 'correlationId',
+
+  // ---- Formularios do GitHub ----
+  // "id" dos campos de um formulario de issue ou pull request.
+  'comoTestar',
 ];
 
 function listarArquivos(dir, resultado = []) {

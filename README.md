@@ -41,10 +41,6 @@ exigida pelo enunciado e cobrindo **todos os 8 exercícios**.
 | Frontend | Vue CLI / webpack | 5.0 / 5.x |
 | Frontend | Tipografia | Poppins (a oficial da AZ) |
 
-> Um resumo de **cada tecnologia, em linguagem simples**, está em
-> [`GUIA-APRESENTACAO.md`](GUIA-APRESENTACAO.md) — é o documento para levar
-> na entrevista.
->
 > A **identidade visual** (paleta, fonte e logo, extraídos do site
 > institucional da empresa) está registrada em
 > [`IDENTIDADE-VISUAL.md`](IDENTIDADE-VISUAL.md).
@@ -412,7 +408,8 @@ Esta foi uma das decisões de projeto mais cuidadas. O que foi feito:
 | **CI com testes e lint** | Nada entra na branch principal sem passar por build, testes, lint e SBOM. |
 
 > O detalhamento completo — mecanismo, limite e o que **não** é protegido —
-> está em [`SEGURANCA.md`](SEGURANCA.md).
+> está na seção 7 deste README e nas anotações do próprio código, no ponto
+> onde cada decisão acontece.
 
 ### 7.5 O que **não** há no repositório
 
@@ -520,9 +517,7 @@ Exemplo de conferência do total do leilão 1001:
   explicando *por quê* e não apenas *o quê*.
 - As decisões não óbvias estão documentadas **no ponto onde elas ocorrem**
   (nos arquivos `.java` e `.vue`) — não só aqui.
-- O guia de apresentação com o resumo de cada tecnologia e as respostas
-  preparadas para as perguntas mais prováveis da entrevista está em
-  [`GUIA-APRESENTACAO.md`](GUIA-APRESENTACAO.md).
+- Nenhuma senha, chave ou token real está versionado no Git.
 
 ---
 
@@ -531,13 +526,10 @@ Exemplo de conferência do total do leilão 1001:
 | Documento | Para quê |
 |---|---|
 | [`README.md`](README.md) | **Este arquivo.** Visão geral, arquitetura, modelo de dados, API e decisões. |
-| [`SEGURANCA.md`](SEGURANCA.md) | Mapa de segurança contra a **OWASP Top 10**, o que está protegido, **o que não está**, e como verificar cada proteção. |
 | [`IDENTIDADE-VISUAL.md`](IDENTIDADE-VISUAL.md) | A paleta, a tipografia e o logo **extraídos do site institucional da empresa** — com a procedência de cada valor e a checagem de contraste contra a WCAG. |
-| [`TECNOLOGIAS.md`](TECNOLOGIAS.md) | Cada tecnologia: o que é, por que foi escolhida, o que resolve, e a alternativa descartada. |
 | [`MANUAL-OPERACAO.md`](MANUAL-OPERACAO.md) | Como rodar do zero, testar, gerar hashes, aplicar permissões, demonstrar e diagnosticar. |
-| [`ENTREVISTA.md`](ENTREVISTA.md) | Banco de perguntas com respostas modeladas, e o roteiro de demonstração. |
-| [`GUIA-APRESENTACAO.md`](GUIA-APRESENTACAO.md) | Resumo executivo para a apresentação. |
 | [`.github/SECURITY.md`](.github/SECURITY.md) | Política de segurança: como reportar uma vulnerabilidade pelo canal privado. |
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | O pipeline: build, testes, lint e SBOM a cada push. |
 
 **Ferramentas de apoio** que acompanham o projeto:
 
