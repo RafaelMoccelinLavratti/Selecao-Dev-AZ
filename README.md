@@ -32,16 +32,22 @@ exigida pelo enunciado e cobrindo **todos os 8 exercícios**.
 | Backend | Java | 11 |
 | Backend | Spring Data JPA / Hibernate | 5.6.9 |
 | Backend | Bean Validation (Jakarta) | 2.0 |
-| Backend | Spring Security (BCrypt + HTTP Basic opcional) | 5.7 |
+| Backend | Spring Security (Argon2id + HTTP Basic/JWT) | 5.7 |
+| Backend | JJWT (tokens RS256) + BouncyCastle (Argon2id) | 0.12.6 / 1.78.1 |
 | Frontend | Vue | 2.7.16 |
 | Frontend | Vue Router | 3.6 |
 | Frontend | Vuetify | 2.7 |
 | Frontend | Axios | 1.6 |
 | Frontend | Vue CLI / webpack | 5.0 / 5.x |
+| Frontend | Tipografia | Poppins (a oficial da AZ) |
 
 > Um resumo de **cada tecnologia, em linguagem simples**, está em
 > [`GUIA-APRESENTACAO.md`](GUIA-APRESENTACAO.md) — é o documento para levar
 > na entrevista.
+>
+> A **identidade visual** (paleta, fonte e logo, extraídos do site
+> institucional da empresa) está registrada em
+> [`IDENTIDADE-VISUAL.md`](IDENTIDADE-VISUAL.md).
 
 ---
 
@@ -298,6 +304,12 @@ Todas as respostas de erro seguem o **mesmo formato**:
 | GET | `/compradores/{empresaId}/{leilaoId}` | Busca o vínculo |
 | GET | `/compradores?empresa=X&leilao=Y` | Busca o vínculo (outra forma) |
 | POST/PUT/DELETE | `/compradores`, `/compradores/{empresaId}/{leilaoId}` | CRUD |
+| POST | `/auth/login` | Autentica e devolve o par de tokens (JWT) |
+| POST | `/auth/refresh` | Renova o token de acesso |
+| POST | `/auth/logout` | Revoga a sessão (204) |
+| GET | `/auth/me` | Quem está autenticado |
+| GET | `/auditoria` | Registros da trilha de auditoria |
+| GET | `/auditoria/verificar` | Verifica a integridade da cadeia |
 | GET | `/actuator/health` | Health check da aplicação |
 
 > **Por que singular e plural?** O enunciado é inconsistente: no exercício 3
@@ -305,6 +317,9 @@ Todas as respostas de erro seguem o **mesmo formato**:
 > exercícios 5–7 as URLs são no plural (`/unidades`, `/empresas`, `/leiloes`).
 > Em vez de escolher e torcer, a API responde às duas formas — são o mesmo
 > código, apenas dois "apelidos".
+>
+> Os endpoints `/auth/*` também respondem sob o prefixo `/autenticacao/*`
+> (mesma estratégia dos "apelidos" singular/plural).
 
 ---
 
@@ -315,19 +330,30 @@ Esta foi uma das decisões de projeto mais cuidadas. O que foi feito:
 ### 7.1 Autenticação e senha
 
 - **Senha nunca é gravada em texto puro.** A coluna `senha` guarda apenas o
-  **hash BCrypt** (custo 10).
-  - *Por que BCrypt e não SHA-256?* Porque o BCrypt sorteia um **salt** (uma
-    serragem aleatória) — duas empresas com a mesma senha ficam com hashes
-    **diferentes**, o que impede montar um dicionário de senhas comuns. E ele
-    é **lento de propósito**: um ataque de força bruta testaria milhões de
-    senhas por segundo contra um SHA-256, mas pouquíssimas contra um BCrypt.
-  - O *salt* fica embutido no próprio hash, então não precisa de coluna extra.
+  **hash Argon2id** (64 MiB de memória, 2 iterações, salt de 16 bytes), com o
+  prefixo `{argon2}` que identifica o algoritmo.
+  - *Por que Argon2id e não BCrypt?* A OWASP passou a recomendá-lo como
+    primeira opção no *Password Storage Cheat Sheet* de 2023: o Argon2id usa
+    **memória** como recurso principal, e cada tentativa de ataque consome
+    dezenas de megabytes — o que trava o ataque paralelo em GPU, contra o
+    qual o BCrypt (que usa pouca memória) só se defende parcialmente.
+  - **E a migração não quebrou ninguém.** O `CodificadorDeSenhaDelegado`
+    reconhece o formato do hash já gravado: os hashes antigos em BCrypt
+    continuam valendo e são **reescritos sozinhos no primeiro login**. A base
+    migra no ritmo do uso — sem script em lote e sem janela de manutenção.
 - **A senha nunca sai da API.** O DTO de resposta (`EmpresaResponse`) não tem
   campo de senha — nem em texto puro, nem o hash.
 - **Autenticação por configuração, não por código.** No perfil padrão
   (desenvolvimento/avaliação) os endpoints ficam abertos, exatamente como o
   enunciado pede. Ativando `SECURITY_ENABLED=true` (perfil `prod`), **toda**
-  rota exige HTTP Basic. Mesmo código, sem `if` espalhado pelo projeto.
+  rota exige credencial. Mesmo código, sem `if` espalhado pelo projeto.
+- **Dois mecanismos pelo mesmo código.** `SECURITY_MODE=basic` (HTTP Basic)
+  ou `SECURITY_MODE=jwt` (token JWT). Os dois produzem o **mesmo objeto de
+  autenticação** no contexto de segurança, então as regras de acesso são
+  idênticas — trocar de modo é mudar **uma propriedade**.
+- **JWT assimétrico (RS256)** com rotação de chaves pelo cabeçalho `kid`, e
+  **rotação do token de renovação com detecção de reuso**: um token usado de
+  novo revoga a família inteira.
 - **Falha rápida.** No perfil `prod`, as credenciais do banco **não têm valor
   padrão**: se faltarem, a aplicação não sobe — em vez de subir com uma senha
   fraca em produção.
@@ -371,13 +397,22 @@ Esta foi uma das decisões de projeto mais cuidadas. O que foi feito:
 | Mecanismo | Efeito |
 |-----------|--------|
 | **CORS com lista explícita** | Só `http://localhost:8080` (ou o domínio real, via `CORS_ORIGINS`) pode chamar a API. Uma origem não autorizada recebe **403**. Nunca `*` combinado com credenciais — que permitiria CSRF cross-origin. |
-| **Cabeçalhos de segurança** | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` (anti-clickjacking), `Referrer-Policy: no-referrer`, `Cache-Control: no-store`, `X-Powered-By` removido. |
+| **Cabeçalhos de segurança** | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` (anti-clickjacking), `Referrer-Policy: no-referrer`, `Cache-Control: no-store`, `X-Powered-By` removido, **`Content-Security-Policy: default-src 'none'`**, **`Permissions-Policy`**, **`Cross-Origin-Opener-Policy`**, **`Cross-Origin-Resource-Policy`**, **`Cross-Origin-Embedder-Policy`**. |
 | **Sem vazamento de stack trace** | `server.error.include-stacktrace=never`. Erros 500 devolvem mensagem genérica; o detalhe real fica **só no log do servidor**. |
 | **CSRF desabilitado — com justificativa** | A API é *stateless* e não usa cookie de sessão (a autenticação é por cabeçalho). Sem cookie automático, o CSRF não se aplica — é a recomendação da própria documentação do Spring Security para esse cenário. |
 | **Sessão stateless** | `SessionCreationPolicy.STATELESS`: sem estado no servidor → mais rápido, escala para várias instâncias e reduz a superfície de ataque. |
 | **HSTS** | Força HTTPS nas requisições seguintes. |
 | **Actuator restrito** | Só `health` e `info` são expostos. O padrão do Spring expõe `env`, `beans`, `configprops` — que vazam informação interna. |
+| **Controle anti-força-bruta** | Limite por **usuário** (5 falhas) e por **IP** (20 falhas), janela de 15 min. Resposta `429` com `Retry-After`. |
+| **Rate limiting de volume** | 120 requisições por IP a cada 60 s, em **janela deslizante** — protege o *recurso*, não só a conta. |
+| **Trilha de auditoria à prova de adulteração** | Cada registro é selado por **HMAC-SHA256** e encadeado no anterior. Alteração, forja ou remoção são detectadas, com a sequência exata da ruptura. |
+| **Identificador de correlação** | `X-Correlation-Id` em toda requisição, presente em todas as linhas de log. |
 | **Auditoria** | `created_at`/`updated_at` automáticos em todas as tabelas (base `Auditable`), com log de cada operação de escrita. Base da trilha de auditoria exigida pela LGPD e pela ISO 27001. |
+| **SBOM e varredura de CVEs** | Inventário de dependências gerado a cada build; build falha se houver vulnerabilidade de CVSS ≥ 7. |
+| **CI com testes e lint** | Nada entra na branch principal sem passar por build, testes, lint e SBOM. |
+
+> O detalhamento completo — mecanismo, limite e o que **não** é protegido —
+> está em [`SEGURANCA.md`](SEGURANCA.md).
 
 ### 7.5 O que **não** há no repositório
 
@@ -425,15 +460,23 @@ Todas as mudanças foram feitas **com motivo**, e o motivo está registrado.
 cd leilao-api && mvn test
 ```
 
+**63 testes**, todos passando. Os testes **não dependem de banco de dados**:
+usam dublês do Mockito ou `@WebMvcTest`, então `mvn test` passa em
+qualquer máquina, sem PostgreSQL no ar.
+
 | Classe | O que garante |
 |--------|---------------|
-| `PasswordEncoderTest` | A senha gravada é um hash, não texto puro; a senha correta é reconhecida; a errada é rejeitada; **duas senhas iguais geram hashes diferentes** (prova do *salt*). |
-| `EmpresaBOTest` | CNPJ/CEP/telefone são normalizados; CNPJ e usuário duplicados são recusados com mensagem clara; a senha é gravada como BCrypt; **na alteração sem nova senha, o hash anterior é preservado**; o DTO de resposta não tem campo de senha. |
+| `PasswordEncoderTest` | A senha gravada é um hash, não texto puro; a senha correta é reconhecida; a errada é rejeitada; **duas senhas iguais geram hashes diferentes** (prova do *salt*); e **o hash legado em BCrypt continua funcionando** (a migração não quebrou ninguém). |
+| `EmpresaBOTest` | CNPJ/CEP/telefone são normalizados; CNPJ e usuário duplicados são recusados com mensagem clara; a senha é gravada como **Argon2id**; **na alteração sem nova senha, o hash anterior é preservado**; o DTO de resposta não tem campo de senha. |
 | `UnidadeBOTest` | Nome é normalizado; nome repetido é recusado; id inexistente devolve “não encontrado”; exclusão remove o registro. |
-| `GeradorHashSenhaTest` | Gera os hashes BCrypt da massa de dados **e verifica** que cada hash do `02_dml.sql` confere com a senha correspondente (`Senha@1`…`Senha@12`). |
-
-Os testes **não dependem de banco de dados**: usam dublês do Mockito, então
-`mvn test` passa em qualquer máquina.
+| `GeradorHashSenhaTest` | Gera os hashes da massa de dados **e verifica** que cada hash do `02_dml.sql` confere com a senha correspondente (`Senha@1`…`Senha@12`). |
+| `AuditoriaBOTest` | A cadeia de hashes se forma; a cadeia intacta é verificada como íntegra; e **alterar, forjar ou remover um registro é detectado**, com a sequência exata da ruptura. |
+| `TokenJwtBOTest` | Token adulterado, expirado, de tipo errado ou assinado com outra chave é **recusado**; o `kid` viaja no cabeçalho; o hash do token é estável. |
+| `LimitadorDeRequisicoesFilterTest` | 429 no estouro do limite; `Retry-After` com tempo **real** (nunca zero); **isolamento por IP** (um IP não bloqueia o outro). |
+| `CorrelationIdFilterTest` | ID único por requisição; **não vaza** para a requisição seguinte; valor malicioso do cliente é descartado (log forging). |
+| `SegurancaIntegracaoTest` | A **cadeia de filtros de ponta a ponta**: 401 em JSON, 429, 200 com o dado real do controller, `WWW-Authenticate`, health check não barrado. |
+| `LoginAttemptServiceTest` | Contadores, janela deslizante, bloqueio por usuário e por IP, limpeza no sucesso. |
+| `ClientIpResolverTest` | `X-Forwarded-For` só é confiado quando há proxy confiável. |
 
 ---
 
@@ -462,7 +505,8 @@ A massa de dados tem **12 empresas, 12 unidades, 12 leiloes, 18 lotes e
 | Agroindustrial Boa Vista S.A. | 11.422.377/0003-17 | `admin.boavista` | `Senha@3` |
 | … | … | … | … |
 
-> A senha no banco é o **hash BCrypt** de `Senha@N`. Para conferir:
+> A senha no banco é o **hash** de `Senha@N` (gravado em BCrypt pela massa
+> de dados original e migrado para Argon2id no primeiro login). Para conferir:
 > `mvn test -Dtest=GeradorHashSenhaTest`.
 
 Exemplo de conferência do total do leilão 1001:
@@ -488,15 +532,20 @@ Exemplo de conferência do total do leilão 1001:
 |---|---|
 | [`README.md`](README.md) | **Este arquivo.** Visão geral, arquitetura, modelo de dados, API e decisões. |
 | [`SEGURANCA.md`](SEGURANCA.md) | Mapa de segurança contra a **OWASP Top 10**, o que está protegido, **o que não está**, e como verificar cada proteção. |
+| [`IDENTIDADE-VISUAL.md`](IDENTIDADE-VISUAL.md) | A paleta, a tipografia e o logo **extraídos do site institucional da empresa** — com a procedência de cada valor e a checagem de contraste contra a WCAG. |
 | [`TECNOLOGIAS.md`](TECNOLOGIAS.md) | Cada tecnologia: o que é, por que foi escolhida, o que resolve, e a alternativa descartada. |
 | [`MANUAL-OPERACAO.md`](MANUAL-OPERACAO.md) | Como rodar do zero, testar, gerar hashes, aplicar permissões, demonstrar e diagnosticar. |
-| [`ENTREVISTA.md`](ENTREVISTA.md) | Banco de **44 perguntas** com respostas modeladas, e o roteiro de demonstração. |
+| [`ENTREVISTA.md`](ENTREVISTA.md) | Banco de perguntas com respostas modeladas, e o roteiro de demonstração. |
 | [`GUIA-APRESENTACAO.md`](GUIA-APRESENTACAO.md) | Resumo executivo para a apresentação. |
+| [`.github/SECURITY.md`](.github/SECURITY.md) | Política de segurança: como reportar uma vulnerabilidade pelo canal privado. |
 
-**Três ferramentas de apoio** que acompanham o projeto:
+**Ferramentas de apoio** que acompanham o projeto:
 
 | Ferramenta | Para quê |
 |---|---|
 | `node scripts/verificar-higiene.js` | Procura caracteres de outro alfabeto, palavras em inglês e erros de digitação nos comentários. |
 | `python scripts/enriquecer-javadocs.py` | Ferramenta usada durante o desenvolvimento para padronizar a documentação dos controllers. |
-| `mvn test` | 37 testes, **sem depender de banco de dados**. |
+| `mvn test` | **63 testes**, sem depender de banco de dados. |
+| `mvn package -DskipTests` | Gera o **SBOM** em `target/bom.json` (inventário de dependências). |
+| `mvn -Psecurity-scan verify` | Varredura de CVEs (falha o build em CVSS ≥ 7). Requer `NVD_API_KEY`. |
+| `npm run lint` | Verificação de estilo do frontend. |
