@@ -11,6 +11,11 @@ leilao-app/npm-debug.log*
 leilao-app/yarn-debug.log*
 leilao-app/yarn-error.log*
 
+# Logs gerados pela API (Spring Boot / Logback). Sao arquivos de
+# execucao: nao pertencem ao codigo-fonte e nao devem ser versionados.
+leilao-api/logs/
+*.log
+
 # Editor directories and files
 .idea
 leilao-app/.vscode
