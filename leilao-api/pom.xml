@@ -72,6 +72,13 @@
           resistente a ataque com hardware dedicado).
         -->
         <bouncycastle.version>1.78.1</bouncycastle.version>
+
+        <!--
+          Versao do plugin que gera o SBOM (lista de componentes do
+          software, no padrao CycloneDX). Um SBOM e o que permite responder
+          "o que nos afetou quando saiu aquele CVE?" em minutos.
+        -->
+        <cyclonedx.version>2.8.1</cyclonedx.version>
     </properties>
 
     <dependencies>
@@ -219,5 +226,127 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!--
+              ============================================================================
+               WRAPPER DO MAVEN
+              ============================================================================
+               O "mvnw" (e o "mvnw.cmd" no Windows) e um script que baixa e
+               usa a versao exata do Maven definida aqui. Com ele no
+               repositorio, o avaliador nao precisa instalar Maven: basta
+               rodar "./mvnw test" (ou "mvnw.cmd test" no Windows).
+
+               E o equivalente do que o Node faz com o "npm ci" + o
+               package-lock.json, que ja e versionado no frontend.
+              ============================================================================
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-wrapper-plugin</artifactId>
+                <version>3.3.2</version>
+                <executions>
+                    <execution>
+                        <id>wrap-maven</id>
+                        <goals>
+                            <goal>wrapper</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+              ============================================================================
+               SBOM - SOFTWARE BILL OF MATERIALS
+              ============================================================================
+               Gera "target/bom.json" e "target/bom.xml": a lista de TODOS os
+               componentes (e suas versoes) que entraram no executavel.
+
+               Para que serve: quando a Oracle publica um CVE no Log4j, a
+               pergunta de qualquer empresa e "nos somos afetados?". Com o
+               SBOM versionado, a resposta sai em segundos, e nao em dias.
+
+               A execucao fica ligada a fase "package", e nao ao "compile",
+               para nao atrasar o ciclo de desenvolvimento.
+              ============================================================================
+            -->
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <version>${cyclonedx.version}</version>
+                <executions>
+                    <execution>
+                        <id>gerar-sbom</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>makeAggregateBom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!--
+          ============================================================================
+           PERFIL "security-scan" - VARREDURA DE DEPENDENCIAS VULNERAVEIS
+          ============================================================================
+           Roda o OWASP Dependency-Check, que cruza as dependencias do projeto
+           com a base de CVEs e reporta as que tem vulnerabilidade conhecida.
+
+           POR QUE ESTA NUM PERFIL E NAO NO BUILD PADRAO?
+           Porque o Dependency-Check baixa uma base de dados de vulnerabilidades
+           de centenas de megabytes e a atualiza com a data do CVE. Rodar isso a
+           cada "mvn test" tornaria o build lento e dependente da internet -
+           e o commit do build quebraria no dia em que a base estivesse
+           indisponivel.
+
+           Um perfil resolve os dois problemas: o build do dia a dia fica
+           rapido e offline, e a varredura roda no momento certo - no CI, e
+           sob demanda local com:
+
+               ./mvnw -Psecurity-scan verify
+
+           Requer a chave gratuita da API NVD (variavel de ambiente
+           NVD_API_KEY) para nao ficar limitado a 6 requisicoes por minuto.
+          ============================================================================
+        -->
+        <profile>
+            <id>security-scan</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>9.0.0</version>
+                        <configuration>
+                            <failBuildOnCVSS>7</failBuildOnCVSS>
+                            <formats>
+                                <format>HTML</format>
+                                <format>JSON</format>
+                            </formats>
+                            <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>verificar-dependencias</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
