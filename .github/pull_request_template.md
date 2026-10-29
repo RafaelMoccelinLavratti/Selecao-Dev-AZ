@@ -81,7 +81,7 @@ body:
       options:
         - label: Rodei "mvn test" e "npm run lint" localmente e passaram
           required: true
-        - label: A documentacao foi atualizada (README, SEGURANCA ou TECNOLOGIAS)
+        - label: A documentacao foi atualizada (README, MANUAL-OPERACAO ou IDENTIDADE-VISUAL)
           required: false
         - label: Nenhuma senha, chave ou token real foi versionado
           required: true

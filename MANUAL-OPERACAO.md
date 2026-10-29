@@ -478,5 +478,5 @@ cd leilao-api && mvn spring-boot:run -Dspring-boot.run.profiles=prod
 ---
 
 **Documentos relacionados:** [`README.md`](README.md) ·
-[`SEGURANCA.md`](SEGURANCA.md) · [`TECNOLOGIAS.md`](TECNOLOGIAS.md) ·
-[`ENTREVISTA.md`](ENTREVISTA.md)
+[`IDENTIDADE-VISUAL.md`](IDENTIDADE-VISUAL.md) ·
+[`.github/SECURITY.md`](.github/SECURITY.md)
