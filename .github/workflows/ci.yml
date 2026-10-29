@@ -1,0 +1,132 @@
+name: Build e Testes
+
+# ============================================================================
+#  QUANDO ESTE FLUXO EXECUTA
+# ============================================================================
+#  A cada push e a cada pull request. E o "portao" de qualidade do
+#  projeto: nada entra na branch principal sem passar por aqui.
+# ============================================================================
+on:
+  push:
+    branches: [master, main, "feature/**"]
+  pull_request:
+    branches: [master, main]
+
+# ============================================================================
+#  PERMISSOES
+# ============================================================================
+#  O padrao e "somente leitura". O fluxo so precisa de "leitura" para
+#  clonar o codigo - nenhuma credencial de escrita e necessaria.
+permissions:
+  contents: read
+
+# ============================================================================
+#  CONCURRENCIA
+# ============================================================================
+#  Se um novo push chegar enquanto o fluxo esta rodando, os antigos sao
+#  cancelados. Isso economiza minutos de runner (que e' um recurso
+#  compartilhado e limitado) e evita validar um commit que ja foi
+#  substituido.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ==========================================================================
+  #  TRABALHO 1: A API (Java / Spring Boot)
+  # ==========================================================================
+  api:
+    name: API - build e testes
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # 1) Baixa o codigo.
+      - name: Clona o repositorio
+        uses: actions/checkout@v4
+
+      # 2) Instala o Java 11 (a versao exigida pelo enunciado do projeto).
+      #
+      #    A versao esta FIXADA de proposito: se o CI usasse "latest", uma
+      #    mudanca no JDK poderia quebrar o build sem ninguem ter mexido
+      #    no codigo. Fixar a versao e a mesma disciplina de fixar a versao
+      #    em qualquer ambiente de build.
+      - name: Instala o Java 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+
+      # 3) Compila e roda TODOS os testes.
+      #
+      #    O "-B" (batch mode) desliga as cores e o interativo - o CI nao
+      #    tem terminal. O "-DskipTests=false" e explicito para deixar
+      #    claro que os testes rodam no CI.
+      - name: Compila e roda os testes
+        run: mvn -B -DskipTests=false test
+
+      # 4) Gera o SBOM (lista de dependencias com as versoes).
+      #
+      #    O SBOM e o "inventario" do que esta dentro do artefato. Com ele,
+      #    quando uma vulnerabilidade aparece em uma biblioteca (o caso
+      #    do Log4Shell foi o alerta mais famoso), da para responder em
+      #    segundos "usamos essa versao?".
+      - name: Gera o SBOM (Ciclo de Vida das Dependencias)
+        run: mvn -B package -DskipTests
+        env:
+          # O SBOM e gravado em target/bom.json
+          CYCLONEDX: 'true'
+
+      - name: Guarda o SBOM como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-leilao-api
+          path: leilao-api/target/bom.json
+          if-no-files-found: error
+
+  # ==========================================================================
+  #  TRABALHO 2: O FRONTEND (Vue)
+  # ==========================================================================
+  frontend:
+    name: Frontend - lint e build
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Clona o repositorio
+        uses: actions/checkout@v4
+
+      # 3) Instala o Node. A versao 20 e o "current LTS" do Node.
+      - name: Instala o Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: leilao-app/package-lock.json
+
+      # 4) Instala as dependencias.
+      #    O "npm ci" (e nao "npm install") e o comando CORRETO no CI: ele
+      #    instala exatamente o que esta no package-lock.json e falha se o
+      #    lock estiver fora de sincronia com o package.json. O "npm
+      #    install" pode resolver versoes diferentes em maquinas
+      #    diferentes - o que tornaria o build NAO reproduzivel.
+      - name: Instala as dependencias
+        working-directory: leilao-app
+        run: npm ci
+
+      # 5) Roda o linter.
+      #
+      #    O linter e o "revisor" de estilo e de erros comuns. Rodar no CI
+      #    evita que um erro de digitacao chegue a branch principal.
+      - name: Roda o linter
+        working-directory: leilao-app
+        run: npm run lint
+
+      # 6) Gera o build de producao.
+      #    E este passo que prova que o codigo COMPILA - um erro de sintaxe
+      #    ou um import quebrado aparece aqui, nao em producao.
+      - name: Gera o build de producao
+        working-directory: leilao-app
+        run: npm run build
