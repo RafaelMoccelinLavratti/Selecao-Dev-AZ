@@ -185,13 +185,14 @@ class EmpresaBOTest {
      *
      * As tres verificacoes juntas cobrem o ciclo completo:
      *   1) o valor gravado NAO e a senha digitada;
-     *   2) o valor gravado TEM o formato de um hash BCrypt;
+     *   2) o valor gravado TEM o formato de um hash (Argon2id, com o
+     *      prefixo que identifica o algoritmo);
      *   3) a senha original ainda e conferivel a partir do hash -
      *      ou seja, o hash nao e "a senha embaralhada", e sim um valor
      *      que o sistema sabe verificar depois.
      */
     @Test
-    @DisplayName("A senha e gravada como hash BCrypt, nunca em texto puro")
+    @DisplayName("A senha e gravada como hash, nunca em texto puro")
     void gravaASenhaComoHash() {
         empresaBO.salvar(requestValido(), null);
 
@@ -201,7 +202,8 @@ class EmpresaBOTest {
 
         String hashGravado = captor.getValue().getSenha();
         assertNotEquals("SenhaSegura123", hashGravado, "a senha nao pode ser gravada em texto puro");
-        assertTrue(hashGravado.startsWith("$2a$"), "o valor gravado deve ser um hash BCrypt");
+        assertTrue(hashGravado.startsWith("{argon2}$argon2id$"),
+                "o valor gravado deve ser um hash Argon2id, com o prefixo que identifica o algoritmo");
         assertTrue(passwordEncoder.matches("SenhaSegura123", hashGravado),
                 "a senha original precisa ser conferivel a partir do hash");
     }
