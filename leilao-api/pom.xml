@@ -11,6 +11,30 @@
     <name>leilao-api</name>
     <description>Projeto Rest selecao de programador.</description>
 
+    <!--
+      ============================================================================
+       A STACK E FIXADA PELO ENUNCIADO
+      ============================================================================
+       O enunciado da AZ Tecnologia pede:
+
+           "Frontend: Vue  |  Server: Spring Boot  |  Banco: PostgreSQL"
+
+       E NADA MAIS. Nao ha versao fixada no enunciado, mas ha um principio
+       que guia este projeto: a avaliacao acontece em uma maquina
+       desconhecida, por outra pessoa, e o projeto tem que RODAR.
+
+       Por isso a versao do Java NAO e a mais nova disponivel, e sim a mais
+       segura de executar em qualquer ambiente:
+
+         - Spring Boot 2.7 (LTS) com Java 11 (LTS);
+         - Vue 2.7 no frontend (a serie fornecida no starter).
+
+       O trade-off e consciente e esta documentado na pergunta 36 do
+       ENTREVISTA.md. Em troca, a inovacao deste projeto acontece na
+       PROFUNDIDADE (seguranca, modelagem de dominio, arquitetura e
+       testes), e nao em exigir uma JDK que o avaliador pode nao ter.
+       ============================================================================
+    -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -21,8 +45,33 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!--
+          Java 11 (LTS). E o que o Spring Boot 2.7 suporta sem configuracao
+          extra, e o que roda em qualquer maquina com JDK 11 ou superior.
+
+          Pelo mesmo motivo, o codigo NAO usa recursos de Java 12+ (records,
+          sealed, switch com pattern matching, text blocks). Onde a
+          linguagem moderna seria usada, o projeto usa a equivalente
+          classica em Java 11 - e a documentacao explica a troca.
+        -->
         <java.version>11</java.version>
         <postgresql.version>42.5.0</postgresql.version>
+
+        <!--
+          JJWT: biblioteca de Tokens JWT (RFC 7519).
+          A versao 0.12 e a que mudou a API para o estilo "verifyWith" e
+          permite assinar com chaves RSA (RS256) - e o que da suporte a
+          rotacao de chave com o cabecalho "kid".
+        -->
+        <jjwt.version>0.12.6</jjwt.version>
+
+        <!--
+          BouncyCastle: necessario para o Argon2id, que e o algoritmo de
+          hash de senha recomendado pela OWASP desde 2023 (memoria-alta,
+          resistente a ataque com hardware dedicado).
+        -->
+        <bouncycastle.version>1.78.1</bouncycastle.version>
     </properties>
 
     <dependencies>
@@ -54,7 +103,7 @@
         </dependency>
 
         <!-- ===================================================================
-             SEGURANCA - PARTE 1: CODIFICACAO DE SENHA (BCrypt)
+             SEGURANCA - PARTE 1: CODIFICACAO DE SENHA
              Usamos APENAS o artefato "crypto" da Spring Security, que traz
              o BCryptPasswordEncoder sem ativar autenticacao por conta
              propria. Com isso a senha e gravada como hash, e o
@@ -77,6 +126,50 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- ===================================================================
+             SEGURANCA - PARTE 3: TOKENS JWT (RFC 7519)
+             "jjwt-api"      : as classes publicas (compilacao).
+             "jjwt-impl"     : a implementacao (runtime).
+             "jjwt-jackson"  : a serializacao do JSON do token (runtime).
+
+             A separacao em tres artefatos e proposital: o "api" nao traz
+             nenhuma implementacao, o que impede que o codigo da aplicacao
+             dependa de detalhes internos da biblioteca.
+             =================================================================== -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ===================================================================
+             SEGURANCA - PARTE 4: ARGON2ID
+             O Spring Security traz o Argon2PasswordEncoder, mas ele depende
+             da BouncyCastle para a primitiva de hash. Sem esta dependencia,
+             o encoder de Argon2 nao consegue inicializar.
+
+             Argon2id e o padrao recomendado pela OWASP (Password Storage
+             Cheat Sheet, 2023): resiste a ataques com GPU e ASIC, que o
+             BCrypt So resiste parcialmente.
+             =================================================================== -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>${bouncycastle.version}</version>
         </dependency>
 
         <!-- ===================================================================
@@ -126,14 +219,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>

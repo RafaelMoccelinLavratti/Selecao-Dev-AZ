@@ -3,6 +3,7 @@ package br.com.selecao.locadora;
 import br.com.selecao.locadora.config.PasswordEncoderConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * ============================================================================
- *  TESTE: CODIFICADOR DE SENHA (BCrypt)
+ *  TESTE: CODIFICADOR DE SENHA (Argon2id com fallback para BCrypt)
  * ============================================================================
  *
  *  ------------------------------------------------------
@@ -40,9 +41,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *  2) A senha digitada consegue ser conferida depois.
  *  3) A senha errada e rejeitada.
  *  4) Duas senhas IGUAIS geram hashes DIFERENTES (prova do "salt").
- *  5) O hash tem o formato esperado do BCrypt ($2a$...).
+ *  5) O hash tem o formato esperado do Argon2id, COM o prefixo "{argon2}".
  *  6) O codificador nao guarda estado entre chamadas (o mesmo objeto
  *     pode ser reusado com seguranca).
+ *  7) O hash legado em BCrypt (sem prefixo) continua sendo conferido -
+ *     e e assim que a base existente migra sozinha para o Argon2id.
  * ============================================================================
  */
 class PasswordEncoderTest {
@@ -61,10 +64,10 @@ class PasswordEncoderTest {
     /**
      * Teste 1: a senha gravada e um HASH, e nao o texto digitado.
      *
-     * O hash do BCrypt tem o formato "$2a$<custo>$<salt><hash>". O
-     * "$2a$" identifica o algoritmo e o custo - e e o que permite
-     * verificar, no futuro, se a senha foi gravada com um custo
-     * adequado.
+     * O hash do Argon2id tem o formato
+     * "{argon2}$argon2id$v=19$m=...,t=...,p=...$<sal>$<hash>". O
+     * prefixo "{argon2}" identifica o algoritmo - e e o que permite
+     * trocar de algoritmo no futuro sem perder as senhas.
      */
     @Test
     @DisplayName("A senha gravada e um hash, e nao o texto digitado")
@@ -73,7 +76,8 @@ class PasswordEncoderTest {
         String hash = encoder.encode(senha);
 
         assertNotEquals(senha, hash, "o hash NUNCA pode ser igual a senha");
-        assertTrue(hash.startsWith("$2a$"), "o hash deve ter o formato do BCrypt");
+        assertTrue(hash.startsWith("{argon2}$argon2id$"),
+                "o hash deve ter o prefixo {argon2} e o formato do Argon2id");
     }
 
     /**
@@ -164,5 +168,53 @@ class PasswordEncoderTest {
         // E os dois hashes continuam verificando as suas senhas.
         assertTrue(encoder.matches("SenhaA", primeiro));
         assertTrue(encoder.matches("SenhaB", segundo));
+    }
+
+    /**
+     * Teste 6: o hash legado em BCrypt continua funcionando.
+     *
+     * Este e o teste que garante a TRANSIACAO sem queda de acesso.
+     *
+     * A base de dados deste projeto foi criada com BCrypt. Se a troca
+     * para o Argon2id fosse feita de uma vez, todas as empresas ja
+     * cadastradas ficariam sem conseguir entrar. Por isso o codificador
+     * reconhece o formato antigo (sem prefixo) e ainda assim confere a
+     * senha - e o `upgradeEncoding` devolve "true", sinalizando que
+     * aquele hash deve ser reescrito no formato novo.
+     *
+     * O hash abaixo e o BCrypt (custo 10) da senha "SenhaLegada123",
+     * gerado e conferido por um codificador BCrypt puro.
+     */
+    @Test
+    @DisplayName("O hash legado em BCrypt continua sendo conferido")
+    void hashLegadoEmBcryptContinuaFuncionando() {
+
+        String hashLegado = new BCryptPasswordEncoder(10).encode("SenhaLegada123");
+
+        assertTrue(hashLegado.startsWith("$2a$"), "premissa do teste: hash BCrypt puro");
+        assertTrue(encoder.matches("SenhaLegada123", hashLegado),
+                "a senha do hash legado deve ser reconhecida");
+        assertTrue(!encoder.matches("SenhaErrada", hashLegado),
+                "a senha errada nao pode ser aceita contra o hash legado");
+    }
+
+    /**
+     * Teste 7: o hash legado e sinalizado para reescrita.
+     *
+     * E o que faz a migracao acontecer sozinha, no ritmo do uso: quem
+     * loga hoje com uma senha em BCrypt passa a ter o hash reescrito em
+     * Argon2id, sem script e sem janela de manutencao.
+     */
+    @Test
+    @DisplayName("O hash legado e sinalizado para migracao automatica")
+    void hashLegadoSinalizadoParaReescrita() {
+
+        String hashLegado = new BCryptPasswordEncoder(10).encode("SenhaLegada123");
+        String hashNovo = encoder.encode("SenhaLegada123");
+
+        assertTrue(encoder.upgradeEncoding(hashLegado),
+                "o hash em BCrypt deve ser marcado para reescrita");
+        assertTrue(!encoder.upgradeEncoding(hashNovo),
+                "o hash ja em Argon2id nao deve ser reescrito");
     }
 }
