@@ -27,11 +27,30 @@
   -->
   <v-app>
     <!-- ============ BARRA SUPERIOR ============ -->
+    <!--
+      A barra usa a cor de marca da AZ (#14b3cc) no papel "primary" do
+      Vuetify. O logo ao lado e o arquivo oficial da empresa
+      (src/assets/brand/logo-az.svg), extraido do site institucional.
+
+      DETALHE IMPORTANTE SOBRE A COR DO LOGO:
+      O logo oficial e ciano (#14b3cc) - a MESMA cor da barra. Um logo
+      ciano sobre uma barra ciano ficaria invisivel. Por isso aplicamos
+      um filtro CSS que converte o logo em branco ("brightness(0)" deixa
+      tudo preto, "invert(1)" inverte preto para branco). O arquivo
+      original NAO e alterado: e o navegador que faz a conversao, e o
+      logo continua com a cor oficial em qualquer outro uso.
+    -->
     <v-app-bar app color="primary" dark elevation="2">
-      <v-icon class="mr-2">mdi-gavel</v-icon>
+      <v-img
+        class="logo-az"
+        src="@/assets/brand/logo-az.svg"
+        alt="AZ Tecnologia em Gestao"
+        contain
+      ></v-img>
+
       <v-toolbar-title class="font-weight-bold">
         Sistema de Leiloes
-        <span class="d-none d-sm-inline" style="opacity: 0.8; font-weight: 400;">
+        <span class="d-none d-sm-inline az-subtitulo">
           &nbsp;|&nbsp; AZ Tecnologia
         </span>
       </v-toolbar-title>
@@ -211,37 +230,85 @@ export default {
 
 <style>
 /**
- * Estilos GLOBAIS da aplicacao (nao do componente).
+ * ============================================================================
+ *  ESTILOS GLOBAIS DA APLICACAO
+ * ============================================================================
  *
- * A fonte padrão é definida aqui para que todo o sistema use a mesma
- * tipografia - consistência visual e metade do trabalho de design.
+ *  A tipografia e as cores vem dos tokens de marca
+ *  (src/assets/brand/tokens.css), extraidos do tema institucional da
+ *  AZ Tecnologia em Gestao. Aqui so aplicamos esses tokens.
+ *
+ *  A fonte institucional e a **Poppins**, carregada no public/index.html.
+ *  Antes, a aplicacao usava Roboto - que e a fonte padrao do Material
+ *  Design, nao a da empresa. A troca e o que faz a interface parecer
+ *  com a marca de verdade.
+ */
+
+/**
+ * A fonte da aplicacao inteira. O seletor "html" e o que garante a
+ * unificacao: o Vuetify define a fonte em ".v-application", e sem
+ * sobrescrever aqui os componentes herdariam a do framework.
  */
 html {
-  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--az-font-family);
   overflow-y: auto;
 }
 
 /**
- * Cor de fundo da aplicacao. Um cinza bem claro deixa as tabelas
- * (brancas) se destacarem.
+ * Cor de fundo da aplicacao. Um neutro muito claro deixa as tabelas
+ * (brancas) se destacarem sem brigar com a cor de marca.
  */
 .v-application {
-  background-color: #f4f6f8 !important;
+  background-color: var(--az-neutral-50) !important;
+}
+
+/**
+ * O logo na barra superior.
+ *
+ * O arquivo oficial e ciano (#14b3cc), a mesma cor da barra. Este filtro
+ * ("brightness(0) invert(1)") converte qualquer cor em branco, sem
+ * alterar o arquivo original - o logo continua com a cor oficial em
+ * qualquer outro lugar onde for usado.
+ */
+.logo-az {
+  filter: brightness(0) invert(1);
+  height: 30px;
+  width: 94px;
+  margin-right: 12px;
+}
+
+/**
+ * O separador " | AZ Tecnologia" ao lado do titulo.
+ *
+ * Fica em branco com 80% de opacidade: presença discreta, sem competir
+ * com o nome do sistema.
+ */
+.az-subtitulo {
+  opacity: 0.8;
+  font-weight: 400;
 }
 
 /**
  * Estilo do titulo de cada tela (h1 das views).
+ *
+ * Usa o navy de estrutura da marca (#153c5c) em vez do ciano. E uma
+ * escolha de acessibilidade: o ciano sobre fundo claro tem contraste
+ * de cerca de 2.4:1, abaixo do minimo de 4.5:1 exigido pela WCAG AA
+ * para texto normal. O navy passa com folga.
  */
 .titulo-tela {
   font-size: 1.5rem;
-  font-weight: 500;
-  color: #0f4c75;
+  font-weight: 600;
+  color: var(--az-navy-700);
   margin-bottom: 4px;
 }
 
+/**
+ * O subtitulo das telas, em texto secundario.
+ */
 .subtitulo-tela {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--az-neutral-700);
   margin-bottom: 16px;
 }
 </style>

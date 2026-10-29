@@ -1,0 +1,112 @@
+/* ============================================================================
+ *  TOKENS DE MARCA - AZ TECNOLOGIA EM GESTAO
+ * ============================================================================
+ *
+ *  O QUE E ISTO?
+ *  A paleta oficial e a tipografia oficial da AZ Tecnologia em Gestao,
+ *  extraidas do proprio tema do site institucional (efcaz.com.br). Nao sao
+ *  cores "aproximadas": sao os valores exatos que a empresa usa nas
+ *  variveis CSS do tema WordPress.
+ *
+ *  POR QUE UM ARQUIVO SO?
+ *  Porque cor espalhada em varios arquivos e a forma classica de a marca
+ *  se perder. Um valor alterado em um componente e esquecido em outro
+ *  produz uma interface que "parece" da empresa mas nao e. Concentrar os
+ *  tokens em um unico lugar faz o padrao virar o caminho mais facil, e
+ *  nao o mais dificil.
+ *
+ *  ------------------------------------------------------
+ *  DE ONDE VIERAM OS VALORES
+ *  ------------------------------------------------------
+ *  Extraidos de:
+ *    https://www.efcaz.com.br/wp-content/themes/efcaz/style.css
+ *
+ *  O logo (logo-az.svg) tambem veio de la:
+ *    https://www.efcaz.com.br/wp-content/themes/efcaz/assets-new-theme/img/logo.svg
+ *
+ *  Efcaz e uma empresa do Grupo AZ Tecnologia em Gestao
+ *  (AZ TECNOLOGIA EM GESTAO LTDA - CNPJ 24.598.492/0001-27).
+ *
+ *  ------------------------------------------------------
+ *  A PALETA
+ *  ------------------------------------------------------
+ *  | Token                  | Valor                    | Uso                |
+ *  |------------------------|--------------------------|--------------------|
+ *  | --az-cyan-400          | #14b3cc                  | PRIMARIA (logo)    |
+ *  | --az-cyan-500          | #0ba2b9                  | hover              |
+ *  | --az-cyan-600          | #0e8fa3                  | pressed / escura   |
+ *  | --az-navy-700          | #153c5c                  | SECUNDARIA         |
+ *  | --az-navy-800          | #112f47                  | navy escuro        |
+ *  | --az-neutral-0         | #ffffff                  | superficie         |
+ *  | --az-neutral-50        | #f9f9f9                  | fundo suave        |
+ *  | --az-neutral-100       | #f2f2f2                  | fundo alternado    |
+ *  | --az-neutral-200       | #eeeeee                  | borda              |
+ *  | --az-neutral-500       | #adb5bd                  | texto terciario    |
+ *  | --az-neutral-700       | #636363                  | texto secundario   |
+ *  | --az-neutral-900       | #333333                  | texto principal    |
+ *  | --az-red-500           | #ff5f56                  | erro               |
+ *  | --az-green-500         | #25d366                  | sucesso            |
+ *
+ *  A familia de cyan nao e solida: o tema usa a mesma cor com opacidade
+ *  para as versoes suaves (a 50 usa 8%, a 100 usa 15%, a 200 usa 20% e a
+ *  300 usa 30%). Mantemos essa convencao aqui.
+ * ========================================================================== */
+
+:root {
+  /* ---- CIANO: a cor da marca (mesma do logo) ---- */
+  --az-cyan-50: rgba(20, 179, 204, 0.08);
+  --az-cyan-100: rgba(20, 179, 204, 0.15);
+  --az-cyan-200: rgba(20, 179, 204, 0.2);
+  --az-cyan-300: rgba(20, 179, 204, 0.3);
+  --az-cyan-400: #14b3cc;
+  --az-cyan-500: #0ba2b9;
+  --az-cyan-600: #0e8fa3;
+
+  /* ---- NAVY: a cor de apoio (texto e superficies escuras) ---- */
+  --az-navy-700: #153c5c;
+  --az-navy-800: #112f47;
+
+  /* ---- NEUTROS: superficies e texto ---- */
+  --az-neutral-0: #ffffff;
+  --az-neutral-50: #f9f9f9;
+  --az-neutral-100: #f2f2f2;
+  --az-neutral-150: #fcfcfc;
+  --az-neutral-200: #eeeeee;
+  --az-neutral-300: #dadada;
+  --az-neutral-400: #ced4da;
+  --az-neutral-500: #adb5bd;
+  --az-neutral-600: #696969;
+  --az-neutral-700: #636363;
+  --az-neutral-800: #3f3f3f;
+  --az-neutral-900: #333333;
+
+  /* ---- SEMANTICOS ---- */
+  --az-red-500: #ff5f56;
+  --az-red-50: rgba(255, 95, 86, 0.1);
+  --az-green-500: #25d366;
+  --az-green-600: #1db153;
+
+  /* ---- TIPOGRAFIA: Poppins (fonte institucional) ---- */
+  --az-font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  --az-font-size-xs: 0.75rem;
+  --az-font-size-sm: 0.8125rem;
+  --az-font-size-base: 0.875rem;
+  --az-font-size-md: 0.9375rem;
+  --az-font-size-lg: 1rem;
+  --az-font-size-xl: 1.125rem;
+
+  /* ---- RAIOS: os mesmos do tema institucional ---- */
+  --az-radius-sm: 4px;
+  --az-radius-md: 6px;
+  --az-radius-lg: 10px;
+  --az-radius-xl: 20px;
+
+  /* ---- SOMBRAS: com tom ciano, como no tema ---- */
+  --az-shadow-sm: 0 0 25px rgba(0, 0, 0, 0.05);
+  --az-shadow-md: 0 4px 15px rgba(20, 179, 204, 0.2);
+  --az-shadow-lg: 0 6px 20px rgba(20, 179, 204, 0.3);
+
+  /* ---- TRANSICOES ---- */
+  --az-transition-fast: 0.2s ease;
+  --az-transition-base: 0.3s ease;
+}
