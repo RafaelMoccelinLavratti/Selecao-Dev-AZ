@@ -29,8 +29,8 @@
          - Spring Boot 2.7 (LTS) com Java 11 (LTS);
          - Vue 2.7 no frontend (a serie fornecida no starter).
 
-       O trade-off e consciente e esta documentado na pergunta 36 do
-       ENTREVISTA.md. Em troca, a inovacao deste projeto acontece na
+       O trade-off e consciente e esta documentado no README e no
+       codigo. Em troca, a inovacao deste projeto acontece na
        PROFUNDIDADE (seguranca, modelagem de dominio, arquitetura e
        testes), e nao em exigir uma JDK que o avaliador pode nao ter.
        ============================================================================

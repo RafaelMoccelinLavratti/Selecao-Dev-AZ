@@ -70,6 +70,3 @@ leilao-api/.vscode/
 #  build.
 # ---------------------------------------------------------------------------
 !leilao-app/package-lock.json
-
-### Configuracao local de ferramentas ###
-.claude/
