@@ -1,0 +1,99 @@
+# ============================================================================
+#  DEPENDABOT
+# ============================================================================
+#
+#  O QUE E O DEPENDABOT?
+#  O GitHub tem um robot que fica de olho nas dependencias do projeto e
+#  avisa quando alguma delas ganha uma versao nova - ou, mais importante,
+#  quando alguma delas ganha uma CORRECAO DE SEGURANCA.
+#
+#  POR QUE ISSO IMPORTA?
+#  Mais de 80% das vulnerabilidades de aplicacoes web nao estao no codigo
+#  que a equipe escreveu: estao em uma biblioteca de terceiros. Um projeto
+#  que usa 40 bibliotecas carrega 40 "portas de entrada" potenciais.
+#
+#  O caso do Log4Shell (dezembro de 2021) e' o exemplo canonico: uma
+#  vulnerabilidade em uma biblioteca de log afetou MILHOES de aplicacoes
+#  no mundo. A unica forma de saber se voce e' afetado e' ter um inventario
+#  (o SBOM) e um monitoramento automatico.
+#
+#  A CONFIGURACAO
+#  O Dependabot abre pull requests AUTOMATICAMENTE com a atualizacao.
+#  Isso e' deliberado: em vez de a equipe lembrar de atualizar, o
+#  tarefa de atualizacao vira um fluxo automatizado, revisado por uma
+#  pessoa - que e' exatamente como deve ser.
+#
+#  A FREQUENCIA
+#  - Maven: SEMANAL. Uma vez por semana e' o ponto de equilibrio entre
+#    "atualizar rapido" e "nao ser inundado de pull requests".
+#  - npm: SEMANAL, pelo mesmo motivo.
+#  - GitHub Actions: SEMANAL. Uma acao de terceiro comprometida e' um
+#    caminho direto para o pipeline de build - e por isso que essas
+#    atualizacoes sao as mais urgentes.
+# ============================================================================
+version: 2
+
+updates:
+
+  # --------------------------------------------------------------------------
+  #  DEPENDENCIAS DA API (Maven)
+  # --------------------------------------------------------------------------
+  - package-ecosystem: "maven"
+    directory: "/leilao-api"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencia"
+      - "backend"
+    commit-message:
+      prefix: "chore(api)"
+      prefix-development: "chore(api)"
+      include: "scope"
+    # Ignora versoes de desenvolvimento (alpha/beta/RC): elas podem ter
+    # regressoes e nao devem entrar em producao por automacao.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # --------------------------------------------------------------------------
+  #  DEPENDENCIAS DO FRONTEND (npm)
+  # --------------------------------------------------------------------------
+  - package-ecosystem: "npm"
+    directory: "/leilao-app"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencia"
+      - "frontend"
+    commit-message:
+      prefix: "chore(app)"
+      prefix-development: "chore(app)"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # --------------------------------------------------------------------------
+  #  ACOES DO GITHUB
+  # --------------------------------------------------------------------------
+  #  As acoes do GitHub rodam com acesso ao repositorio. Uma acao
+  #  comprometida e' um caminho direto para o pipeline de build.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Sao_Paulo"
+    labels:
+      - "dependencia"
+      - "ci"
+    commit-message:
+      prefix: "chore(ci)"
