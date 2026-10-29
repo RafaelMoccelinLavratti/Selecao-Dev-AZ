@@ -101,8 +101,8 @@ cd leilao-api
 mvn test
 ```
 
-**16 testes**, todos automatizados e **sem precisar de banco de dados** —
-rodam em qualquer máquina, em menos de 2 segundos.
+**37 testes**, todos automatizados e **sem precisar de banco de dados** —
+rodam em qualquer máquina, em menos de 5 segundos.
 
 ---
 
@@ -477,5 +477,26 @@ Exemplo de conferência do total do leilão 1001:
 - As decisões não óbvias estão documentadas **no ponto onde elas ocorrem**
   (nos arquivos `.java` e `.vue`) — não só aqui.
 - O guia de apresentação com o resumo de cada tecnologia e as respostas
-   respostas preparadas para as perguntas mais prováveis da entrevista está em
+  preparadas para as perguntas mais prováveis da entrevista está em
   [`GUIA-APRESENTACAO.md`](GUIA-APRESENTACAO.md).
+
+---
+
+## 13. Documentação
+
+| Documento | Para quê |
+|---|---|
+| [`README.md`](README.md) | **Este arquivo.** Visão geral, arquitetura, modelo de dados, API e decisões. |
+| [`SEGURANCA.md`](SEGURANCA.md) | Mapa de segurança contra a **OWASP Top 10**, o que está protegido, **o que não está**, e como verificar cada proteção. |
+| [`TECNOLOGIAS.md`](TECNOLOGIAS.md) | Cada tecnologia: o que é, por que foi escolhida, o que resolve, e a alternativa descartada. |
+| [`MANUAL-OPERACAO.md`](MANUAL-OPERACAO.md) | Como rodar do zero, testar, gerar hashes, aplicar permissões, demonstrar e diagnosticar. |
+| [`ENTREVISTA.md`](ENTREVISTA.md) | Banco de **44 perguntas** com respostas modeladas, e o roteiro de demonstração. |
+| [`GUIA-APRESENTACAO.md`](GUIA-APRESENTACAO.md) | Resumo executivo para a apresentação. |
+
+**Três ferramentas de apoio** que acompanham o projeto:
+
+| Ferramenta | Para quê |
+|---|---|
+| `node scripts/verificar-higiene.js` | Procura caracteres de outro alfabeto, palavras em inglês e erros de digitação nos comentários. |
+| `python scripts/enriquecer-javadocs.py` | Ferramenta usada durante o desenvolvimento para padronizar a documentação dos controllers. |
+| `mvn test` | 37 testes, **sem depender de banco de dados**. |
