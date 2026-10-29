@@ -339,7 +339,78 @@
 </template>
 
 <script>
+/**
+ * ============================================================================
+ *  SCRIPT DA VIEW: CADASTRO DE EMPRESA
+ * ============================================================================
+ *
+ *  ------------------------------------------------------
+ *  O QUE ESTA TELA FAZ
+ *  ------------------------------------------------------
+ *  Esta e a tela do EXERCICIO 8: o cadastro (inclusao E alteracao) de
+ *  empresas. E a tela mais completa do sistema, porque tem validacao
+ *  de formato em varios campos (CNPJ, CEP, telefone, e-mail, site).
+ *
+ *  ------------------------------------------------------
+ *  UMA TELA, DOIS MODOS: INCLUSAO E EDICAO
+ *  ------------------------------------------------------
+ *  A mesma tela atende as duas situacoes. O que define o modo e a URL:
+ *
+ *      #/empresa       -> INCLUSAO (formulario vazio)
+ *      #/empresa/5     -> EDICAO (carrega os dados do id 5)
+ *
+ *  O componente descobre o modo lendo o parametro "id" da rota (veja o
+ *  computed "id"). Com isso, nao existem duas telas parecidas - existe
+ *  UMA tela que se adapta. Isso reduz a manutencao: uma correcao no
+ *  formulario vale para as duas situacoes.
+ *
+ *  ------------------------------------------------------
+ *  A REGRA DE OURO DESTE FORMULARIO: VALIDAR NOS DOIS LADOS
+ *  ------------------------------------------------------
+ *  As regras do computed "regras" ESPELHAM exatamente as validacoes do
+ *  backend (a classe EmpresaRequest.java, com as anotacoes @NotBlank,
+ *  @Size, @Pattern, @Email do Bean Validation).
+ *
+ *  A regra do projeto e:
+ *      - O BACKEND e a GARANTIA. E o unico lugar que pode garantir a
+ *        regra, porque qualquer um pode chamar a API direto (curl,
+ *        Postman, outro sistema), sem passar pela tela.
+ *      - O FRONTEND e a CONVENIENCIA. O usuario ve o erro na hora,
+ *        campo a campo, sem perder o que ja digitou.
+ *
+ *  O frontend nunca substitui o backend. Se as duas camadas validam a
+ *  mesma coisa, o usuario nunca ve o casopressa de "a tela aceitou e a
+ *  API recusou" - que e a pior experiencia possivel num formulario.
+ *
+ *  ------------------------------------------------------
+ *  SEGURANCA: O CAMPO SENHA
+ *  ------------------------------------------------------
+ *  Dois cuidados que aparecem no codigo:
+ *
+ *  1) A senha NUNCA volta da API. Por isso, ao carregar um registro
+ *     para edicao, os campos "senha" e "confirmarSenha" ficam VAZIOS -
+ *     o usuario so pode digitar uma senha nova se quiser trocar.
+ *
+ *  2) Na alteracao, "senha vazia" significa "manter a senha atual".
+ *     No envio, o campo vazio vira null, e o backend entende isso como
+ *     "nao altere a senha". Sem essa traducao, o backend receberia uma
+ *     string vazia e tentaria validar uma senha de zero caracteres.
+ * ============================================================================
+ */
+
+/**
+ * Importacao do servico centralizado de comunicacao com a API.
+ */
 import api from '../../services/api';
+
+/**
+ * Importacao dos mascaradores e das funcoes de validacao.
+ *
+ * Todas as funcoes de validacao do projeto ficam em UM arquivo
+ * (utils/mascaras.js). Isso garante que a mesma mascara e a mesma
+ * regra aparecam identicas em todas as telas - e que exista UM lugar
+ * para corrigir quando o formato mudar.
+ */
 import {
   mascaraCnpj,
   mascaraCep,
@@ -353,29 +424,80 @@ import {
 } from '../../utils/mascaras';
 
 export default {
+  /**
+   * Nome do componente (tela).
+   */
   name: 'TelaEmpresa',
 
+  /**
+   * ------------------------------------------------------------------
+   *  DADOS REATIVOS (data)
+   * ------------------------------------------------------------------
+   */
   data() {
     return {
-      // O formulario e um objeto com todos os campos.
+      /**
+       * O formulario: um objeto com todos os campos da empresa.
+       *
+       * Comeca chamando "formularioVazio()". Chamar um metodo dentro
+       * do "data" e permitido - o Vue executa o "data" uma unica vez,
+       * na criacao do componente, entao o metodo e chamado uma vez
+       * tambem. (Nao daria para usar "this" aqui: ele ainda nao
+       * existiria.)
+       */
       formulario: this.formularioVazio(),
 
-      // Resultado da validacao do v-form.
+      /**
+       * Resultado da validacao do v-form.
+       *
+       * O Vuetify preenche esta variavel (via o "v-model") com o
+       * resultado da validacao de todos os campos. E o que permite
+       * desabilitar o botao "Salvar" enquanto o formulario estiver
+       * invalido.
+       */
       formularioValido: false,
 
-      // Controla se a senha aparece em texto puro.
+      /**
+       * Controla se a senha aparece em texto puro (o "olho" do campo).
+       *
+       * Comeca em false - por padrao,senha nunca e mostrada.
+       */
       mostrarSenha: false,
 
-      // Mensagem de erro vinda do servidor.
+      /**
+       * Mensagem de erro vinda do servidor (ex.: "CNPJ ja cadastrado").
+       */
       erroServidor: '',
 
-      // Erros por campo vindos do servidor (chave = nome do campo).
+      /**
+       * Erros por campo vindos do servidor.
+       *
+       * A chave e o nome do campo, o valor e a mensagem. Exemplo:
+       *
+       *      { "cnpj": "O CNPJ deve ter 14 digitos." }
+       *
+       * O backend sempre responde nesse formato quando a validacao
+       * falha (ver o GlobalExceptionHandler do lado Java).
+       */
       errosCampo: {},
 
-      // Sinaliza que o salvamento esta em andamento (desabilita o botao).
+      /**
+       * Sinaliza que o salvamento esta em andamento.
+       *
+       * Desabilita o botao de salvar e mostra o indicador de
+       * carregamento - impedindo o usuario de clicar duas vezes e criar
+       * dois registros.
+       */
       salvando: false,
 
-      // Lista de estados (UF) para o campo auxiliar.
+      /**
+       * Lista de estados (UF) para o campo auxiliar.
+       *
+       * Este campo existe APENAS no formulario da tela: ele ajuda o
+       * usuario a digitar o municipio, mas NAO faz parte do modelo de
+       * dados (o banco guarda o municipio e o CEP). Por isso, ele nao
+       * e enviado na requisicao - veja o metodo "salvar".
+       */
       ufs: [
         'AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG',
         'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR',
@@ -384,9 +506,22 @@ export default {
     };
   },
 
+  /**
+   * ------------------------------------------------------------------
+   *  VALORES CALCULADOS (computed)
+   * ------------------------------------------------------------------
+   */
   computed: {
     /**
      * O id veio da URL? (#/empresa/5)
+     *
+     * O vue-router guarda os parametros dinamicos da rota em
+     * "$route.params". Como a rota foi declarada como "/empresa/:id",
+     * o "id" e o pedaco final da URL.
+     *
+     * Quando o usuario esta na rota "/empresa" (sem id), este valor
+     * e undefined - e por isso que o "emEdicao" abaixo verifica se
+     * ele existe.
      */
     id() {
       return this.$route.params.id;
@@ -394,6 +529,11 @@ export default {
 
     /**
      * Estamos editando ou incluindo?
+     *
+     * Basta verificar se existe um id na URL. Este computado e usado
+     * em varios lugares do template (titulo do botao, texto do alerta,
+     * metodo "salvar"), e ter o conceito em UM lugar evita a
+     * condicao duplicada e inconsistente.
      */
     emEdicao() {
       return !!this.id;
@@ -405,6 +545,26 @@ export default {
      * ESTAS REGRAS ESPELHAM AS DO BACKEND (EmpresaRequest.java).
      * A mesma regra nos dois lados garante que o usuario nunca veja
      * "a tela aceitou e a API recusou".
+     *
+     * ------------------------------------------------------
+     *  COMO UMA REGRA DO VUETIFY FUNCIONA
+     * ------------------------------------------------------
+     *  Cada regra e uma funcao que recebe o valor do campo e devolve:
+     *      - TRUE  -> o valor esta valido;
+     *      - FALSE -> invalido, sem mensagem;
+     *      - STRING-> invalido, e a string e a mensagem exibida.
+     *
+     *  O encadeamento com "||" e o que faz a mensagem aparecer: a
+     *  primeira regra que falhar "devolve" a mensagem e as seguintes
+     *  nem sao avaliadas.
+     *
+     *  Exemplo do CNPJ:
+     *      obrigatorio(value) || 'O CNPJ e obrigatorio.'
+     *          || (cnpjValido(value) || 'O CNPJ deve ter 14 digitos.')
+     *
+     *  Se o campo estiver vazio, a primeira parte retorna a mensagem
+     *  "obrigatorio" e o resto nem e avaliado. Se estiver preenchido
+     *  mas invalido, a segunda parte retorna a mensagem de formato.
      */
     regras() {
       return {
@@ -431,7 +591,15 @@ export default {
   },
 
   /**
-   * Ao entrar na tela, se for edicao, carrega os dados da empresa.
+   * ------------------------------------------------------------------
+   *  CICLO DE VIDA: mounted
+   * ------------------------------------------------------------------
+   *
+   *  Ao entrar na tela, se for EDICAO, carrega os dados da empresa.
+   *
+   *  Na inclusao nao ha nada a carregar - o formulario ja comeca
+   *  vazio. E por isso que a verificacao "emEdicao" e necessaria
+   *  aqui: sem ela, a tela tentaria buscar a empresa de id undefined.
    */
   mounted() {
     if (this.emEdicao) {
@@ -439,9 +607,21 @@ export default {
     }
   },
 
+  /**
+   * ------------------------------------------------------------------
+   *  METODOS (methods)
+   * ------------------------------------------------------------------
+   */
   methods: {
     /**
      * Objeto de formulario vazio (usado na criacao e ao limpar).
+     *
+     * Concentrar a lista de campos em UM metodo evita o erro classico
+     * de esquecer um campo: se um campo novo for adicionado aqui, ele
+     * nasce vazio nos dois lugares que usam este metodo (a criacao e o
+     * reset apos o carregamento na edicao).
+     *
+     * @returns {object} um objeto novo, com todos os campos vazios
      */
     formularioVazio() {
       return {
@@ -463,20 +643,37 @@ export default {
       };
     },
 
-    // Mascaradores (importados do arquivo de utilitarios).
+    /**
+     * Mascaradores (importados do arquivo de utilitarios).
+     *
+     * Sao atribuidos como metodos do componente para poderem ser
+     * chamados no template, por exemplo "mascaraCnpj(valor)".
+     */
     mascaraCnpj,
     mascaraCep,
     mascaraTelefone,
 
     /**
      * Carrega a empresa que esta sendo editada.
+     *
+     * Repare em tres detalhes importantes:
+     *
+     *  1) O "Object.assign" parte do formulario VAZIO e sobrescreve
+     *     apenas os campos que vieram da API. Assim, o formulario
+     *     fica sempre com a estrutura completa, mesmo que a API
+     *     devolva um objeto com menos campos.
+     *
+     *  2) O CNPJ, o CEP e o telefone sao mascarados NA EXIBICAO
+     *     (o banco guarda so os digitos).
+     *
+     *  3) A SENHA fica vazia de proposito - a API nunca devolve a
+     *     senha (nem o hash). O usuario so digita uma senha se quiser
+     *     trocar a atual.
      */
     async carregar() {
       try {
         const empresa = await api.get('/empresas/' + this.id);
 
-        // Copia os campos da API para o formulario.
-        // A senha NAO vem da API (por seguranca) - por isso fica vazia.
         this.formulario = Object.assign(this.formularioVazio(), {
           razaoSocial: empresa.razaoSocial || '',
           cnpj: mascaraCnpj(empresa.cnpj || ''),
@@ -500,26 +697,41 @@ export default {
 
     /**
      * Valida e envia o formulario.
+     *
+     * O metodo tem QUATRO passos bem separados, e a ordem importa:
      */
     async salvar() {
+      // ---- PASSO 0: limpa os erros da tentativa anterior ----
+      // Sem isso, a mensagem de erro antiga ficaria na tela mesmo
+      // depois de o usuario corrigir o campo.
       this.erroServidor = '';
       this.errosCampo = {};
 
-      // 1) Valida no navegador (a mensagem aparece campo a campo).
+      // ---- PASSO 1: valida no navegador ----
+      // O "validate()" do v-form percorre todos os campos e devolve
+      // true/false. As mensagens aparecem campo a campo, embaixo de
+      // cada input.
       if (!this.$refs.formulario.validate()) {
         this.notificar('error', 'Verifique os campos destacados do formulario.');
         return;
       }
 
-      // 2) Monta o corpo da requisicao (sem os campos que so existem
-      //    na tela, como "estado" e "confirmarSenha").
-      //    A senha vazia vira null: assim o backend entende que o usuario
-      //    NAO quer trocar a senha (na alteracao), em vez de tentar
-      //    validar uma string vazia.
+      // ---- PASSO 2: monta o corpo da requisicao ----
+      // Montamos um objeto NOVO, com apenas o que a API espera. Os
+      // campos que so existem na tela ("estado" e "confirmarSenha")
+      // ficam de fora - e um espelho do que o backend aceitaria.
+      //
+      // Detalhes:
+      //  - o "trim()" remove espacos das pontas;
+      //  - a quantidade vazia vira null (e nao 0), para distinguir
+      //    "nao informado" de "zero";
+      //  - a senha vazia vira null: assim o backend entende que o
+      //    usuario NAO quer trocar a senha (na alteracao), em vez de
+      //    tentar validar uma string vazia.
       const corpo = {
         razaoSocial: this.formulario.razaoSocial.trim(),
         cnpj: this.formulario.cnpj,
-        logadouro: this.formulario.logadouro,
+        logadouro: this.formulario.ladouro,
         numero: this.formulario.numero,
         complemento: this.formulario.complemento,
         municipio: this.formulario.municipio,
@@ -532,7 +744,7 @@ export default {
         senha: this.formulario.senha ? this.formulario.senha : null
       };
 
-      // 3) Envia para a API (POST ou PUT, conforme o modo).
+      // ---- PASSO 3: envia para a API (POST ou PUT, conforme o modo) ----
       this.salvando = true;
       try {
         if (this.emEdicao) {
@@ -543,11 +755,11 @@ export default {
           this.notificar('success', 'Empresa cadastrada com sucesso.');
         }
 
-        // 4) Volta para a tela de listagem.
+        // ---- PASSO 4: volta para a tela de listagem ----
         this.$router.push('/empresas');
       } catch (erro) {
-        // Erro do servidor: mostra a mensagem e recarrega o formulario
-        // para o usuario corrigir sem perder o que digitou.
+        // Erro do servidor: mostra a mensagem e MANTEM o formulario
+        // preenchido, para o usuario corrigir sem perder o que digitou.
         this.erroServidor = erro.mensagem || 'Erro ao salvar a empresa.';
         if (erro.campos) {
           this.errosCampo = erro.campos;
