@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ============================================================================
+   CONFIGURACAO DE LOG DOS TESTES (logback-test.xml)
+  ============================================================================
+   Este arquivo so vale durante os testes ("mvn test"). Ele deixa o log
+   limpo: sem as mensagens de DEBUG do Spring Test, o resultado da suite
+   fica legivel. O log da aplicacao em producao NAO e afetado - ele vem
+   do application.properties.
+  ============================================================================
+-->
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Silencia o Spring Test e o Hibernate durante os testes. -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="br.com.selecao.locadora" level="INFO"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

@@ -1,13 +1,62 @@
 ---
+  # ==========================================================================
+  #  DOCKER COMPOSE - BANCO DE DADOS POSTGRESQL
+  # ==========================================================================
+  #  PARA QUE SERVE?
+  #  Sobe o PostgreSQL com a estrutura e a massa de dados ja prontas, sem
+  #  precisar instalar o Postgres na maquina.
+  #
+  #  COMO USAR:
+  #      docker compose -f docker-database.yml up -d     (sobe o banco)
+  #      docker compose -f docker-database.yml down      (derruba o banco)
+  #      docker compose -f docker-database.yml logs -f   (ve o log)
+  #
+  #  O QUE ACONTECE NA PRIMEIRA SUBIDA?
+  #  O container oficial do Postgres executa, na primeira vez, TODOS os
+  #  arquivos .sql da pasta /docker-entrypoint-initdb.d, em ordem alfabetica.
+  #  Como nossos arquivos comecam com 01_ e 02_, a ordem e garantida:
+  #      01_ddl.sql  -> cria as tabelas
+  #      02_dml.sql  -> insere a massa de dados
+  #  (O volume "postgresqldata" garante que isso so acontece na primeira
+  #   vez: se o volume ja existe, o Postgres nao reexecuta os scripts.)
+  # ==========================================================================
   version: "3"
+
   services:
-    postgresql: 
-      image: "postgres:10.5-alpine"
-      ports: 
+    postgresql:
+      # Versao 16 (LTS). O enunciado nao fixa versao; 16 e uma escolha
+      # estavel e com suporte longo.
+      image: "postgres:16-alpine"
+
+      container_name: "leilao-postgres"
+
+      ports:
+        # "5432:5432" = porta 5432 do container liberada na porta 5432 da
+        # maquina. E por isso que a API conecta em "localhost:5432".
         - "5432:5432"
-      volumes: 
+
+      volumes:
+        # 1) Volume nomeado: guarda os dados do banco mesmo que o container
+        #    seja destruido e recriado.
         - "postgresqldata:/var/lib/postgresql/data"
-      env_file: 
+
+        # 2) Os scripts de criacao do banco, montados na pasta que o
+        #    container do Postgres executa na primeira subida.
+        - "./leilao-api/src/main/resources/sql:/docker-entrypoint-initdb.d:ro"
+
+      env_file:
         - "variables.env"
-  volumes: 
-    postgresqldata: null
+
+      # Fica aguardando: o container so considera "pronto" quando o
+      # PostgreSQL aceitar conexoes de verdade.
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres -d az"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+      restart: unless-stopped
+
+  volumes:
+    postgresqldata:
+      driver: local
