@@ -50,6 +50,8 @@ public class CompradorService {
 
     /**
      * GET /compradores - lista todos os vinculos.
+     *
+     * @return a lista de vinculos empresa-leilao
      */
     @GetMapping
     public ResponseEntity<List<CompradorResponse>> buscarTodos() {
@@ -58,6 +60,12 @@ public class CompradorService {
 
     /**
      * GET /compradores/{empresaId}/{leilaoId} - busca um vinculo.
+     *
+     * Como a chave e COMPOSTA, a URL leva os dois ids.
+     *
+     * @param empresaId id da empresa
+     * @param leilaoId  id do leilao
+     * @return o vinculo encontrado
      */
     @GetMapping("/{empresaId}/{leilaoId}")
     public ResponseEntity<CompradorResponse> buscarPorId(@PathVariable Integer empresaId,
@@ -88,6 +96,14 @@ public class CompradorService {
 
     /**
      * PUT /compradores/{empresaId}/{leilaoId} - altera o vinculo.
+     *
+     * Como a chave primaria e o proprio vinculo, "alterar" aqui
+     * significa trocar o par - por exemplo, trocar o leilao de destino.
+     *
+     * @param empresaId id da empresa do vinculo atual
+     * @param leilaoId  id do leilao do vinculo atual
+     * @param request   empresa e leilao do vinculo novo
+     * @return o vinculo novo
      */
     @PutMapping("/{empresaId}/{leilaoId}")
     public ResponseEntity<CompradorResponse> alterar(@PathVariable Integer empresaId,
@@ -98,6 +114,9 @@ public class CompradorService {
 
     /**
      * DELETE /compradores/{empresaId}/{leilaoId} - remove o vinculo.
+     *
+     * @param empresaId id da empresa
+     * @param leilaoId  id do leilao
      */
     @DeleteMapping("/{empresaId}/{leilaoId}")
     public ResponseEntity<Void> excluir(@PathVariable Integer empresaId, @PathVariable Integer leilaoId) {
