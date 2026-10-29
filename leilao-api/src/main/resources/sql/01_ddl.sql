@@ -124,7 +124,13 @@ CREATE TABLE tb_unidade (
 -- Sobre `usuario` e `senha`: no desenho eles NAO tem asterisco, entao aqui
 -- ficam opcionais no banco (e o que o diagrama pede). Em contrapartida,
 -- a senha NUNCA e gravada em texto puro - a aplicacao grava apenas o
--- hash (BCrypt). Ver src/main/java/.../config/PasswordEncoderConfig.java.
+-- hash (Argon2id, com o prefixo "{argon2}" que identifica o algoritmo).
+-- Os hashes antigos em BCrypt continuam valendo: a aplicacao os reconhece
+-- e os reescreve sozinha no login. Ver
+-- src/main/java/.../config/PasswordEncoderConfig.java.
+--
+-- "senha" tem 128 caracteres porque o hash do Argon2id ocupa 109
+-- ("{argon2}" + parametros + sal + hash). O BCrypt ocupa 60.
 -- -----------------------------------------------------------------------------
 CREATE TABLE tb_empresa (
     id           INTEGER       NOT NULL DEFAULT nextval('seq_empresa'),
@@ -250,6 +256,115 @@ CREATE TABLE tb_comprador (
     CONSTRAINT tb_comprador_leilao_fk FOREIGN KEY (leilao)
         REFERENCES tb_leilao (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+-- -----------------------------------------------------------------------------
+-- PASSO 8 - Tabela REFRESH_TOKEN (tokens de renovacao)
+-- -----------------------------------------------------------------------------
+-- Armazena os tokens de renovacao (o "refresh token") do fluxo JWT.
+--
+-- POR QUE ESSA TABELA EXISTE:
+-- Um token de renovacao e, por definicao, de LONGA duracao (o usuario nao
+-- deve digitar a senha a cada 15 minutos). Isso o torna o alvo perfeito
+-- para um atacante: e o token que, se roubado, da acesso por dias.
+--
+-- Por isso esta tabela aplica TRES protecoes:
+--
+--  1) O token NUNCA e guardado em texto puro. Guardamos apenas o SHA-256
+--     dele. Se o banco vazar, os hashes sao inuteis para o atacante (a
+--     senha e o token sao differentes, entao o hash do token nao
+--     ajuda a descobrir o token - seria preciso reverter o SHA-256).
+--     O proprio token so existe na hora em que e emitido.
+--
+--  2) Cada token pertence a uma FAMILIA. Todos os tokens gerados a
+--     partir do mesmo login compartilham o mesmo identificador de familia.
+--     Quando um token usado e reapresentado (sinal de token copiado),
+--     toda a familia e revogada de uma vez.
+--
+--  3) Cada token e de USO UNICO. Ao renovar, ele e marcado como usado.
+--
+-- O indice em "familia" existe porque a revogacao em lote (logout e
+-- deteccao de reuso) busca por ele.
+-- -----------------------------------------------------------------------------
+CREATE TABLE tb_refresh_token (
+    id            BIGSERIAL,
+    token_hash    CHAR(64)     NOT NULL,
+    usuario       VARCHAR(100) NOT NULL,
+    familia       VARCHAR(36)  NOT NULL,
+    utilizado     BOOLEAN       NOT NULL DEFAULT FALSE,
+    data_revogacao TIMESTAMP,
+    ip_origem     VARCHAR(45),
+    data_emissao  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    data_expiracao TIMESTAMP    NOT NULL,
+
+    CONSTRAINT tb_refresh_token_pk PRIMARY KEY (id),
+
+    CONSTRAINT tb_refresh_token_hash_uk UNIQUE (token_hash)
+);
+
+-- Busca do token pelo hash: e o que acontece em TODA renovacao.
+CREATE INDEX tb_refresh_token_hash_idx ON tb_refresh_token (token_hash);
+
+-- Revogacao em lote da familia: e o que acontece no logout e na
+-- deteccao de reuso.
+CREATE INDEX tb_refresh_token_familia_idx ON tb_refresh_token (familia);
+
+-- Tarefa agendada de limpeza: remove os tokens expirados.
+CREATE INDEX tb_refresh_token_expiracao_idx ON tb_refresh_token (data_expiracao);
+
+-- -----------------------------------------------------------------------------
+-- PASSO 8b - Tabela AUDITORIA (trilha a prova de adulteracao)
+-- -----------------------------------------------------------------------------
+-- Registra as operacoes que alteram dados (POST, PUT, PATCH, DELETE).
+--
+-- POR QUE ESSA TABELA E DIFERENTE DAS OUTRAS:
+-- Uma trilha de auditoria comum e so um LOG: o usuario com acesso ao
+-- banco pode apagar a prova. Isso nao serve para nada numa investigacao.
+--
+-- Esta trilha e A PROVA DE ADULTERACAO (tamper-evident). Cada registro
+-- guarda o hash do registro ANTERIOR, formando uma CORRENTE:
+--
+--     registro 1  hash = HMAC(conteudo_1)
+--     registro 2  hash = HMAC(hash_1 + conteudo_2)
+--     registro 3  hash = HMAC(hash_2 + conteudo_3)
+--     ...
+--
+-- Se alguem alterar um registro no meio da cadeia, todos os hashes
+-- seguintes deixam de bater - e a verificacao acusa exatamente ONDE a
+-- adulteracao aconteceu.
+--
+-- A chave do HMAC fica FORA do banco (variavel de ambiente). Sem ela,
+-- nem quem tem acesso ao banco consegue forjar um registro valido.
+--
+-- "sequencia" e um numero monotonico, gravado junto com o registro. Ele
+-- impede o ataque mais obvio: apagar um registro do MEIO. Se o registro 5
+-- sumir, a sequencia salta de 4 para 6, e a verificacao ve a quebra.
+-- -----------------------------------------------------------------------------
+CREATE TABLE tb_auditoria (
+    id            BIGSERIAL,
+    sequencia     BIGINT        NOT NULL,
+    data_evento   TIMESTAMP     NOT NULL,
+    usuario       VARCHAR(100),
+    ip_origem     VARCHAR(45),
+    metodo_http   VARCHAR(10),
+    caminho       VARCHAR(500),
+    status_http   INTEGER,
+    duracao_ms    BIGINT,
+    acao          VARCHAR(100),
+    detalhe       TEXT,
+    hash_anterior CHAR(64),
+    hash_atual    CHAR(64)      NOT NULL,
+
+    CONSTRAINT tb_auditoria_pk PRIMARY KEY (id),
+
+    CONSTRAINT tb_auditoria_sequencia_uk UNIQUE (sequencia)
+);
+
+-- Leitura cronologica da trilha (e o que a API devolve em GET /auditoria).
+CREATE INDEX tb_auditoria_sequencia_idx ON tb_auditoria (sequencia);
+
+-- Investigacao por usuario e por janela de tempo.
+CREATE INDEX tb_auditoria_usuario_idx ON tb_auditoria (usuario);
+CREATE INDEX tb_auditoria_data_idx ON tb_auditoria (data_evento);
 
 -- -----------------------------------------------------------------------------
 -- PASSO 9 - Vincular as sequencias as suas tabelas
