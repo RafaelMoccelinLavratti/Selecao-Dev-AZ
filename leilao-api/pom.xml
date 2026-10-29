@@ -64,7 +64,7 @@
           permite assinar com chaves RSA (RS256) - e o que da suporte a
           rotacao de chave com o cabecalho "kid".
         -->
-        <jjwt.version>0.12.6</jjwt.version>
+        <jjwt.version>0.13.0</jjwt.version>
 
         <!--
           BouncyCastle: necessario para o Argon2id, que e o algoritmo de
