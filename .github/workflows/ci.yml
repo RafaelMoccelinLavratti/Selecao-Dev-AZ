@@ -44,7 +44,7 @@ jobs:
 
       # 1) Baixa o codigo.
       - name: Clona o repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # 2) Instala o Java 11 (a versao exigida pelo enunciado do projeto).
       #
@@ -96,7 +96,7 @@ jobs:
     steps:
 
       - name: Clona o repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # 3) Instala o Node. A versao 20 e o "current LTS" do Node.
       - name: Instala o Node 20
