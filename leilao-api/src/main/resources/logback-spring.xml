@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ============================================================================
+   CONFIGURACAO DO LOG (Logback)
+  ============================================================================
+
+   O QUE MEXE AQUI E POR QUE
+   ----------------------------------------------------------------------------
+   O padrao de log ("pattern") e' a "forma" de cada linha escrita no arquivo.
+
+   A novelty aqui e' o "%X{correlationId}": o "%X{...}" e' a forma de o
+   Logback escrever um valor do MDC (Mapped Diagnostic Context) - o contexto
+   de diagnostico da thread. Como o CorrelationIdFilter coloca ali o
+   identificador da requisicao, TODA linha de log produzida enquanto aquela
+   requisicao esta em andamento carrega o mesmo identificador.
+
+   O resultado pratico: o suporte recebe do usuario o codigo que apareceu na
+   tela ("Erro XYZ - codigo: 8f3a..."), filtra o log por esse codigo e
+   encontra exatamente as linhas da requisicao que deu problema - mesmo que
+   o log esteja cheio de requisicoes de outros usuarios.
+
+   SEM O MDC, o log seria uma sequencia de linhas sem relacao entre si, e
+  -investigar um erro em producao viraria trabalho de adivinhacao.
+
+   ============================================================================
+-->
+<configuration>
+
+    <!--
+      Perfil de desenvolvimento: consoles com cores, tudo em um unico
+      appender. O "%highlight" colore o nivel (ERROR em vermelho, WARN em
+      amarelo) o que ajuda a achar o problema rapido.
+    -->
+    <springProfile name="!prod">
+
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%X{correlationId:-sem-id}] %cyan(%logger{36}) - %msg%n</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+    </springProfile>
+
+    <!--
+      Perfil de producao: arquivo com ROTACAO DIARIA.
+
+      A rotacao importa: um arquivo de log unico cresceria sem limite
+      (ocupando o disco ate derrubar o servidor) e seria impossivel de
+      navegar. O Logback mantem 30 arquivos, um por dia, e compacta os
+      antigos em .gz (o gzip economiza cerca de 90% do espaco, e o
+      "fileSize" impede que um log anormalmente grande estoure o disco).
+    -->
+    <springProfile name="prod">
+
+        <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
+        <property name="LOG_MAX_HISTORY" value="${LOG_MAX_HISTORY:-30}"/>
+        <property name="LOG_MAX_FILE_SIZE" value="${LOG_MAX_FILE_SIZE:-50MB}"/>
+        <property name="LOG_TOTAL_SIZE_CAP" value="${LOG_TOTAL_SIZE_CAP:-2GB}"/>
+
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{correlationId:-sem-id}] %logger{36} - %msg%n</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <appender name="ARQUIVO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_DIR}/aplicacao.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <!-- Um arquivo por dia -->
+                <fileNamePattern>${LOG_DIR}/aplicacao.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+                <!-- E um novo arquivo a cada 50 MB, mesmo dentro do mesmo dia -->
+                <maxFileSize>${LOG_MAX_FILE_SIZE}</maxFileSize>
+                <!-- Mantem 30 dias -->
+                <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+                <!-- Teto total de espaco em disco ocupado pelos logs -->
+                <totalSizeCap>${LOG_TOTAL_SIZE_CAP}</totalSizeCap>
+            </rollingPolicy>
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{correlationId:-sem-id}] %logger{36} - %msg%n</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ARQUIVO"/>
+        </root>
+
+    </springProfile>
+
+</configuration>
