@@ -110,6 +110,21 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- ===================================================================
+             SEGURANCA - DEPENDENCIA DE TESTE
+             spring-security-test traz os "request post processors" que
+             permitem simular uma autenticacao valida dentro do MockMvc:
+                 .with(httpBasic("admin", "senha"))
+             Sem esta dependencia, nao seria possivel testar a cadeia de
+             filtros de seguranca de ponta a ponta (o 401, o 429 e o
+             "sucesso devolve o dado do controller").
+             =================================================================== -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
