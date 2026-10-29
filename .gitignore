@@ -59,36 +59,6 @@ leilao-api/.vscode/
 
 
 
-### Ferramentas locais do Claude Code ###
-.claude/
-
-# ---------------------------------------------------------------------------
-#  DOCUMENTACAO DE PREPARACAO (mantida FORA do repositorio)
-# ---------------------------------------------------------------------------
-#  Estes quatro arquivos sao MATERIAL DE ESTUDO, e nao documentacao do
-#  produto:
-#
-#    - ENTREVISTA.md        : banco de perguntas e respostas da entrevista
-#    - GUIA-APRESENTACAO.md : roteiro da apresentacao
-#    - TECNOLOGIAS.md       : guia de estudo das tecnologias
-#    - SEGURANCA.md         : relatorio detalhado de seguranca
-#
-#  Eles continuam no seu disco e sao uteis na hora da conversa - mas
-#  NAO vao para o GitHub. Um repositorio publico com um banco de
-#  perguntas de entrevista e um roteiro de apresentacao entrega, ao
-#  avaliador, exatamente o que o candidato precisa esconder: que o
-#  projeto foi preparado. O que vai para o repositorio e' o PROJETO -
-#  o codigo, os testes, a documentacao que descreve o que a API faz e
-#  como roda. Isso ja basta para demonstrar dominio.
-#
-#  Se quiser versionar algum deles depois, e' so remover a linha
-#  correspondente daqui (o arquivo continua no disco, intacto).
-# ---------------------------------------------------------------------------
-ENTREVISTA.md
-GUIA-APRESENTACAO.md
-TECNOLOGIAS.md
-SEGURANCA.md
-
 # ---------------------------------------------------------------------------
 #  package-lock.json
 # ---------------------------------------------------------------------------
@@ -100,3 +70,6 @@ SEGURANCA.md
 #  build.
 # ---------------------------------------------------------------------------
 !leilao-app/package-lock.json
+
+### Configuracao local de ferramentas ###
+.claude/
