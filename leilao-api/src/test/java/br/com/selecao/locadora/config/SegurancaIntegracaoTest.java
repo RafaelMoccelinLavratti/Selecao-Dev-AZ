@@ -1,5 +1,6 @@
 package br.com.selecao.locadora.config;
 
+import br.com.selecao.locadora.business.AuditoriaBO;
 import br.com.selecao.locadora.dto.UnidadeResponse;
 import br.com.selecao.locadora.service.UnidadeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -112,6 +113,29 @@ class SegurancaIntegracaoTest {
     /** Duble da camada de negocio (o banco nao e necessario aqui). */
     @MockBean
     private br.com.selecao.locadora.business.UnidadeBO unidadeBO;
+
+    /**
+     * Duble da trilha de auditoria selada por hash.
+     *
+     * A trilha real grava em "tb_auditoria" e depende do repositorio JPA -
+     * que nao existe neste recorte de teste (e' o proposito do @WebMvcTest:
+     * nao exigir banco). O duble preserva o contrato (o filtro chama
+     * "registrar") sem tocar no banco.
+     */
+    @MockBean
+    private AuditoriaBO auditoriaBO;
+
+    /**
+     * Duble do servico de tokens JWT.
+     *
+     * O JwtAuthenticationFilter e' um filtro (@Component), e o @WebMvcTest
+     * carrega filtros automaticamente - por isso o servico de tokens
+     * tambem precisa existir no contexto. Como este teste valida o modo
+     * HTTP BASIC, o JWT nao e' exercitado aqui: o duble existe apenas
+     * para satisfazer a injecao.
+     */
+    @MockBean
+    private br.com.selecao.locadora.business.TokenJwtBO tokenJwtBO;
 
     /**
      * Controle de tentativas de login.
