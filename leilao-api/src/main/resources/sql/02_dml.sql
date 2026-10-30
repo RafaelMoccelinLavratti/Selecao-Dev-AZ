@@ -168,21 +168,20 @@ INSERT INTO tb_comprador (empresa, leilao) VALUES
 -- -----------------------------------------------------------------------------
 COMMIT;
 
--- =============================================================================
---  COMO VERIFICAR QUE A MASSA DE DADOS FOI CARREGADA
---  Rode estas consultas depois de executar o script:
+
+-- Como verificar que a massa de dados foi carregada.
+-- Rode estas consultas depois de executar o script:
 --
---    SELECT 'empresa' AS tabela, count(*) FROM tb_empresa
---    UNION ALL SELECT 'leilao',  count(*) FROM tb_leilao
---    UNION ALL SELECT 'lote',    count(*) FROM tb_lote
---    UNION ALL SELECT 'unidade', count(*) FROM tb_unidade
---    UNION ALL SELECT 'comprador', count(*) FROM tb_comprador;
+--   SELECT 'empresa' AS tabela, count(*) FROM tb_empresa
+--   UNION ALL SELECT 'leilao',  count(*) FROM tb_leilao
+--   UNION ALL SELECT 'lote',    count(*) FROM tb_lote
+--   UNION ALL SELECT 'unidade', count(*) FROM tb_unidade
+--   UNION ALL SELECT 'comprador', count(*) FROM tb_comprador;
 --
---  O esperado e: 12 / 12 / 18 / 12 / 14 - ou seja, TODAS as tabelas com
---  pelo menos 10 registros, como o enunciado pede.
+-- O esperado e: 12 / 12 / 18 / 12 / 14 - ou seja, TODAS as tabelas com
+-- pelo menos 10 registros, como o enunciado pede.
 --
---  Para conferir o total de um leilao (mesma conta que a tela faz):
---    SELECT l.id, l.codigo, sum(lo.quantidade * lo.valorInicial) AS total
---      FROM tb_leilao l JOIN tb_lote lo ON lo.leilao = l.id
---     GROUP BY l.id, l.codigo ORDER BY l.id;
--- =============================================================================
+-- Para conferir o total de um leilao (mesma conta que a tela faz):
+--   SELECT l.id, l.codigo, sum(lo.quantidade * lo.valorInicial) AS total
+--     FROM tb_leilao l JOIN tb_lote lo ON lo.leilao = l.id
+--    GROUP BY l.id, l.codigo ORDER BY l.id;

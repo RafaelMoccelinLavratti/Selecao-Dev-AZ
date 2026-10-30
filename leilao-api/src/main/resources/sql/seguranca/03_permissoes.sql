@@ -93,21 +93,20 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 
 COMMIT;
 
--- =============================================================================
---  COMO CONFERIR QUE FUNCIONOU
---  Entre com o novo usuario e veja o que ele NAO pode fazer:
+
+-- Como conferir que funcionou.
+-- Entre com o novo usuario e veja o que ele NAO pode fazer:
 --
---      psql -U leilao_app -d az
+--     psql -U leilao_app -d az
 --
---      -- isto FUNCIONA (leitura):
---      SELECT * FROM tb_empresa LIMIT 1;
+--     -- isto FUNCIONA (leitura):
+--     SELECT * FROM tb_empresa LIMIT 1;
 --
---      -- isto FALHA com "permission denied for schema public" (e o
---      -- esperado e exatamente isso - o usuario da aplicacao nao deve
---      -- poder mexer na estrutura):
---      DROP TABLE tb_empresa;
+--     -- isto FALHA com "permission denied for schema public" (e o
+--     -- esperado e exatamente isso - o usuario da aplicacao nao deve
+--     -- poder mexer na estrutura):
+--     DROP TABLE tb_empresa;
 --
---  E para confirmar o NAO acesso a outros bancos do servidor:
---      psql -U leilao_app -d postgres
---      -- deve falhar com "permission denied for database postgres"
--- =============================================================================
+-- E para confirmar o NAO acesso a outros bancos do servidor:
+--     psql -U leilao_app -d postgres
+--     -- deve falhar com "permission denied for database postgres"
