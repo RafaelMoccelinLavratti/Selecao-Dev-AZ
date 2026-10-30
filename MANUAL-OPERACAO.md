@@ -2,51 +2,31 @@
 
 > Documento operacional do projeto **Avaliação AZ Tecnologia**.
 >
-> Tudo o que é preciso para **rodar**, **testar**, **demonstrar** e
-> **diagnosticar** o projeto do zero, em máquina limpa.
+> Tudo o que é preciso para rodar, testar, demonstrar e diagnosticar o
+> projeto numa máquina limpa.
 
----
-
-## Sumário
-
-1. [Pré-requisitos](#1-pré-requisitos)
-2. [Subir o banco de dados](#2-subir-o-banco-de-dados)
-3. [Subir a API](#3-subir-a-api)
-4. [Subir o frontend](#4-subir-o-frontend)
-5. [Rodar os testes](#5-rodar-os-testes)
-6. [Gerar senhas com hash](#6-gerar-senhas-com-hash)
-7. [Aplicar o menor privilégio no banco](#7-aplicar-o-menor-privilégio-no-banco)
-8. [Roteiro de demonstração](#8-roteiro-de-demonstração)
-9. [Verificação completa de saúde](#9-verificação-completa-de-saúde)
-10. [Diagnóstico de problemas](#10-diagnóstico-de-problemas)
-11. [Variáveis de ambiente](#11-variáveis-de-ambiente)
-
----
+Para o que o projeto **é** e **por que** foi feito assim, veja o
+[`README.md`](README.md). Aqui é só o lado prático.
 
 ## 1. Pré-requisitos
 
 | Ferramenta | Versão | Para quê |
 |---|---|---|
-| **Java** | 11 (LTS) | Rodar a API |
-| **Maven** | 3.8+ | Build e dependências da API |
-| **Node.js** | 16+ | Rodar o frontend |
-| **PostgreSQL** | 16 | Banco de dados |
-| **Docker** (opcional) | qualquer | Alternativa para subir o banco sem instalar |
-
-**Verificando o que já está instalado:**
+| Java | 11 (LTS) | Rodar a API |
+| Maven | 3.8+ | Build e dependências |
+| Node.js | 16+ | Rodar o frontend |
+| PostgreSQL | 16 | Banco de dados |
+| Docker | qualquer | Alternativa para subir o banco sem instalar |
 
 ```bash
 java -version        # deve mostrar 11.x
 mvn -version         # deve mostrar 3.8+ e o Java 11
 node -v              # deve mostrar 16+
 psql --version       # deve mostrar 16+
-docker --version     # opcional
 ```
 
-> **Atenção:** a API precisa do **Java 11**. Com o Java 17, o Spring
-> Boot 2.7 exige `--add-opens` no `MAVEN_OPTS` para funcionar.
-
----
+A API precisa do **Java 11**. Com o Java 17, o Spring Boot 2.7 exige
+`--add-opens` no `MAVEN_OPTS` para funcionar.
 
 ## 2. Subir o banco de dados
 
@@ -57,9 +37,8 @@ cd Selecao-Dev-AZ
 docker compose -f docker-database.yml up -d
 ```
 
-Na **primeira** subida, o container do PostgreSQL executa
-automaticamente `01_ddl.sql` (estrutura) e `02_dml.sql` (dados). O banco
-`az` já fica criado **e populado**.
+Na primeira subida o container do PostgreSQL executa `01_ddl.sql` (estrutura) e
+`02_dml.sql` (dados). O banco `az` já fica criado e populado.
 
 Conferir:
 
@@ -68,14 +47,14 @@ docker compose -f docker-database.yml ps
 docker exec -it $(docker ps -q --filter "publish=5432") psql -U postgres -d az -c "\dt"
 ```
 
-**Recomeçar do zero** (apaga os dados):
+Recomeçar do zero (apaga os dados):
 
 ```bash
 docker compose -f docker-database.yml down -v
 docker compose -f docker-database.yml up -d
 ```
 
-### Opção B: PostgreSQL instalado na máquina
+### Opção B: PostgreSQL na máquina
 
 ```bash
 createdb -U postgres az
@@ -83,9 +62,9 @@ psql -U postgres -d az -f leilao-api/src/main/resources/sql/01_ddl.sql
 psql -U postgres -d az -f leilao-api/src/main/resources/sql/02_dml.sql
 ```
 
-Os scripts são **idempotentes**: podem ser rodados de novo sem quebrar.
+Os dois scripts são idempotentes: podem rodar de novo sem quebrar.
 
-**Verificar os dados:**
+Conferir os dados:
 
 ```bash
 psql -U postgres -d az -c "SELECT COUNT(*) FROM tb_unidade;"
@@ -95,8 +74,6 @@ psql -U postgres -d az -c "SELECT COUNT(*) FROM tb_lote;"
 psql -U postgres -d az -c "SELECT COUNT(*) FROM tb_comprador;"
 ```
 
----
-
 ## 3. Subir a API
 
 ```bash
@@ -104,29 +81,25 @@ cd leilao-api
 mvn spring-boot:run
 ```
 
-Sobe na **porta 8081**.
-
-**Para ver o SQL no console** (útil para depurar):
+Sobe na porta **8081**. Para ver o SQL no console:
 
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-**Para gerar o `.jar` executável:**
+Para gerar o `.jar` executável:
 
 ```bash
 mvn package
 java -jar target/leilao-api-1.0.0-SNAPSHOT.jar
 ```
 
-**Conferir que subiu:**
+Conferir que subiu:
 
 ```bash
 curl http://localhost:8081/actuator/health
 # {"status":"UP"}
 ```
-
----
 
 ## 4. Subir o frontend
 
@@ -136,20 +109,15 @@ npm install
 npm run serve
 ```
 
-Sobe na **porta 8080**. Acesse <http://localhost:8080>.
-
-**Para gerar o bundle de produção:**
+Sobe na porta **8080**. Acesse <http://localhost:8080>.
 
 ```bash
 npm run build      # gera a pasta dist/
 npm run lint       # verificação de estilo e erros comuns
 ```
 
-> O `.env` da pasta `leilao-app` aponta a API para
-> `http://localhost:8081`. Para apontar para outro endereço, edite a
-> variável `VUE_APP_API_BASE_URL`.
-
----
+O `.env` da pasta `leilao-app` aponta a API para `http://localhost:8081`. Para
+mudar o endereço, edite a variável `VUE_APP_API_BASE_URL`.
 
 ## 5. Rodar os testes
 
@@ -158,10 +126,10 @@ cd leilao-api
 mvn test
 ```
 
-**63 testes**, todos automatizados e **sem precisar de banco de dados**:
-rodam em qualquer máquina, em menos de 30 segundos.
+63 testes, todos sem precisar de banco de dados: rodam em qualquer máquina,
+em menos de 30 segundos.
 
-| Arquivo de teste | Testes | O que verifica |
+| Arquivo | Testes | O que verifica |
 |---|---|---|
 | `SegurancaIntegracaoTest` | 7 | A cadeia de segurança inteira (401, 429, bloqueio, dado do controller) |
 | `TokenJwtBOTest` | 8 | Emissão, adulteração, expiração e tipo dos tokens |
@@ -175,47 +143,34 @@ rodam em qualquer máquina, em menos de 30 segundos.
 | `CorrelationIdFilterTest` | 5 | O identificador de correlação e o log forging |
 | `GeradorHashSenhaTest` | 2 | O gerador de hash usado para montar a massa de dados |
 
-**Rodar só um arquivo:**
+Rodar só um arquivo, ou só um método:
 
 ```bash
 mvn test -Dtest=SegurancaIntegracaoTest
-```
-
-**Rodar um método específico:**
-
-```bash
 mvn test -Dtest=SegurancaIntegracaoTest#credencialCorretaDevolveODadoDoController
 ```
 
-**Relatório HTML** (o Surefire gera em `target/surefire-reports/`):
-
-```bash
-mvn test && open leilao-api/target/surefire-reports/index.html
-```
-
----
+O relatório HTML fica em `target/surefire-reports/`.
 
 ## 6. Gerar senhas com hash
 
-A senha nunca é gravada em texto puro: o banco guarda um **hash**. A
-massa de dados (`02_dml.sql`) vem com hashes em **BCrypt**, o formato que
-existia no banco quando o projeto começou, e que o codificador delegado
-continua reconhecendo.
+A senha nunca é gravada em texto puro: o banco guarda um hash. A massa de
+dados (`02_dml.sql`) vem com hashes em BCrypt, o formato que existia no banco
+quando o projeto começou e que o codificador delegado continua reconhecendo.
 
-Para gerar hashes novos (no formato atual, **Argon2id**), existe um
-utilitário dentro do próprio projeto:
+Para gerar hashes novos (no formato atual, Argon2id):
 
 ```bash
 cd leilao-api
 mvn test -Dtest=GeradorHashSenhaTest
 ```
 
-O teste imprime os hashes gerados no console. O mesmo teste confere que
-cada hash gravado no `02_dml.sql` corresponde à senha `Senha@N`
-correspondente. Ou seja, ele é também a prova de que a migração para o
-Argon2id não trancou ninguém fora do sistema.
+O teste imprime os hashes gerados no console. O mesmo teste confere que cada
+hash gravado no `02_dml.sql` corresponde à senha `Senha@N` correspondente. Ou
+seja, ele é também a prova de que a migração para o Argon2id não trancou
+ninguém fora do sistema.
 
-Alternativamente, use o JShell do Java 11 com o classpath do projeto:
+Alternativamente, pelo JShell do Java 11:
 
 ```bash
 cd leilao-api
@@ -228,93 +183,74 @@ var encoder = new br.com.selecao.locadora.config.PasswordEncoderConfig().passwor
 System.out.println(encoder.encode("MinhaSenhaForte123"));
 ```
 
-**Regra importante:** a senha original **nunca** é gravada, só o hash.
-E o hash gerado **não pode ser reaproveitado** para outra senha: como
-o salt é sorteado a cada vez, cada hash é único.
-
----
+A senha original nunca é gravada, só o hash. E o hash gerado não serve para
+outra senha: como o salt é sorteado a cada vez, cada hash é único.
 
 ## 7. Aplicar o menor privilégio no banco
 
-**Opcional**, mas recomendado para qualquer ambiente que não seja a
-máquina do avaliador.
+Opcional, mas recomendado para qualquer ambiente que não seja a máquina do
+avaliador.
 
 ```bash
 psql -U postgres -d az -f leilao-api/src/main/resources/sql/seguranca/03_permissoes.sql
 ```
 
-Isso cria o usuário `app_leilao`, que pode ler e gravar **apenas** nas
-tabelas do projeto e **não** pode derrubar o banco, alterar a
-estrutura, criar usuários nem ler outros bancos.
+Isso cria o usuário `leilao_app`, que pode ler e gravar apenas nas tabelas do
+projeto. Ele não pode derrubar o banco, alterar a estrutura, criar usuários
+nem ler outros bancos.
 
 Depois, aponte a aplicação para ele:
 
 ```bash
 export DATABASE_URL="jdbc:postgresql://localhost:5432/az"
-export DATABASE_USER="app_leilao"
+export DATABASE_USER="leilao_app"
 export DATABASE_PASSWORD="<senha definida no script>"
 ```
 
-> **Por que isso importa.** Sem isso, a aplicação conecta como
-> superusuário. Se ela for invadida (um SQL Injection, uma dependência
-> maliciosa), o atacante herda todo esse poder. Com isso, o dano fica
-> limitado às tabelas do projeto.
-
----
+Por que isso importa: sem isso a aplicação conecta como superusuário. Se ela
+for invadida (um SQL Injection, uma dependência maliciosa), o atacante herda
+todo esse poder. Com isso, o dano fica limitado às tabelas do projeto.
 
 ## 8. Roteiro de demonstração
 
-O roteiro para uma apresentação de ~10 minutos.
+Para uma apresentação de uns 10 minutos.
 
-### 8.1 Abrir a aplicação
+**Abrir.** Subir banco, API e frontend. Em <http://localhost:8080> abre a
+tela de Unidades.
 
-1. Subir o banco, a API e o frontend.
-2. Abrir <http://localhost:8080>: a tela de **Unidades**.
+**Exercício 5 - Unidades (CRUD completo).** Clicar em "Nova unidade" e
+digitar o nome: a linha entra no topo, com o campo já focado. Salvar: a
+linha vira registro, com id gerado pelo banco. O lápis edita, a lixeira
+exclui (com diálogo de confirmação, porque exclusão não tem Ctrl+Z).
 
-### 8.2 Exercício 5: Unidades (CRUD completo)
+A técnica: uma única tabela do Vuetify com três estados (consulta, edição,
+inclusão), e a linha de inclusão entra no topo por um `computed`.
 
-1. **Clicar em "Nova unidade"** → uma linha em branco aparece no topo,
-   com o campo já focado.
-2. Digitar "Novo Galpão.Teste" e salvar → a linha vira registro, com
-   **id gerado pelo banco**.
-3. **Clicar no lápis** → a linha vira formulário; digitar e salvar.
-4. **Clicar na lixeira** → aparece o **diálogo de confirmação**
-   (exclusão não tem Ctrl+Z).
-5. **Explicar a técnica:** *grid editável do Vuetify, uma única
-   tabela com três estados (consulta, edição, inclusão), e a linha de
-   inclusão entra no topo via um `computed`.*
+**Exercício 6 - Empresas (consulta e máscaras).** No menu, Empresas. Digitar
+na busca filtra no navegador.
 
-### 8.3 Exercício 6: Empresas (consulta + máscaras)
+As máscaras: a API devolve só os dígitos (`11422377000155`) e a tela
+formata para exibição (`11.422.377/0001-55`). A canonicalização é feita no
+backend, e é o que garante que a busca por CNPJ funcione.
 
-1. Menu → **Empresas**.
-2. Digitar na busca → o filtro acontece **no navegador**.
-3. **Explicar as máscaras:** a API devolve **só os dígitos**
-   (`11422377000155`); a tela formata para exibição
-   (`11.422.377/0001-55`). A canonicalização é feita no **backend**,
-   é o que garante que a busca por CNPJ funcione.
+**Exercício 8 - Cadastro de empresa.** Menu → Empresas → "Nova empresa".
 
-### 8.4 Exercício 8: Cadastro de empresa
+A URL `#/empresa` é inclusão e `#/empresa/5` é edição: uma tela, dois
+modos. O componente descobre o modo lendo o `id` da rota.
 
-1. Menu → **Empresas** → "Nova empresa".
-2. **Explicar a URL:** `#/empresa` é inclusão; `#/empresa/5` é edição.
-   **Uma tela, dois modos**: o componente descobre o modo lendo o
-   parâmetro `id` da rota.
-3. Preencher e salvar → a tela volta para a listagem.
-4. **Explicar a validação em duas camadas:** o frontend valida para
-   *experiência*, o backend para *garantia*.
+A validação está em duas camadas: o frontend valida para a experiência, o
+backend para a garantia.
 
-### 8.5 Exercício 7: Leilões (total calculado no banco)
+**Exercício 7 - Leilões (total calculado no banco).** Menu → Leilões. Os
+cards de resumo mostram o total geral e o próximo leilão.
 
-1. Menu → **Leilões**.
-2. **Apontar os cards de resumo**: total geral e próximo leilão.
-3. **Explicar:** o total do leilão é uma **JPQL agregada no banco**
-   (`SUM(quantidade * valorInicial)`), uma consulta só, em vez de
-   buscar todos os lotes e somar em memória.
+O total do leilão é uma JPQL agregada no banco (`SUM(quantidade *
+valorInicial)`): uma consulta só, em vez de buscar todos os lotes e somar em
+memória.
 
-### 8.6 Segurança (a parte que impressiona)
+**Segurança.** Com a API no perfil de produção:
 
 ```bash
-# Em outro terminal, com a API no perfil de produção:
 curl -i http://localhost:8081/unidades
 # → 401 em JSON
 
@@ -325,7 +261,7 @@ curl -i -u admin:$SENHA_CORRETA http://localhost:8081/unidades
 # → 200 com os DADOS do controller
 ```
 
-Depois, o ataque de força bruta:
+E o ataque de força bruta:
 
 ```bash
 for i in $(seq 1 6); do
@@ -335,22 +271,13 @@ done
 # cinco 401 e depois 429
 ```
 
-**Explicar:** o limite é de **5 falhas por usuário** e **20 por IP**; a
-conta bloqueada responde **429** com o cabeçalho `Retry-After`; e a
-resposta para "usuário inexistente" é **byte a byte igual** à de "senha
-errada", o que impede a enumeração de usuários.
+O limite é de 5 falhas por usuário e 20 por IP. A conta bloqueada responde
+429 com o cabeçalho `Retry-After`. E a resposta para "usuário inexistente" é
+byte a byte igual à de "senha errada", o que impede a enumeração de usuários.
 
-### 8.7 O que está no repositório
+## 9. Verificação de saúde
 
-Mostrar os documentos e dizer que a segurança está mapeada contra a
-**OWASP Top 10**, com a seção explícita do que **não** está protegido.
-
----
-
-## 9. Verificação completa de saúde
-
-O checklist para rodar **antes** de apresentar, garantindo que está tudo
-100%.
+O que rodar antes de apresentar:
 
 ```bash
 # 1) Banco no ar
@@ -370,12 +297,10 @@ cd leilao-api && mvn test
 cd ../leilao-app && npm run lint && npm run build
 ```
 
-**Todos devem responder:** API `200`, suíte `BUILD SUCCESS` e lint
+Tudo deve responder: API em 200, suíte com `BUILD SUCCESS` e lint com
 `No lint errors found!`.
 
----
-
-## 10. Diagnóstico de problemas
+## 10. Diagnóstico
 
 ### A API não sobe
 
@@ -385,7 +310,6 @@ cd ../leilao-app && npm run lint && npm run build
 | `Connection to localhost:5432 refused` | banco parado | `docker compose -f docker-database.yml up -d` |
 | `relation "tb_unidade" does not exist` | scripts SQL não rodaram | rode `01_ddl.sql` e `02_dml.sql` |
 | `Unsupported class file major version` | Java errado | use o JDK 11 |
-| `Porta 8081 já está em uso` no frontend | frontend e API na mesma porta | o frontend é 8080, a API é 8081 |
 
 ### O frontend abre em branco
 
@@ -393,18 +317,18 @@ cd ../leilao-app && npm run lint && npm run build
 |---|---|---|
 | Tela branca | a API não está rodando | `curl http://localhost:8081/actuator/health` |
 | "Network Error" no console | CORS bloqueando | verifique `app.cors.origins` (padrão: `http://localhost:8080`) |
-| "vue-cli-service: command not found` | `npm install` não rodou | `cd leilao-app && npm install` |
+| `vue-cli-service: command not found` | `npm install` não rodou | `cd leilao-app && npm install` |
 
 ### Um teste falha
 
 | Sintoma | Causa provável | Solução |
 |---|---|---|
-| `Port 5432 ... connection refused` num teste | algum teste exige banco | os 63 testes foram escritos para **não** exigir banco; se aparecer isso, é regressão |
+| `Port 5432 ... connection refused` num teste | algum teste exige banco | os 63 testes foram escritos para não exigir banco; se aparecer isso, é regressão |
 | `SegurancaIntegracaoTest` falha | contexto do Spring não subiu | rode `mvn test -Dtest=SegurancaIntegracaoTest` e leia a stack trace |
 
 ### A autenticação não está sendo exigida
 
-A autenticação é **opt-in** por perfil. Verifique:
+Ela liga por perfil. Verifique:
 
 ```bash
 echo $SECURITY_ENABLED        # deve ser "true"
@@ -412,9 +336,9 @@ echo $SECURITY_ENABLED        # deve ser "true"
 mvn spring-boot:run -Dspring-boot.run.profiles=prod
 ```
 
-E confira o `application-prod.properties`, que exige `SECURITY_USERNAME`
-e `SECURITY_PASSWORD`. Sem elas, a aplicação **não sobe** (por opção:
-falhar na inicialização é melhor do que subir com senha padrão).
+O `application-prod.properties` exige `SECURITY_USERNAME` e
+`SECURITY_PASSWORD`. Sem elas a aplicação não sobe, por opção: falhar na
+inicialização é melhor do que subir com senha padrão.
 
 ### Limpar tudo e recomeçar
 
@@ -432,12 +356,10 @@ netstat -ano | findstr :8081
 netstat -ano | findstr :8080
 ```
 
----
-
 ## 11. Variáveis de ambiente
 
-Todas podem ser definidas por variável de ambiente (o Spring Boot dá
-precedência à variável sobre o `application.properties`).
+Todas podem ser definidas por variável de ambiente: o Spring Boot dá
+precedência à variável sobre o `application.properties`.
 
 ### Backend
 
@@ -447,16 +369,23 @@ precedência à variável sobre o `application.properties`).
 | `DATABASE_USER` | `postgres` | Usuário do banco |
 | `DATABASE_PASSWORD` | `postgres` | Senha do banco |
 | `SECURITY_ENABLED` | `false` | `true` liga a autenticação |
+| `SECURITY_MODE` | `basic` | `basic` (HTTP Basic) ou `jwt` (token JWT) |
 | `SECURITY_USERNAME` | `admin` | Usuário do HTTP Basic |
 | `SECURITY_PASSWORD` | `troque-esta-senha` | Senha do HTTP Basic |
+| `JWT_ISSUER` | `az-leilao-api` | Emissor dos tokens JWT |
+| `JWT_KEYS_DIR` | (vazio) | Pasta das chaves RSA; vazio gera chaves de desenvolvimento |
+| `AUDIT_HMAC_KEY` | (vazio) | Chave que sela a trilha de auditoria |
 | `RATE_LIMIT_ENABLED` | `true` | Liga o controle de força bruta |
 | `RATE_LIMIT_MAX_ATTEMPTS` | `5` | Falhas por usuário antes do bloqueio |
 | `RATE_LIMIT_MAX_ATTEMPTS_PER_IP` | `20` | Falhas por IP antes do bloqueio |
 | `RATE_LIMIT_WINDOW_MINUTES` | `15` | Duração da janela de contagem |
+| `API_RATE_LIMIT_ENABLED` | `true` | Liga o limite de volume |
+| `API_RATE_LIMIT_MAX_REQUESTS` | `120` | Requisições por IP na janela |
+| `API_RATE_LIMIT_WINDOW_SECONDS` | `60` | Tamanho da janela, em segundos |
 | `TRUST_PROXY` | `false` | Confiar no `X-Forwarded-For` (só atrás de proxy) |
 | `CORS_ORIGINS` | `http://localhost:8080,...` | Origens permitidas |
 
-### Exemplo: subir em modo produção
+Subindo em modo produção:
 
 ```bash
 export DATABASE_URL="jdbc:postgresql://localhost:5432/az"
@@ -476,9 +405,9 @@ cd leilao-api && mvn spring-boot:run -Dspring-boot.run.profiles=prod
 |---|---|---|
 | `VUE_APP_API_BASE_URL` | `http://localhost:8081` | Endereço da API |
 
-> **ATENÇÃO:** o `.env` do frontend vira **código que chega ao
-> navegador**. Nunca coloque ali uma senha ou um token, porque qualquer
-> pessoa que abrir o "ver código-fonte" da página veria.
+Atenção: o `.env` do frontend vira código que chega ao navegador. Nunca
+coloque ali uma senha ou um token, porque qualquer pessoa que abrir o "ver
+código-fonte" da página veria.
 
 ---
 
