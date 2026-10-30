@@ -2,9 +2,9 @@
 
 Frontend do sistema de gestão de leilões, em Vue 2 + Vuetify.
 
-Ele consome a API Spring Boot que fica na pasta `../leilao-api`. A API precisa
-estar no ar antes: o endereço vem da variável `VUE_APP_API_BASE_URL` (definida
-em `.env`), e o padrão é `http://localhost:8081`.
+Ele consome a API Spring Boot da pasta `../leilao-api`, que precisa estar no
+ar antes. O endereço vem da variável `VUE_APP_API_BASE_URL` (definida em
+`.env`), e o padrão é `http://localhost:8081`.
 
 ## Rodando
 
@@ -22,13 +22,13 @@ npm run lint       # roda o ESLint com --fix
 
 ## Telas
 
-| Rota          | Arquivo                            | O que faz                                    |
-| ------------- | ---------------------------------- | -------------------------------------------- |
-| `/unidades`   | `views/unidade/Unidades.vue`       | Consulta e edição de unidades, em grid       |
-| `/empresas`   | `views/empresa/Empresas.vue`       | Lista de empresas com busca                  |
-| `/empresa`    | `views/empresa/Empresa.vue`        | Cadastro de empresa                          |
-| `/empresa/:id`| `views/empresa/Empresa.vue`        | Alteração de empresa                         |
-| `/leiloes`    | `views/leilao/Leiloes.vue`         | Resumo dos leilões com o total de lotes      |
+| Rota | Arquivo | O que faz |
+|---|---|---|
+| `/unidades` | `views/unidade/Unidades.vue` | Consulta e edição de unidades, em grid |
+| `/empresas` | `views/empresa/Empresas.vue` | Lista de empresas com busca |
+| `/empresa` | `views/empresa/Empresa.vue` | Cadastro de empresa |
+| `/empresa/:id` | `views/empresa/Empresa.vue` | Alteração de empresa |
+| `/leiloes` | `views/leilao/Leiloes.vue` | Resumo dos leilões com o total de lotes |
 
 A rota `/` redireciona para `/unidades`.
 
@@ -56,5 +56,6 @@ no formulário.
 
 ## Identidade visual
 
-As cores, a tipografia (Poppins) e o logo estão em `src/assets/brand/`. A
-referência completa está em `../IDENTIDADE-VISUAL.md`.
+As cores, a tipografia (Barlow no corpo do texto e Tomorrow nos títulos) e o
+logo estão em `src/assets/brand/`. A referência completa está em
+`../IDENTIDADE-VISUAL.md`.
