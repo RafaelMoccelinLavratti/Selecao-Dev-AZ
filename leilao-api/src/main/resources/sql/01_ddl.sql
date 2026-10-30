@@ -374,11 +374,10 @@ ALTER SEQUENCE seq_unidade OWNED BY tb_unidade.id;
 -- -----------------------------------------------------------------------------
 COMMIT;
 
--- =============================================================================
---  NOTA DE SEGURANCA
---  Nenhum usuario/senha do banco aparece neste script, e nenhuma senha do
---  avaliador esta versionada no Git. Para rodar localmente, use as
---  credenciais do seu proprio PostgreSQL (veja README.md, secao "Como rodar").
---  Para separar o usuario da aplicacao do dono do banco, veja o script
---  opcional sql/seguranca/03_permissoes.sql (principio do menor privilegio).
--- =============================================================================
+
+-- Nota de seguranca.
+-- Nenhum usuario/senha do banco aparece neste script, e nenhuma senha do
+-- avaliador esta versionada no Git. Para rodar localmente, use as
+-- credenciais do seu proprio PostgreSQL (veja README.md, secao "Como rodar").
+-- Para separar o usuario da aplicacao do dono do banco, veja o script
+-- opcional sql/seguranca/03_permissoes.sql (principio do menor privilegio).
