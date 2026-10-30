@@ -129,7 +129,7 @@ export default {
        * arquivo .env da pasta leilao-app). O "||" (OU) abaixo e um
        * plano B: se a variavel nao existir, usa o endereco local padrao.
        *
-       * POR QUE MOSTRAR ISSO NA TELA?
+       * Por que mostrar isso na tela?
        * Para o usuario (e para quem avalia o sistema) saber com
        * qual ambiente esta trabalhando. evita o erro classico de
        * cadastrar dados no banco errado sem perceber.

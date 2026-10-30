@@ -18,7 +18,7 @@
      enunciado ("separe bem o codigo em componentes").
   -->
   <v-app>
-    <!-- ============ barra superior ============ -->
+    <!-- barra superior -->
     <!--
       A barra usa a cor de estrutura da AZ (#002436, azul-marinho) - a
       mesma da navbar do site institucional. O logo ao lado e o arquivo
@@ -49,7 +49,7 @@
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
     </v-app-bar>
 
-    <!-- ============ menu lateral ============ -->
+    <!-- menu lateral -->
     <!--
       "app" faz o menu acompanhar o conteudo na rolagem.
       "v-model" liga o estado "drawer" (aberto/fechado) ao componente.
@@ -58,7 +58,7 @@
       <app-menu />
     </v-navigation-drawer>
 
-    <!-- ============ conteudo principal ============ -->
+    <!-- conteudo principal -->
     <v-main>
       <v-container fluid class="pa-4">
         <!--

@@ -1,53 +1,33 @@
--- =============================================================================
---  03_permissoes.sql  |  PAPEL DE BANCO COM MENOR PRIVILEGIO (OPCIONAL)
---  Projeto: Avaliação AZ Tecnologia - Leilões
+-- 03_permissoes.sql - papel de banco com menor privilegio (opcional).
 --
---  ATENÇÃO: ESTE SCRIPT É OPCIONAL E NÃO É EXECUTADO AUTOMATICAMENTE.
---  Ele fica na subpasta "seguranca/" justamente por isso: o container do
---  Postgres só executa os arquivos .sql que estão DIRETAMENTE na pasta
---  montada em /docker-entrypoint-initdb.d (o utilitário find do container
---  usa "maxdepth 1" e não entra em subpastas).
+-- Este script nao e executado automaticamente. Ele fica na subpasta
+-- "seguranca/" porque o container do Postgres so executa os .sql que estao
+-- DIRETAMENTE na pasta montada em /docker-entrypoint-initdb.d (o utilitario
+-- find do container usa "maxdepth 1" e nao entra em subpastas).
 --
---  PARA QUE SERVE ESTE SCRIPT?
---  Aplicar o "princípio do menor privilégio" no banco de dados.
+-- A ideia e aplicar "principio do menor privilegio" no banco. Sem isso, a
+-- aplicacao conecta com o superusuario "postgres", que pode derrubar o
+-- banco, alterar a estrutura das tabelas, criar outros usuarios e ler todos
+-- os bancos do servidor - e, se a aplicacao for invadida (um SQL Injection,
+-- uma dependencia maliciosa), o atacante herda todo esse poder.
 --
---  O QUE É ESSE PRINCÍPIO?
---  A ideia é: a aplicação deve usar um usuário que SÓ consegue fazer o
---  que precisa - e nada mais.
+-- Este script cria o usuario "leilao_app", que so pode fazer SELECT, INSERT,
+-- UPDATE e DELETE nas tabelas do projeto. Ele nao pode DROP, ALTER, TRUNCATE,
+-- criar usuarios nem acessar outros bancos. Se a aplicacao for invadida, o
+-- dano se limita aos dados - que e o que a ISO 27001 e a LGPD pedem em
+-- termos de contencao de impacto.
 --
---  Sem isso (cenário comum):
---      A aplicação conecta com o superusuário "postgres", que pode:
---        - DROPAR o banco inteiro;
---        - ALTERAR a estrutura das tabelas;
---        - criar outros usuários;
---        - ler TODOS os bancos do servidor.
---      Se a aplicação for invadida (um SQL Injection, uma dependência
---      maliciosa), o atacante herda TODO esse poder.
+-- Para aplicar:
+--   psql -U postgres -d az -f 03_permissoes.sql
 --
---  Com isso (o que este script faz):
---      Cria o usuário "leilao_app", que pode apenas:
---        - SELECT, INSERT, UPDATE, DELETE nas tabelas do projeto.
---      E NÃO pode:
---        - DROP / ALTER / TRUNCATE;
---        - criar ou alterar usuários;
---        - acessar outros bancos do servidor.
---      Se a aplicação for invadida, o dano se limita aos DADOS - que é
---      exatamente o que se quer (e é o que a ISO 27001 e a LGPD pedem
---      em termos de contenção de impacto).
+-- Depois, aponte a aplicacao para o novo usuario:
+--   DATABASE_USER=leilao_app
+--   DATABASE_PASSWORD=<a senha que voce definir>
 --
---  COMO APLICAR (opcional):
---      psql -U postgres -d az -f 03_permissoes.sql
---
---  DEPOIS DE APLICAR, APONTE A APLICAÇÃO PARA O NOVO USUÁRIO:
---      DATABASE_USER=leilao_app
---      DATABASE_PASSWORD=<a senha que voce definir>
---
---  NOTA SOBRE A SENHA:
---  O placeholder abaixo ("troque-esta-senha") é proposital. Em um ambiente
---  real, a senha viria de um "secret" do orquestrador (Docker Swarm
---  secrets, Kubernetes Secret, AWS Secrets Manager, HashiCorp Vault) e
---  NUNCA de um arquivo versionado no Git.
--- =============================================================================
+-- A senha "troque-esta-senha" abaixo e um placeholder. Em um ambiente real
+-- ela viria de um "secret" do orquestrador (Docker Swarm secrets,
+-- Kubernetes Secret, AWS Secrets Manager, HashiCorp Vault) e nunca de um
+-- arquivo versionado no Git.
 
 BEGIN;
 

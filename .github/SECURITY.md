@@ -6,8 +6,8 @@ Este documento explica **como reportar uma vulnerabilidade** e **o que não
 ## Como reportar
 
 **Não abra uma issue pública para reportar uma vulnerabilidade.** Uma
-issue pública fica visível para todo mundo — inclusive para quem pretende
-explorar o problema — no tempo exato em que a correção ainda não existe.
+issue pública fica visível para todo mundo, inclusive para quem pretende
+explorar o problema, no tempo exato em que a correção ainda não existe.
 
 Use o canal privado do GitHub:
 
@@ -29,7 +29,7 @@ Use o canal privado do GitHub:
 1. Você recebe a confirmação de recebimento em até **3 dias úteis**.
 2. A vulnerabilidade é confirmada (ou não) em até **7 dias úteis**.
 3. A correção é preparada e testada.
-4. A correção é publicada, e você é creditado(a) no changelog — a menos
+4. A correção é publicada, e você é creditado(a) no changelog, a menos
    que prefira não ser creditado(a).
 5. A issue pública é aberta depois que a correção estiver disponível.
 
@@ -39,7 +39,7 @@ Use o canal privado do GitHub:
 
 - **Erros de configuração que exigem acesso prévio.** Rodar a aplicação
   com `app.security.enabled=false` em produção é uma escolha de
-  implantação, não uma vulnerabilidade — o perfil `prod` liga a
+  implantação, não uma vulnerabilidade: o perfil `prod` liga a
   autenticação.
 - **Ataques de negação de serviço com recursos infinitos.** O projeto já
   tem controle anti-força-bruta e limitador de requisições por IP.
@@ -48,7 +48,7 @@ Use o canal privado do GitHub:
   produção.
 - **Segredos de ambiente.** As variáveis de ambiente não fazem parte do
   repositório. Se você encontrar uma senha real versionada no Git, isso
-  **é** uma vulnerabilidade — reporte.
+  **é** uma vulnerabilidade: reporte.
 - **Relatos sem passos de reprodução.** Um relato teórico precisa de ao
   menos uma indicação de como chegar até lá.
 
@@ -63,7 +63,7 @@ Use o canal privado do GitHub:
 
 **Fora de escopo:**
 - Vulnerabilidades do próprio Spring Boot, Vue, PostgreSQL ou do JDK
-  (reportadas aos respectivos mantenedores — o Dependabot deste
+  (reportadas aos respectivos mantenedores; o Dependabot deste
   repositório já sinaliza as atualizações)
 - Problemas de configuração de infraestrutura
 - Falta de cabeçalhos de segurança em ambientes que desativam a API

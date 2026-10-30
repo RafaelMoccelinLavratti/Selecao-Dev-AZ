@@ -8,7 +8,7 @@
      URL da pagina.....: http://server/#/leiloes
      URL dos servicos..: http://server/leiloes (GET)
 
-     ONDE NASCE O "TOTAL"?
+     De onde nasce o "total"?
 
      O total NAO e um campo da tabela tb_leilao - ele e CALCULADO, no banco,
      na consulta do repositorio (LeilaoRepository.findResumoLeiloes):

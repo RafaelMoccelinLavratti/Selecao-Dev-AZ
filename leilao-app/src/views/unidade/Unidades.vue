@@ -8,7 +8,7 @@
      URL da pagina......: http://server/#/unidades
      URL dos servicos...: http://server/unidades (GET | POST | PUT | DELETE)
 
-     COMO A "GRID EDITAVEL" FUNCIONA
+     Como a "grid editavel" funciona
 
      A linha tem TRES estados possiveis:
 
@@ -25,7 +25,7 @@
      frente da lista real. Assim nao existe uma segunda tabela na tela - e
      uma unica, que muda de conteudo.
 
-     POR QUE OS BOTOES DE EXCLUIR USAM UM DIALOGO?
+     Por que os botoes de excluir usam um dialogo?
 
      Exclusao nao tem "Ctrl+Z". Um clique acidental no icone de lixeira -
      que fica a poucos pixels do lapis de editar - apagaria um cadastro sem
@@ -345,7 +345,7 @@ export default {
      *
      * Espelham as validacoes do backend (UnidadeRequest.java).
      *
-     * POR QUE VALIDAR NOS DOIS LADOS?
+     * Por que validar nos dois lados?
      *  - No FRONTEND, para dar EXPERIENCIA: o usuario ve o erro na
      *    hora, sem perder o que ja digitou e sem gastar uma ida ao
      *    servidor.

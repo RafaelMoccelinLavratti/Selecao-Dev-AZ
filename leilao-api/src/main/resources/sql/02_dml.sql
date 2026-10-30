@@ -1,36 +1,25 @@
--- =============================================================================
---  02_dml.sql  |  MASSA DE DADOS INICIAL (DML - Data Manipulation Language)
---  Projeto: Avaliação AZ Tecnologia - Leilões
+-- 02_dml.sql - massa de dados inicial (DML).
 --
---  PARA QUE SERVE ESTE ARQUIVO?
---  O avaliador pediu: "Prepare script (DML) com uma massa de dados inicial
---  para permitir que a aplicação seja testada. Adicione pelo menos 10
---  registros em cada tabela."
+-- A avaliacao pede "uma massa de dados inicial para permitir que a aplicacao
+-- seja testada, com pelo menos 10 registros em cada tabela". Este script
+-- cria 12 empresas, 12 unidades, 12 leiloes, 18 lotes e 14 compradores, com
+-- as chaves estrangeiras apontando para registros que existem. E o que
+-- permite abrir a aplicacao e ver telas com conteudo real sem cadastrar
+-- nada na mao.
 --
---  Este script cria 12 empresas, 12 unidades, 12 leiloes, 18 lotes e
---  14 compradores - todos com as chaves estrangeiras corretamente
---  apontando para registros que existem. Isso é o que permite abrir a
---  aplicação e ver telas com conteúdo real, sem precisar cadastrar
---  nada na mão.
+-- Sobre as senhas: a coluna "senha" da tb_empresa guarda um HASH BCrypt,
+-- nunca a senha em texto puro. Se o banco vazar, o atacante leva hashes e
+-- nao as senhas. Cada empresa da massa de teste tem uma senha diferente, no
+-- padrao "Senha@<id>", mas o que fica gravado e so o hash. Os hashes sao
+-- gerados por src/test/java/br/com/selecao/locadora/GeradorHashSenha.java
+-- (rode: mvn test -Dtest=GeradorHashSenha).
 --
---  DETALHE IMPORTANTE SOBRE AS SENHAS:
---  A coluna "senha" da tb_empresa guarda um HASH BCrypt, nunca a senha em
---  texto puro. Esse e o principio basico de seguranca da informacao: se o
---  banco vazar, o atacante leva hashes, nao as senhas. Cada empresa da
---  massa de teste tem uma senha diferente no padrao
---  "Senha@<id>", porem o que fica gravado no banco e apenas o hash.
---  O script que gera esses hashes esta em
---  src/test/java/br/com/selecao/locadora/GeradorHashSenha.java
---  (rode: mvn test -Dtest=GeradorHashSenha)
+-- Para rodar:
+--   docker compose -f docker-database.yml up -d   (ja roda sozinho)
+--   psql -U postgres -d az -f 02_dml.sql
 --
---  COMO RODAR:
---  - Docker:    ja roda sozinho (o compose monta a pasta sql/ no container)
---  - psql:      psql -U postgres -d az -f 02_dml.sql
---
---  O script e IDEMPOTENTE: pode rodar quantas vezes quiser, porque
---  primeiro limpa a massa de teste (TRUNCATE ... CASCADE) e so depois
---  insere os dados.
--- =============================================================================
+-- O script e idempotente: pode rodar quantas vezes quiser, porque primeiro
+-- limpa a massa de teste (TRUNCATE ... CASCADE) e so depois insere.
 
 BEGIN;
 

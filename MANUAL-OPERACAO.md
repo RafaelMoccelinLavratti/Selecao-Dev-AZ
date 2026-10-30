@@ -1,9 +1,9 @@
-# MANUAL DE OPERAÇÃO — Sistema de Leilões
+# Manual de Operação do Sistema de Leilões
 
 > Documento operacional do projeto **Avaliação AZ Tecnologia**.
 >
 > Tudo o que é preciso para **rodar**, **testar**, **demonstrar** e
-> **diagnosticar** o projeto — do zero, em máquina limpa.
+> **diagnosticar** o projeto do zero, em máquina limpa.
 
 ---
 
@@ -50,7 +50,7 @@ docker --version     # opcional
 
 ## 2. Subir o banco de dados
 
-### Opção A — Docker (recomendado)
+### Opção A: Docker (recomendado)
 
 ```bash
 cd Selecao-Dev-AZ
@@ -75,7 +75,7 @@ docker compose -f docker-database.yml down -v
 docker compose -f docker-database.yml up -d
 ```
 
-### Opção B — PostgreSQL instalado na máquina
+### Opção B: PostgreSQL instalado na máquina
 
 ```bash
 createdb -U postgres az
@@ -158,7 +158,7 @@ cd leilao-api
 mvn test
 ```
 
-**63 testes**, todos automatizados e **sem precisar de banco de dados** —
+**63 testes**, todos automatizados e **sem precisar de banco de dados**:
 rodam em qualquer máquina, em menos de 30 segundos.
 
 | Arquivo de teste | Testes | O que verifica |
@@ -199,7 +199,7 @@ mvn test && open leilao-api/target/surefire-reports/index.html
 
 A senha nunca é gravada em texto puro: o banco guarda um **hash**. A
 massa de dados (`02_dml.sql`) vem com hashes em **BCrypt**, o formato que
-existia no banco quando o projeto começou — e que o codificador delegado
+existia no banco quando o projeto começou, e que o codificador delegado
 continua reconhecendo.
 
 Para gerar hashes novos (no formato atual, **Argon2id**), existe um
@@ -212,7 +212,7 @@ mvn test -Dtest=GeradorHashSenhaTest
 
 O teste imprime os hashes gerados no console. O mesmo teste confere que
 cada hash gravado no `02_dml.sql` corresponde à senha `Senha@N`
-correspondente — ou seja, ele é também a prova de que a migração para o
+correspondente. Ou seja, ele é também a prova de que a migração para o
 Argon2id não trancou ninguém fora do sistema.
 
 Alternativamente, use o JShell do Java 11 com o classpath do projeto:
@@ -228,7 +228,7 @@ var encoder = new br.com.selecao.locadora.config.PasswordEncoderConfig().passwor
 System.out.println(encoder.encode("MinhaSenhaForte123"));
 ```
 
-**Regra importante:** a senha original **nunca** é gravada — só o hash.
+**Regra importante:** a senha original **nunca** é gravada, só o hash.
 E o hash gerado **não pode ser reaproveitado** para outra senha: como
 o salt é sorteado a cada vez, cada hash é único.
 
@@ -244,7 +244,7 @@ psql -U postgres -d az -f leilao-api/src/main/resources/sql/seguranca/03_permiss
 ```
 
 Isso cria o usuário `app_leilao`, que pode ler e gravar **apenas** nas
-tabelas do projeto — e **não** pode derrubar o banco, alterar a
+tabelas do projeto e **não** pode derrubar o banco, alterar a
 estrutura, criar usuários nem ler outros bancos.
 
 Depois, aponte a aplicação para ele:
@@ -269,9 +269,9 @@ O roteiro para uma apresentação de ~10 minutos.
 ### 8.1 Abrir a aplicação
 
 1. Subir o banco, a API e o frontend.
-2. Abrir <http://localhost:8080> — a tela de **Unidades**.
+2. Abrir <http://localhost:8080>: a tela de **Unidades**.
 
-### 8.2 Exercício 5 — Unidades (CRUD completo)
+### 8.2 Exercício 5: Unidades (CRUD completo)
 
 1. **Clicar em "Nova unidade"** → uma linha em branco aparece no topo,
    com o campo já focado.
@@ -280,35 +280,35 @@ O roteiro para uma apresentação de ~10 minutos.
 3. **Clicar no lápis** → a linha vira formulário; digitar e salvar.
 4. **Clicar na lixeira** → aparece o **diálogo de confirmação**
    (exclusão não tem Ctrl+Z).
-5. **Explicar a técnica:** *grid editável do Vuetify — uma única
+5. **Explicar a técnica:** *grid editável do Vuetify, uma única
    tabela com três estados (consulta, edição, inclusão), e a linha de
    inclusão entra no topo via um `computed`.*
 
-### 8.3 Exercício 6 — Empresas (consulta + máscaras)
+### 8.3 Exercício 6: Empresas (consulta + máscaras)
 
 1. Menu → **Empresas**.
 2. Digitar na busca → o filtro acontece **no navegador**.
 3. **Explicar as máscaras:** a API devolve **só os dígitos**
    (`11422377000155`); a tela formata para exibição
-   (`11.422.377/0001-55`). A canonicalização é feita no **backend** —
+   (`11.422.377/0001-55`). A canonicalização é feita no **backend**,
    é o que garante que a busca por CNPJ funcione.
 
-### 8.4 Exercício 8 — Cadastro de empresa
+### 8.4 Exercício 8: Cadastro de empresa
 
 1. Menu → **Empresas** → "Nova empresa".
 2. **Explicar a URL:** `#/empresa` é inclusão; `#/empresa/5` é edição.
-   **Uma tela, dois modos** — o componente descobre o modo lendo o
+   **Uma tela, dois modos**: o componente descobre o modo lendo o
    parâmetro `id` da rota.
 3. Preencher e salvar → a tela volta para a listagem.
 4. **Explicar a validação em duas camadas:** o frontend valida para
    *experiência*, o backend para *garantia*.
 
-### 8.5 Exercício 7 — Leilões (total calculado no banco)
+### 8.5 Exercício 7: Leilões (total calculado no banco)
 
 1. Menu → **Leilões**.
 2. **Apontar os cards de resumo**: total geral e próximo leilão.
 3. **Explicar:** o total do leilão é uma **JPQL agregada no banco**
-   (`SUM(quantidade * valorInicial)`) — uma consulta só, em vez de
+   (`SUM(quantidade * valorInicial)`), uma consulta só, em vez de
    buscar todos os lotes e somar em memória.
 
 ### 8.6 Segurança (a parte que impressiona)
@@ -338,7 +338,7 @@ done
 **Explicar:** o limite é de **5 falhas por usuário** e **20 por IP**; a
 conta bloqueada responde **429** com o cabeçalho `Retry-After`; e a
 resposta para "usuário inexistente" é **byte a byte igual** à de "senha
-errada" — isso impede a enumeração de usuários.
+errada", o que impede a enumeração de usuários.
 
 ### 8.7 O que está no repositório
 
@@ -413,7 +413,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=prod
 ```
 
 E confira o `application-prod.properties`, que exige `SECURITY_USERNAME`
-e `SECURITY_PASSWORD` — sem elas, a aplicação **não sobe** (por opção:
+e `SECURITY_PASSWORD`. Sem elas, a aplicação **não sobe** (por opção:
 falhar na inicialização é melhor do que subir com senha padrão).
 
 ### Limpar tudo e recomeçar
@@ -477,7 +477,7 @@ cd leilao-api && mvn spring-boot:run -Dspring-boot.run.profiles=prod
 | `VUE_APP_API_BASE_URL` | `http://localhost:8081` | Endereço da API |
 
 > **ATENÇÃO:** o `.env` do frontend vira **código que chega ao
-> navegador**. Nunca coloque ali uma senha ou um token — qualquer
+> navegador**. Nunca coloque ali uma senha ou um token, porque qualquer
 > pessoa que abrir o "ver código-fonte" da página veria.
 
 ---
