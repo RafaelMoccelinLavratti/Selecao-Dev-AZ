@@ -68,7 +68,7 @@
           hash de senha recomendado pela OWASP desde 2023 (memoria-alta,
           resistente a ataque com hardware dedicado).
         -->
-        <bouncycastle.version>1.78.1</bouncycastle.version>
+        <bouncycastle.version>1.86</bouncycastle.version>
 
         <!--
           Versao do plugin que gera o SBOM (lista de componentes do
