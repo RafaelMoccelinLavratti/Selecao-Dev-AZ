@@ -1,54 +1,38 @@
--- =============================================================================
---  01_ddl.sql  |  ESTRUTURA DO BANCO (DDL - Data Definition Language)
---  Projeto: Avaliação AZ Tecnologia - Leilões
---  Banco....: PostgreSQL 10+ (testado no 16)
+-- 01_ddl.sql - estrutura do banco (DDL). PostgreSQL 10+ (testado no 16).
 --
---  PARA QUE SERVE ESTE ARQUIVO?
---  O diagrama que o avaliador entregou (database.png) mostra 5 tabelas:
---  empresa, leilao, lote, unidade e comprador.
---  Este script transforma aquele desenho em tabelas de verdade no banco:
---  cria as tabelas, as chaves primárias (PK), as chaves estrangeiras (FK),
---  as restrições de unicidade (UNIQUE), as sequências (SEQUENCE) e as
---  validações de conteúdo (CHECK).
+-- O diagrama da avaliacao (sql/database.png) tem 5 tabelas: empresa,
+-- leilao, lote, unidade e comprador. Este script cria essas tabelas com
+-- chaves primarias, chaves estrangeiras, restricoes de unicidade,
+-- sequencias e validacoes de conteudo.
 --
---  CONVENÇÃO DE NOMENCLATURA (importante para ler o código depois)
---  O diagrama usa "camelCase" (razaoSocial, inicioPrevisto, valorInicial).
---  No banco, que roda em outro SO e em outra linguagem, adotamos o padrão
---  mais usado do mercado: "snake_case" em minusculas.
---      Diagrama (logico)  ->  Banco (fisico)
---           razaoSocial   ->      razao_social
---           inicioPrevisto->      inicio_previsto
---           valorInicial  ->      valor_inicial
---           numeroLote    ->      numero_lote
---           createdAt     ->      created_at
---           updatedAt     ->      updated_at
---  O mesmo nome logico aparece em camelCase no codigo Java e em snake_case
---  no banco, e a ligacao entre os dois fica EXPLICITA na anotacao
---  @Column(name = "razao_social") de cada entidade.
+-- O diagrama usa camelCase (razaoSocial, inicioPrevisto, valorInicial) e o
+-- banco usa snake_case, que e o padrao do mercado:
 --
---  REGRA DE OURO USADA AQUI:
---  1) Todo "id" e INTEGER e nasce de uma SEQUENCE (nextval). Isso evita
---     erro de "duplicate key" quando duas pessoas cadastram ao mesmo tempo.
---  2) Respeitei os asteriscos (*) do diagrama: TODA coluna com * e NOT NULL.
---  3) Respeitei os sublinhados do diagrama: cnpj e usuario sao UNIQUE.
---  4) VALORES monetarios usam NUMERIC(14,2) e nunca FLOAT/DOUBLE, porque
---     ponto flutuante "perde" centavos (0.1 + 0.2 != 0.3). Dinheiro e
---     exato por definicao.
---  5) Todo comando esta dentro de uma TRANSACTION (BEGIN/COMMIT): se algo
---     falhar no meio, o banco volta ao estado anterior em vez de ficar
---     pela metade. Isso e "transacionalidade" e evita sujeira no banco.
+--     razaoSocial    ->  razao_social
+--     inicioPrevisto ->  inicio_previsto
+--     valorInicial   ->  valor_inicial
+--     numeroLote     ->  numero_lote
+--     createdAt      ->  created_at
 --
---  COMO RODAR ESTE ARQUIVO:
---  - Via Docker (o repo ja traz docker-database.yml):
---      docker compose -f docker-database.yml up -d
---    O container do Postgres roda automaticamente TODOS os arquivos .sql
---    que estiverem na pasta /docker-entrypoint-initdb.d (o compose.yml ja
---    monta essa pasta). Por isso os arquivos comecam com 01_, 02_...
---    (a ordem numerica garante a execucao correta).
+-- A ligacao entre os dois fica explicita no @Column(name = "razao_social")
+-- de cada entidade.
 --
---  - Via psql (Postgres ja instalado na maquina):
---      psql -U postgres -d az -f 01_ddl.sql
--- =============================================================================
+-- Decisoes de projeto:
+--   - todo id e INTEGER e nasce de uma SEQUENCE (nextval), o que evita
+--     "duplicate key" quando duas pessoas cadastram ao mesmo tempo;
+--   - os asteriscos do diagrama viraram NOT NULL e os sublinhados viraram
+--     UNIQUE (cnpj e usuario);
+--   - valores monetarios usam NUMERIC(14,2) e nunca FLOAT, porque ponto
+--     flutuante perde centavos (0.1 + 0.2 != 0.3);
+--   - tudo roda dentro de uma transacao, entao uma falha no meio devolve o
+--     banco ao estado anterior em vez de deixa-lo pela metade.
+--
+-- Para rodar:
+--   docker compose -f docker-database.yml up -d
+--     (o container do Postgres executa sozinho os .sql da pasta montada em
+--     /docker-entrypoint-initdb.d; o prefixo numerico garante a ordem)
+--
+--   psql -U postgres -d az -f 01_ddl.sql
 
 BEGIN;
 

@@ -1,4 +1,4 @@
-# Sistema de Leilões — Avaliação AZ Tecnologia
+# Sistema de Leilões (Avaliação AZ Tecnologia)
 
 Aplicação **full stack** para consulta e gestão de leilões, desenvolvida para a
 avaliação técnica da **AZ Tecnologia em Gestão**.
@@ -49,7 +49,7 @@ exigida pelo enunciado e cobrindo **todos os 8 exercícios**.
 
 ## 3. Como rodar
 
-### 3.1 Opção A — Docker (banco pronto, um comando)
+### 3.1 Opção A: Docker (banco pronto, um comando)
 
 Pré-requisito: Docker Desktop instalado.
 
@@ -68,7 +68,7 @@ docker compose -f docker-database.yml down -v
 docker compose -f docker-database.yml up -d
 ```
 
-### 3.2 Opção B — PostgreSQL instalado na máquina
+### 3.2 Opção B: PostgreSQL instalado na máquina
 
 ```bash
 createdb -U postgres az
@@ -103,7 +103,7 @@ cd leilao-api
 mvn test
 ```
 
-**63 testes**, todos automatizados e **sem precisar de banco de dados** —
+**63 testes**, todos automatizados e **sem precisar de banco de dados**:
 rodam em qualquer máquina, em menos de 30 segundos.
 
 ---
@@ -117,7 +117,7 @@ O enunciado define 4 camadas. Cada uma tem uma responsabilidade única:
       │  HTTP/JSON
       ▼
 ┌──────────────────────────────┐
-│ service    (UnidadeService,  │  controllers REST — traduzem HTTP ↔ Java
+│ service    (UnidadeService,  │  controllers REST: traduzem HTTP ↔ Java
 │            EmpresaService, …)│  NÃO contêm regra de negócio
 └──────────────┬───────────────┘
                ▼
@@ -143,7 +143,7 @@ Por que separar?
 - **Manutenção**: mexer no SQL não afeta o controller; mudar o formato da
   resposta não afeta a regra de negócio.
 - **Substituição**: a camada `business` não sabe se o dado está em PostgreSQL,
-  MySQL ou num cache — o `repository` é quem sabe.
+  MySQL ou num cache. Quem sabe é o `repository`.
 
 ### Estrutura de pastas
 
@@ -203,26 +203,22 @@ leilao-app/src/
 
 ```
 leilao-api/src/main/resources/sql/
-├── 01_ddl.sql          estrutura das 5 tabelas   ← executado pelo Docker
-├── 02_dml.sql          massa de dados inicial    ← executado pelo Docker
-├── database.png        o diagrama do enunciado
-├── seguranca/
-│   └── 03_permissoes.sql   papel de menor privilégio (OPCIONAL, manual)
-└── exemplos/
-    └── spcript.sql      script original do starter (NÃO é executado)
+├── 01_ddl.sql              estrutura das 5 tabelas   ← executado pelo Docker
+├── 02_dml.sql              massa de dados inicial    ← executado pelo Docker
+├── database.png            o diagrama do enunciado
+└── seguranca/
+    └── 03_permissoes.sql   papel de menor privilégio (OPCIONAL, manual)
 ```
 
-> **Por que `spcript.sql` e `03_permissoes.sql` estão em subpastas?**
+> **Por que o `03_permissoes.sql` está numa subpasta?**
 > O container do PostgreSQL executa automaticamente **apenas** os arquivos
 > `.sql` que estão **diretamente** na pasta montada em
 > `/docker-entrypoint-initdb.d` (o utilitário do container usa `maxdepth 1`
 > e não entra em subpastas).
 >
-> O `spcript.sql` do starter criaria a tabela `tb_unidade` e a sequence
-> `seq_unidade` — que o `01_ddl.sql` **já cria**. Se ele fosse executado
-> automaticamente, o container abortaria a inicialização com
-> `relation tb_unidade already exists` e **o banco nem subiria**. Por isso
-> foi para a subpasta `exemplos/`, onde fica como referência.
+> O script do starter que criava a tabela `tb_unidade` foi removido: ele
+> colidiria com a `tb_unidade` que o `01_ddl.sql` já cria, e o container
+> abortaria a inicialização com `relation tb_unidade already exists`.
 >
 > O `03_permissoes.sql` também é opcional e manual (ver seção 7.3).
 
@@ -238,16 +234,16 @@ empresa ──< leilao ──< lote
 |--------|-----------------|-------------|
 | `tb_empresa` | `id` (sequência) | `cnpj` e `usuario` são **UNIQUE** (sublinhados no diagrama). `razaoSocial` e `cnpj` são **NOT NULL** (asterisco). |
 | `tb_leilao` | `id` (sequência) | `vendedor` → FK `tb_empresa` (**ON DELETE RESTRICT**). `codigo` e `vendedor` são NOT NULL. |
-| `tb_lote` | `id` (sequência) | `leilao` → FK `tb_leilao` (ON DELETE CASCADE). `valor_inicial` é **NUMERIC(14,2)** — nunca `float`. |
+| `tb_lote` | `id` (sequência) | `leilao` → FK `tb_leilao` (ON DELETE CASCADE). `valor_inicial` é **NUMERIC(14,2)**, nunca `float`. |
 | `tb_unidade` | `id` (sequência) | `nome` NOT NULL e UNIQUE. |
-| `tb_comprador` | **(empresa, leilao)** — composta | Tabela de junção. Mapeada no JPA com `@EmbeddedId`. |
+| `tb_comprador` | **(empresa, leilao)**, composta | Tabela de junção. Mapeada no JPA com `@EmbeddedId`. |
 
 ### Decisões de modelagem que valem explicar
 
 1. **`NUMERIC(14,2)` para dinheiro.** Ponto flutuante "perde" centavos
    (`0.1 + 0.2 ≠ 0.3` em `double`). Dinheiro é exato por definição.
 2. **Sequências (`nextval`) para todo `id`.** Evita "duplicate key" quando
-   duas pessoas cadastram ao mesmo tempo — algo que um `MAX(id)+1` não
+   duas pessoas cadastram ao mesmo tempo, algo que um `MAX(id)+1` não
    resolve.
 3. **`ALTER SEQUENCE ... OWNED BY`.** Sem esse vínculo, o
    `TRUNCATE ... RESTART IDENTITY` do script de dados **não** reinicia os
@@ -319,7 +315,7 @@ Todas as respostas de erro seguem o **mesmo formato**:
 > **Por que singular e plural?** O enunciado é inconsistente: no exercício 3
 > os exemplos usam singular (`GET /unidade/1`, `POST /leiao`), mas nos
 > exercícios 5–7 as URLs são no plural (`/unidades`, `/empresas`, `/leiloes`).
-> Em vez de escolher e torcer, a API responde às duas formas — são o mesmo
+> Em vez de escolher e torcer, a API responde às duas formas: são o mesmo
 > código, apenas dois "apelidos".
 >
 > Os endpoints `/auth/*` também respondem sob o prefixo `/autenticacao/*`
@@ -339,14 +335,14 @@ Esta foi uma das decisões de projeto mais cuidadas. O que foi feito:
   - *Por que Argon2id e não BCrypt?* A OWASP passou a recomendá-lo como
     primeira opção no *Password Storage Cheat Sheet* de 2023: o Argon2id usa
     **memória** como recurso principal, e cada tentativa de ataque consome
-    dezenas de megabytes — o que trava o ataque paralelo em GPU, contra o
+    dezenas de megabytes, o que trava o ataque paralelo em GPU, contra o
     qual o BCrypt (que usa pouca memória) só se defende parcialmente.
   - **E a migração não quebrou ninguém.** O `CodificadorDeSenhaDelegado`
     reconhece o formato do hash já gravado: os hashes antigos em BCrypt
     continuam valendo e são **reescritos sozinhos no primeiro login**. A base
-    migra no ritmo do uso — sem script em lote e sem janela de manutenção.
+    migra no ritmo do uso, sem script em lote e sem janela de manutenção.
 - **A senha nunca sai da API.** O DTO de resposta (`EmpresaResponse`) não tem
-  campo de senha — nem em texto puro, nem o hash.
+  campo de senha: nem em texto puro, nem o hash.
 - **Autenticação por configuração, não por código.** No perfil padrão
   (desenvolvimento/avaliação) os endpoints ficam abertos, exatamente como o
   enunciado pede. Ativando `SECURITY_ENABLED=true` (perfil `prod`), **toda**
@@ -354,12 +350,12 @@ Esta foi uma das decisões de projeto mais cuidadas. O que foi feito:
 - **Dois mecanismos pelo mesmo código.** `SECURITY_MODE=basic` (HTTP Basic)
   ou `SECURITY_MODE=jwt` (token JWT). Os dois produzem o **mesmo objeto de
   autenticação** no contexto de segurança, então as regras de acesso são
-  idênticas — trocar de modo é mudar **uma propriedade**.
+  idênticas. Trocar de modo é mudar **uma propriedade**.
 - **JWT assimétrico (RS256)** com rotação de chaves pelo cabeçalho `kid`, e
   **rotação do token de renovação com detecção de reuso**: um token usado de
   novo revoga a família inteira.
 - **Falha rápida.** No perfil `prod`, as credenciais do banco **não têm valor
-  padrão**: se faltarem, a aplicação não sobe — em vez de subir com uma senha
+  padrão**: se faltarem, a aplicação não sobe, em vez de subir com uma senha
   fraca em produção.
 
 ### 7.2 Validação de entrada (a garantia real)
@@ -369,7 +365,7 @@ Esta foi uma das decisões de projeto mais cuidadas. O que foi feito:
   telefone, e-mail e URL.
 - **Validação em duas camadas.** O frontend valida para dar boa experiência
   (erro na hora, sem perder o que foi digitado); o backend valida porque é a
-  camada que **não pode ser contornada** — qualquer um pode chamar a API sem
+  camada que **não pode ser contornada**: qualquer um pode chamar a API sem
   passar pela tela. As regras são as **mesmas** dos dois lados (as expressões
   regulares do JS espelham as anotações do Java), então o usuário nunca vê
   "a tela aceitou e a API recusou".
@@ -386,7 +382,7 @@ Esta foi uma das decisões de projeto mais cuidadas. O que foi feito:
 - **SQL Injection:** todo o SQL é gerado pelo Hibernate com **parâmetros
   vinculados** (*prepared statements*). Nenhuma concatenação de texto
   digitado pelo usuário. As únicas consultas escritas à mão (a de total dos
-  leilões) são **JPQL** — a camada abstrata do Hibernate — e o JPQL também
+  leilões) são **JPQL**, a camada abstrata do Hibernate, e o JPQL também
   usa parâmetros vinculados.
 - **Integridade referencial no banco:** PK, FK, UNIQUE e CHECK constraints.
   Mesmo que a aplicação seja contornada, o banco recusa dados inválidos.
@@ -394,28 +390,28 @@ Esta foi uma das decisões de projeto mais cuidadas. O que foi feito:
   [`sql/seguranca/03_permissoes.sql`](leilao-api/src/main/resources/sql/seguranca/03_permissoes.sql)
   cria um usuário de banco separado, com **apenas** `SELECT/INSERT/UPDATE/DELETE`
   e **sem** permissão de `DROP`/`ALTER`. Se a aplicação for comprometida, o
-  dano se limita aos dados — não ao banco.
+  dano se limita aos dados, não ao banco.
 
 ### 7.4 Proteção da aplicação e do navegador
 
 | Mecanismo | Efeito |
 |-----------|--------|
-| **CORS com lista explícita** | Só `http://localhost:8080` (ou o domínio real, via `CORS_ORIGINS`) pode chamar a API. Uma origem não autorizada recebe **403**. Nunca `*` combinado com credenciais — que permitiria CSRF cross-origin. |
+| **CORS com lista explícita** | Só `http://localhost:8080` (ou o domínio real, via `CORS_ORIGINS`) pode chamar a API. Uma origem não autorizada recebe **403**. Nunca `*` combinado com credenciais, o que permitiria CSRF cross-origin. |
 | **Cabeçalhos de segurança** | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` (anti-clickjacking), `Referrer-Policy: no-referrer`, `Cache-Control: no-store`, `X-Powered-By` removido, **`Content-Security-Policy: default-src 'none'`**, **`Permissions-Policy`**, **`Cross-Origin-Opener-Policy`**, **`Cross-Origin-Resource-Policy`**, **`Cross-Origin-Embedder-Policy`**. |
 | **Sem vazamento de stack trace** | `server.error.include-stacktrace=never`. Erros 500 devolvem mensagem genérica; o detalhe real fica **só no log do servidor**. |
-| **CSRF desabilitado — com justificativa** | A API é *stateless* e não usa cookie de sessão (a autenticação é por cabeçalho). Sem cookie automático, o CSRF não se aplica — é a recomendação da própria documentação do Spring Security para esse cenário. |
+| **CSRF desabilitado, com justificativa** | A API é *stateless* e não usa cookie de sessão (a autenticação é por cabeçalho). Sem cookie automático, o CSRF não se aplica, que é a recomendação da própria documentação do Spring Security para esse cenário. |
 | **Sessão stateless** | `SessionCreationPolicy.STATELESS`: sem estado no servidor → mais rápido, escala para várias instâncias e reduz a superfície de ataque. |
 | **HSTS** | Força HTTPS nas requisições seguintes. |
-| **Actuator restrito** | Só `health` e `info` são expostos. O padrão do Spring expõe `env`, `beans`, `configprops` — que vazam informação interna. |
+| **Actuator restrito** | Só `health` e `info` são expostos. O padrão do Spring expõe `env`, `beans`, `configprops`, que vazam informação interna. |
 | **Controle anti-força-bruta** | Limite por **usuário** (5 falhas) e por **IP** (20 falhas), janela de 15 min. Resposta `429` com `Retry-After`. |
-| **Rate limiting de volume** | 120 requisições por IP a cada 60 s, em **janela deslizante** — protege o *recurso*, não só a conta. |
+| **Rate limiting de volume** | 120 requisições por IP a cada 60 s, em **janela deslizante**, protege o *recurso*, não só a conta. |
 | **Trilha de auditoria à prova de adulteração** | Cada registro é selado por **HMAC-SHA256** e encadeado no anterior. Alteração, forja ou remoção são detectadas, com a sequência exata da ruptura. |
 | **Identificador de correlação** | `X-Correlation-Id` em toda requisição, presente em todas as linhas de log. |
 | **Auditoria** | `created_at`/`updated_at` automáticos em todas as tabelas (base `Auditable`), com log de cada operação de escrita. Base da trilha de auditoria exigida pela LGPD e pela ISO 27001. |
 | **SBOM e varredura de CVEs** | Inventário de dependências gerado a cada build; build falha se houver vulnerabilidade de CVSS ≥ 7. |
 | **CI com testes e lint** | Nada entra na branch principal sem passar por build, testes, lint e SBOM. |
 
-> O detalhamento completo — mecanismo, limite e o que **não** é protegido —
+> O detalhamento completo (mecanismo, limite e o que **não** é protegido)
 > está na seção 7 deste README e nas anotações do próprio código, no ponto
 > onde cada decisão acontece.
 
@@ -423,7 +419,7 @@ Esta foi uma das decisões de projeto mais cuidadas. O que foi feito:
 
 - Nenhuma senha real versionada no Git.
 - Nenhum token ou chave de API no código do frontend (lembre-se: o
-  frontend roda no navegador do usuário — qualquer coisa escrita nele é
+  frontend roda no navegador do usuário, então qualquer coisa escrita nele é
   pública).
 - Credenciais do banco sempre por **variável de ambiente**
   (`DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD`).
@@ -431,7 +427,7 @@ Esta foi uma das decisões de projeto mais cuidadas. O que foi feito:
 > **Nota honesta:** os endpoints estão abertos por padrão porque o
 > enunciado do teste exige que `GET /unidades` responda sem login. O
 > mecanismo para exigir autenticação existe, está testado e é ativado por
-> uma variável de ambiente — a decisão de segurança está explícita e
+> uma variável de ambiente: a decisão de segurança está explícita e
 > documentada, e não é uma omissão.
 
 ---
@@ -445,14 +441,14 @@ Todas as mudanças foram feitas **com motivo**, e o motivo está registrado.
 | 1 | **Vue CLI 4 → 5** (webpack 4 → 5) | O webpack 4 usa o hash **MD4**, removido do OpenSSL 3 (padrão no Node 17+). O build quebra com `ERR_OSSL_EVP_UNSUPPORTED`. O `--openssl-legacy-provider` resolveria, mas só existe do Node 17 ao 21 e é descontinuado. O webpack 5 usa SHA-256 e funciona do Node 12 ao 24 **sem nenhuma flag**. |
 | 2 | **Vue 2.6 → 2.7** | Versão final do Vue 2, com correções de segurança e compatibilidade total com o Vuetify 2. |
 | 3 | **Vuetify 2 adicionado** | Não vinha no starter, mas os exercícios 5–8 exigem `v-data-table`. É a biblioteca de componentes mais usada em Vue 2 no mercado. Importada de forma completa (sem `sass`/`vuetify-loader`), o que reduz dependências e o risco de build. |
-| 4 | **`spring-boot-starter-validation` adicionado** | Removido do `spring-starter-web` no Spring Boot 2.3. Sem ele, as anotações `@NotBlank`/`@Size`/`@Pattern` dos DTOs **não são verificadas** — e o exercício 8 depende delas. |
+| 4 | **`spring-boot-starter-validation` adicionado** | Removido do `spring-starter-web` no Spring Boot 2.3. Sem ele, as anotações `@NotBlank`/`@Size`/`@Pattern` dos DTOs **não são verificadas**, e o exercício 8 depende delas. |
 | 5 | **`spring-security-crypto` + `spring-boot-starter-security`** | Hash de senha (Argon2id) e cadeia de segurança configurável. Sem o `starter-security`, o Spring Boot geraria uma senha aleatória e bloquearia todos os endpoints. |
 | 6 | **`spring-boot-starter-actuator`** | Health check (`/actuator/health`), que é o que um orquestrador consulta para saber se a aplicação está viva. Exposição restrita a `health` e `info`. |
 | 7 | **`POSTGRES_DB=az` no `variables.env`** | Sem essa variável, o container do Postgres cria só o banco `postgres` e a API falha com `database "az" does not exist`. |
 | 8 | **Colunas em `snake_case`** | Padrão do mercado; a ligação com o `camelCase` do diagrama é explícita no `@Column`. |
 | 9 | **IDs `Integer` (não `Long`)** | Bate exatamente com `integer` do diagrama e evita o erro de tipo do PostgreSQL (`integer` × `bigint`). |
 | 10 | **URLs em singular e plural** | O enunciado é inconsistente entre os exercícios 3 e 5–7. Aceitar as duas formas é mais robusto do que escolher uma. |
-| 11 | **`views/leilao/Leiloes.vue`** (maiúscula) | O exercício 4 escreve `leiloes.vue` e o 7 escreve `Leiloes.vue`. Em Linux o sistema de arquivos diferencia maiúsculas — adotamos a do exercício 7. |
+| 11 | **`views/leilao/Leiloes.vue`** (maiúscula) | O exercício 4 escreve `leiloes.vue` e o 7 escreve `Leiloes.vue`. Em Linux o sistema de arquivos diferencia maiúsculas; adotamos a do exercício 7. |
 | 12 | **`#/empresa/:id`** (não `#/leilao/:id`) | O próprio enunciado diz "os links para editar **empresa** na tela do exercício 6", e as URLs da seção 8 são `#/empresa` e `#/empresa/:id`. O `#/leilao/:id` é um erro de digitação. |
 | 13 | **`Auditable` como base das entidades** | `created_at`/`updated_at` aparecem nas 5 tabelas do diagrama. Uma `@MappedSuperclass` evita repetir o mesmo código 5 vezes. |
 | 14 | **Validação do `comprador` com chave composta** | Mapeado com `@EmbeddedId` (`CompradorId`), exatamente como a PK composta do diagrama. |
@@ -524,7 +520,7 @@ Exemplo de conferência do total do leilão 1001:
 - Todo o código está comentado em **português, em linguagem simples**,
   explicando *por quê* e não apenas *o quê*.
 - As decisões não óbvias estão documentadas **no ponto onde elas ocorrem**
-  (nos arquivos `.java` e `.vue`) — não só aqui.
+  (nos arquivos `.java` e `.vue`), não só aqui.
 - Nenhuma senha, chave ou token real está versionado no Git.
 
 ---
@@ -534,7 +530,7 @@ Exemplo de conferência do total do leilão 1001:
 | Documento | Para quê |
 |---|---|
 | [`README.md`](README.md) | **Este arquivo.** Visão geral, arquitetura, modelo de dados, API e decisões. |
-| [`IDENTIDADE-VISUAL.md`](IDENTIDADE-VISUAL.md) | A paleta, a tipografia e o logo **extraídos do site institucional da empresa** — com a procedência de cada valor e a checagem de contraste contra a WCAG. |
+| [`IDENTIDADE-VISUAL.md`](IDENTIDADE-VISUAL.md) | A paleta, a tipografia e o logo **extraídos do site institucional da empresa**, com a procedência de cada valor e a checagem de contraste contra a WCAG. |
 | [`MANUAL-OPERACAO.md`](MANUAL-OPERACAO.md) | Como rodar do zero, testar, gerar hashes, aplicar permissões, demonstrar e diagnosticar. |
 | [`.github/SECURITY.md`](.github/SECURITY.md) | Política de segurança: como reportar uma vulnerabilidade pelo canal privado. |
 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | O pipeline: build, testes, lint e SBOM a cada push. |

@@ -10,7 +10,7 @@
      URL de edicao..: http://server/#/empresa/:id
      Servicos........: http://server/empresa (GET | POST | PUT | DELETE)
 
-     A MESMA TELA FAZ INCLUSAO E ALTERACAO
+     A mesma tela faz inclusao e alteracao
 
      O que define o modo e a presenca de um id na URL (#/empresa/5). Com id,
      a tela carrega os dados e o botao diz "Alterar"; sem id, o formulario
@@ -36,7 +36,7 @@
       -->
       <v-form ref="formulario" v-model="formularioValido" @submit.prevent="salvar">
         <v-card-text>
-          <!-- ============ dados da empresa ============ -->
+          <!-- dados da empresa -->
           <div class="text-subtitle-1 font-weight-medium mb-3" style="color: var(--az-azul-900);">
             <v-icon small left color="primary">mdi-domain</v-icon>
             Dados da empresa
@@ -166,7 +166,7 @@
             </v-col>
           </v-row>
 
-          <!-- ============ contato ============ -->
+          <!-- contato -->
           <div class="text-subtitle-1 font-weight-medium mt-4 mb-3" style="color: var(--az-azul-900);">
             <v-icon small left color="primary">mdi-card-text</v-icon>
             Contato
@@ -218,7 +218,7 @@
             </v-col>
           </v-row>
 
-          <!-- ============ acesso ============ -->
+          <!-- acesso -->
           <div class="text-subtitle-1 font-weight-medium mt-4 mb-3" style="color: var(--az-azul-900);">
             <v-icon small left color="primary">mdi-lock</v-icon>
             Acesso
@@ -304,7 +304,7 @@
           </v-alert>
         </v-card-text>
 
-        <!-- ============ botoes ============ -->
+        <!-- botoes -->
         <v-card-actions class="px-4 pb-4">
           <v-btn
             color="primary"
