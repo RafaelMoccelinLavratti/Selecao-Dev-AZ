@@ -1,28 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ============================================================================
-   CONFIGURACAO DO LOG (Logback)
-  ============================================================================
+  Configuracao do log (Logback).
 
-   O QUE MEXE AQUI E POR QUE
-   ----------------------------------------------------------------------------
-   O padrao de log ("pattern") e' a "forma" de cada linha escrita no arquivo.
+  O "%X{correlationId}" no pattern e o "%X{...}" do Logback, que escreve no
+  log um valor guardado no MDC (o contexto de diagnostico da thread). Como o
+  CorrelationIdFilter coloca ali o identificador da requisicao, TODA linha
+  de log produzida enquanto ela estiver em andamento carrega o mesmo
+  identificador.
 
-   A novelty aqui e' o "%X{correlationId}": o "%X{...}" e' a forma de o
-   Logback escrever um valor do MDC (Mapped Diagnostic Context) - o contexto
-   de diagnostico da thread. Como o CorrelationIdFilter coloca ali o
-   identificador da requisicao, TODA linha de log produzida enquanto aquela
-   requisicao esta em andamento carrega o mesmo identificador.
+  O resultado pratico: o suporte recebe do usuario o codigo que apareceu na
+  tela ("Erro XYZ - codigo: 8f3a..."), filtra o log por esse codigo e
+  encontra exatamente as linhas da requisicao que deu problema - mesmo que
+  o log esteja cheio de requisicoes de outros usuarios.
 
-   O resultado pratico: o suporte recebe do usuario o codigo que apareceu na
-   tela ("Erro XYZ - codigo: 8f3a..."), filtra o log por esse codigo e
-   encontra exatamente as linhas da requisicao que deu problema - mesmo que
-   o log esteja cheio de requisicoes de outros usuarios.
-
-   SEM O MDC, o log seria uma sequencia de linhas sem relacao entre si, e
-  -investigar um erro em producao viraria trabalho de adivinhacao.
-
-   ============================================================================
+  Sem o MDC, o log seria uma sequencia de linhas sem relacao entre si, e
+  investigar um erro em producao viraria trabalho de adivinhacao.
 -->
 <configuration>
 

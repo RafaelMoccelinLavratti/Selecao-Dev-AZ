@@ -1,28 +1,22 @@
 <template>
   <!--
-    ==========================================================================
-     VIEW: CADASTRO DE EMPRESA   (views/empresa/Empresa.vue)
-     EXERCICIO 8 - "Crie a tela de inclusao e alteracao do cadastro de
-     empresas. Observe que esta tela deve validar os campos obrigatorios
-     especificados no modelo de banco de dados. Deve validar tambem as
-     mascaras e os formatos de numero, email, url e tamanho maximo do
-     texto. Quanto mais completo melhor."
+     View: cadastro de empresa (views/empresa/Empresa.vue).
 
-     URL da pagina INCLUIR: http://server/#/empresa
-     URL da pagina EDITAR.: http://server/#/empresa/:id
-     URL dos servicos....: http://server/empresa (GET | POST | PUT | DELETE)
+     Exercicio 8 - inclusao e alteracao do cadastro de empresas, validando
+     os campos obrigatorios do modelo, as mascaras e os formatos de numero,
+     email, url e tamanho maximo do texto.
 
-     ------------------------------------------------------
+     URL de inclusao: http://server/#/empresa
+     URL de edicao..: http://server/#/empresa/:id
+     Servicos........: http://server/empresa (GET | POST | PUT | DELETE)
+
      A MESMA TELA FAZ INCLUSAO E ALTERACAO
-     ------------------------------------------------------
-     A diferenca entre os dois modos e UMA COISA: o presence de um id na
-     URL (#/empresa/5). Se houver id, a tela carrega os dados e o botao
-     diz "Alterar"; se nao houver, o formulario comeca vazio e o botao
-     diz "Cadastrar".
 
-     E assim que se evita duplicar 200 linhas de formulario em duas telas
-     - e qualquer correcao de layout vale para as duas.
-    ==========================================================================
+     O que define o modo e a presenca de um id na URL (#/empresa/5). Com id,
+     a tela carrega os dados e o botao diz "Alterar"; sem id, o formulario
+     comeca vazio e o botao diz "Cadastrar". E assim que se evita duplicar
+     o mesmo formulario em duas telas - e qualquer correcao de layout vale
+     para as duas.
   -->
   <div>
     <h1 class="titulo-tela">
@@ -35,14 +29,14 @@
 
     <v-card elevation="2">
       <!--
-        FORMULARIO.
+        Formulario.
         "v-form" (do Vuetify) cuida da validacao: cada campo tem suas
         "rules" e o componente tem o "ref" que usamos para disparar a
         validacao de todos de uma vez ("this.$refs.formulario.validate()").
       -->
       <v-form ref="formulario" v-model="formularioValido" @submit.prevent="salvar">
         <v-card-text>
-          <!-- ============ DADOS DA EMPRESA ============ -->
+          <!-- ============ dados da empresa ============ -->
           <div class="text-subtitle-1 font-weight-medium mb-3" style="color: var(--az-azul-900);">
             <v-icon small left color="primary">mdi-domain</v-icon>
             Dados da empresa
@@ -81,7 +75,7 @@
           </v-row>
 
           <v-row dense>
-            <!-- LOGADOURO -->
+            <!-- logadouro -->
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="formulario.logadouro"
@@ -93,7 +87,7 @@
               />
             </v-col>
 
-            <!-- NUMERO -->
+            <!-- numero -->
             <v-col cols="6" md="2">
               <v-text-field
                 v-model="formulario.numero"
@@ -105,7 +99,7 @@
               />
             </v-col>
 
-            <!-- COMPLEMENTO -->
+            <!-- complemento -->
             <v-col cols="6" md="4">
               <v-text-field
                 v-model="formulario.complemento"
@@ -119,7 +113,7 @@
           </v-row>
 
           <v-row dense>
-            <!-- MUNICIPIO -->
+            <!-- municipio -->
             <v-col cols="12" md="5">
               <v-text-field
                 v-model="formulario.municipio"
@@ -146,7 +140,7 @@
               />
             </v-col>
 
-            <!-- QUANTIDADE -->
+            <!-- quantidade -->
             <v-col cols="6" md="2">
               <v-text-field
                 v-model="formulario.quantidade"
@@ -172,7 +166,7 @@
             </v-col>
           </v-row>
 
-          <!-- ============ CONTATO ============ -->
+          <!-- ============ contato ============ -->
           <div class="text-subtitle-1 font-weight-medium mt-4 mb-3" style="color: var(--az-azul-900);">
             <v-icon small left color="primary">mdi-card-text</v-icon>
             Contato
@@ -224,7 +218,7 @@
             </v-col>
           </v-row>
 
-          <!-- ============ ACESSO ============ -->
+          <!-- ============ acesso ============ -->
           <div class="text-subtitle-1 font-weight-medium mt-4 mb-3" style="color: var(--az-azul-900);">
             <v-icon small left color="primary">mdi-lock</v-icon>
             Acesso
@@ -245,7 +239,7 @@
               />
             </v-col>
 
-            <!-- SENHA -->
+            <!-- senha -->
             <v-col cols="12" md="4">
               <v-text-field
                 v-model="formulario.senha"
@@ -262,7 +256,7 @@
               />
             </v-col>
 
-            <!-- CONFIRMAR SENHA -->
+            <!-- confirmar senha -->
             <v-col cols="12" md="4">
               <v-text-field
                 v-model="formulario.confirmarSenha"
@@ -277,7 +271,7 @@
           </v-row>
 
           <!--
-            ALERTA DE ERROS DO SERVIDOR.
+            Alerta de erros do servidor.
             Quando o backend rejeita a gravacao (por exemplo, CNPJ ja
             cadastrado), a mensagem dele aparece aqui, perto do botao de
             salvar - e nao perdida no console.
@@ -294,7 +288,7 @@
             {{ erroServidor }}
           </v-alert>
 
-          <!-- ERROS DE CAMPO RETORNADOS PELO BACKEND -->
+          <!-- erros de campo retornados pelo backend -->
           <v-alert
             v-if="errosCampo && Object.keys(errosCampo).length > 0"
             type="error"
@@ -310,7 +304,7 @@
           </v-alert>
         </v-card-text>
 
-        <!-- ============ BOTOES ============ -->
+        <!-- ============ botoes ============ -->
         <v-card-actions class="px-4 pb-4">
           <v-btn
             color="primary"
@@ -340,62 +334,17 @@
 
 <script>
 /**
- * ============================================================================
- *  SCRIPT DA VIEW: CADASTRO DE EMPRESA
- * ============================================================================
+ * Script da tela de cadastro de empresa.
  *
- *  ------------------------------------------------------
- *  O QUE ESTA TELA FAZ
- *  ------------------------------------------------------
- *  Esta e a tela do EXERCICIO 8: o cadastro (inclusao E alteracao) de
- *  empresas. E a tela mais completa do sistema, porque tem validacao
- *  de formato em varios campos (CNPJ, CEP, telefone, e-mail, site).
+ * A mesma tela atende inclusao e edicao: o que define o modo e a URL
+ * (#/empresa para incluir, #/empresa/{id} para editar).
  *
- *  ------------------------------------------------------
- *  UMA TELA, DOIS MODOS: INCLUSAO E EDICAO
- *  ------------------------------------------------------
- *  A mesma tela atende as duas situacoes. O que define o modo e a URL:
+ * As regras do formulario espelham exatamente as do backend
+ * (EmpresaRequest.java), para que o usuario nunca veja "a tela aceitou e a
+ * API recusou".
  *
- *      #/empresa       -> INCLUSAO (formulario vazio)
- *      #/empresa/5     -> EDICAO (carrega os dados do id 5)
- *
- *  O componente descobre o modo lendo o parametro "id" da rota (veja o
- *  computed "id"). Com isso, nao existem duas telas parecidas - existe
- *  UMA tela que se adapta. Isso reduz a manutencao: uma correcao no
- *  formulario vale para as duas situacoes.
- *
- *  ------------------------------------------------------
- *  A REGRA DE OURO DESTE FORMULARIO: VALIDAR NOS DOIS LADOS
- *  ------------------------------------------------------
- *  As regras do computed "regras" ESPELHAM exatamente as validacoes do
- *  backend (a classe EmpresaRequest.java, com as anotacoes @NotBlank,
- *  @Size, @Pattern, @Email do Bean Validation).
- *
- *  A regra do projeto e:
- *      - O BACKEND e a GARANTIA. E o unico lugar que pode garantir a
- *        regra, porque qualquer um pode chamar a API direto (curl,
- *        Postman, outro sistema), sem passar pela tela.
- *      - O FRONTEND e a CONVENIENCIA. O usuario ve o erro na hora,
- *        campo a campo, sem perder o que ja digitou.
- *
- *  O frontend nunca substitui o backend. Se as duas camadas validam a
- *  mesma coisa, o usuario nunca ve o casopressa de "a tela aceitou e a
- *  API recusou" - que e a pior experiencia possivel num formulario.
- *
- *  ------------------------------------------------------
- *  SEGURANCA: O CAMPO SENHA
- *  ------------------------------------------------------
- *  Dois cuidados que aparecem no codigo:
- *
- *  1) A senha NUNCA volta da API. Por isso, ao carregar um registro
- *     para edicao, os campos "senha" e "confirmarSenha" ficam VAZIOS -
- *     o usuario so pode digitar uma senha nova se quiser trocar.
- *
- *  2) Na alteracao, "senha vazia" significa "manter a senha atual".
- *     No envio, o campo vazio vira null, e o backend entende isso como
- *     "nao altere a senha". Sem essa traducao, o backend receberia uma
- *     string vazia e tentaria validar uma senha de zero caracteres.
- * ============================================================================
+ * A senha nunca volta da API, entao, ao carregar um registro para edicao,
+ * o campo fica vazio e a senha so e exigida quando o usuario troca.
  */
 
 /**
@@ -430,9 +379,7 @@ export default {
   name: 'TelaEmpresa',
 
   /**
-   * ------------------------------------------------------------------
    *  DADOS REATIVOS (data)
-   * ------------------------------------------------------------------
    */
   data() {
     return {
@@ -507,9 +454,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  VALORES CALCULADOS (computed)
-   * ------------------------------------------------------------------
    */
   computed: {
     /**
@@ -546,9 +491,7 @@ export default {
      * A mesma regra nos dois lados garante que o usuario nunca veja
      * "a tela aceitou e a API recusou".
      *
-     * ------------------------------------------------------
-     *  COMO UMA REGRA DO VUETIFY FUNCIONA
-     * ------------------------------------------------------
+     *  Como uma regra do vuetify funciona
      *  Cada regra e uma funcao que recebe o valor do campo e devolve:
      *      - TRUE  -> o valor esta valido;
      *      - FALSE -> invalido, sem mensagem;
@@ -591,9 +534,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  CICLO DE VIDA: mounted
-   * ------------------------------------------------------------------
    *
    *  Ao entrar na tela, se for EDICAO, carrega os dados da empresa.
    *
@@ -608,9 +549,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  METODOS (methods)
-   * ------------------------------------------------------------------
    */
   methods: {
     /**

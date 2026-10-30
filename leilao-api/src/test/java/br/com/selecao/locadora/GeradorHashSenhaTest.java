@@ -19,46 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * ============================================================================
- *  UTILITARIO: GERADOR E VERIFICADOR DE HASH DE SENHA
- * ============================================================================
+ * Gerador e verificador dos hashes de senha.
  *
- *  ESTE TESTE FAZ DUAS COISAS:
+ * Gera os hashes das senhas de teste (Senha@1 ... Senha@12) para uso no
+ * script de massa de dados, e confere que cada hash gravado no
+ * sql/02_dml.sql corresponde a senha correspondente.
  *
- *  1) GERA os hashes das senhas de teste ("Senha@1" ... "Senha@12"), para
- *     uso no script de massa de dados (sql/02_dml.sql). Como o banco
- *     guarda apenas o HASH, e nao a senha, o script de dados precisa
- *     conter os hashes ja prontos.
- *
- *  2) VERIFICA que os hashes que estao no script 02_dml.sql conferem com
- *     as senhas "Senha@1" ... "Senha@12". Isso garante que a massa de
- *     dados de teste fica coerente - se alguem editar o script e trocar um
- *     hash por outro, este teste avisa.
- *
- *  COMO RODAR:
- *      mvn test -Dtest=GeradorHashSenhaTest
- *
- *  --------------------------------------------------------------
- *  UM DETALHE IMPORTANTE SOBRE O FORMATO DO HASH
- *  --------------------------------------------------------------
- *  O script 02_dml.sql guarda hashes em BCrypt (formato "$2a$10$..."),
- *  que e o formato que existia na base quando o projeto comecou. Eles
- *  CONTINUAM valendo: e o CodificadorDeSenhaDelegado que reconhece o
- *  formato legado e verifica a senha com o algoritmo correspondente.
- *
- *  Este teste e, portanto, a prova de que a migracao para o Argon2id
- *  NAO quebrou o acesso de ninguem: e a verificacao automatizada de que
- *  os hashes antigos ainda abrem a porta.
- *
- *  Ja o hash NOVO gerado pelo codificador sai em Argon2id, com o
- *  prefixo "{argon2}" - e e o formato que a aplicacao grava hoje.
- *
- *  SOBRE O SALT: como o algoritmo sorteia um "salt" novo a cada
- *  execucao, rodar este teste duas vezes produz hashes diferentes (e
- *  igualmente validos) para a mesma senha. Esse e o comportamento
- *  correto do algoritmo - e e por isso que dois usuarios com a mesma
- *  senha nunca ficam com o mesmo hash no banco.
- * ============================================================================
+ * Roda com: mvn test -Dtest=GeradorHashSenhaTest
  */
 class GeradorHashSenhaTest {
 

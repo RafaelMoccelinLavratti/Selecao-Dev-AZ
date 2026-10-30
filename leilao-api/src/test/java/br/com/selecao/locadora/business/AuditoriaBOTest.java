@@ -21,38 +21,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * ============================================================================
- *  TESTE: TRILHA DE AUDITORIA A PROVA DE ADULTERACAO
- * ============================================================================
+ * Testes da trilha de auditoria.
  *
- *  ------------------------------------------------------
- *  POR QUE ESTE TESTE E O MAIS IMPORTANTE DO PROJETO?
- *  ------------------------------------------------------
- *  Uma trilha de auditoria comum e um log: quem tem acesso ao banco pode
- *  apagar. Este teste prova que a trilha deste projeto NAO e um log - e
- *  uma cadeia selada por hash, e que a adulteracao e DETECTADA.
+ * O repositorio e dublado com o Mockito: o que esta em teste e a logica do
+ * selo (a corrente de hashes), nao o SQL.
  *
- *  Os testes simulam exatamente o que um atacante com acesso ao banco
- *  faria: alterar um registro no meio da cadeia e tentar repassar.
- *
- *  ------------------------------------------------------
- *  POR QUE NAO PRECISA DE BANCO DE DADOS?
- *  ------------------------------------------------------
- *  O repositorio e dublado com Mockito. O que esta em teste e a LOGICA DO
- *  SELO (a cadeia de hashes), e nao o SQL. Isso mantem o teste rapido e
- *  independente de infraestrutura - como pede o README ("mvn test" roda
- *  em qualquer maquina).
- *
- *  ------------------------------------------------------
- *  O QUE ESTES TESTES PROVAM
- *  ------------------------------------------------------
- *  1) A cadeia se forma: cada registro guarda o hash do anterior;
- *  2) A cadeia integra e verificada como integra;
- *  3) ALTERAR o conteudo de um registro e DETECTADO, e o ponto exato da
- *     adulteracao e informado;
- *  4) QUEBRAR o encadeamento (trocar o hash anterior) e DETECTADO;
- *  5) REMOVER um registro do meio e DETECTADO (pelo buraco na sequencia).
- * ============================================================================
+ * Os testes provam que a corrente se forma, que ela verifica como integra, e
+ * que alterar, forjar ou remover um registro e detectado com a sequencia da
+ * ruptura.
  */
 class AuditoriaBOTest {
 

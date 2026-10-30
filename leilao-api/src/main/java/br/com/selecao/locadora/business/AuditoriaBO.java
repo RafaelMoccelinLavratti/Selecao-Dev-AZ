@@ -21,56 +21,15 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * ============================================================================
- *  REGRAS DE NEGOCIO: TRILHA DE AUDITORIA A PROVA DE ADULTERACAO
- * ============================================================================
+ * Regras de negocio da trilha de auditoria.
  *
- *  ------------------------------------------------------
- *  O PROBLEMA
- *  ------------------------------------------------------
- *  Um log comum registra o que aconteceu - mas quem tem acesso ao banco
- *  pode apagar o log. Num incidente de seguranca, quem costuma ter acesso
- *  ao banco e justamente quem a auditoria precisa investigar.
+ * Cada registro e selado com um HMAC-SHA256 e encadeado no registro
+ * anterior. Alterar, forjar ou remover uma linha quebra a corrente, e a
+ * sequencia indica onde a ruptura aconteceu.
  *
- *  ------------------------------------------------------
- *  A SOLUCAO: UMA CORRENTE DE HASHES
- *  ------------------------------------------------------
- *  Cada registro guarda o hash do registro ANTERIOR. Para gravar o
- *  registro N, calcula-se:
- *
- *      hash_N = HMAC(chave_secreta, sequencia_N || hash_{N-1} || conteudo_N)
- *
- *  Onde o conteudo e a concatenacao canonica dos campos (usuario, metodo,
- *  caminho, status, instante...). A chave fica FORA do banco, em variavel
- *  de ambiente.
- *
- *  Para VERIFICAR a trilha, recalcula-se o hash de cada registro e compara
- *  com o valor gravado. Se algum nao bater, a cadeia foi rompida - e a
- *  verificacao informa em qual registro.
- *
- *  Se um registro for REMOVIDO do meio, dois sinais aparecem:
- *      - o encadeamento quebra (o hash_anterior do registro seguinte nao
- *        corresponde ao hash_atual do registro removido);
- *      - a SEQUENCIA fica com buraco (o "count" nao bate com o "max").
- *
- *  ------------------------------------------------------
- *  POR QUE O HMAC E "COM SEGREDO" E NAO "SEM SEGREDO"?
- *  ------------------------------------------------------
- *  Se o hash fosse um SHA-256 simples do conteudo, quem tivesse acesso
- *  ao banco conseguiria alterar um registro e recalcular o hash - o
- *  hash nao provaria nada. Com HMAC, e preciso conhecer a chave, que
- *  vive fora do banco. Quem tem o banco, mas nao a chave, nao consegue
- *  forjar um registro valido.
- *
- *  ------------------------------------------------------
- *  POR QUE A GRAVACAO USA TRANSACAO SEPARADA?
- *  ------------------------------------------------------
- *  A gravacao da trilha acontece DEPOIS da operacao de negocio ja ter
- *  sido confirmada. Se as duas dividissem a mesma transacao, uma falha
- *  ao gravar a trilha derrubaria a operacao de negocio - o usuario
- *  perderia o dado E nao teria registro. O registro de auditoria e uma
- *  garantia de que a operacao OCORREU: ele deve sobreviver a ela.
- * ============================================================================
+ * A gravacao roda em transacao separada da operacao de negocio: se as
+ * duas dividissem a mesma transacao, uma falha na trilha derrubaria junto
+ * o que ja tinha sido gravado.
  */
 @Component
 public class AuditoriaBO {

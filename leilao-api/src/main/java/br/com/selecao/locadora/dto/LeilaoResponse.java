@@ -8,15 +8,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * ============================================================================
- *  DTO DE SAIDA: LEILAO
- * ============================================================================
+ * DTO de saida do leilao.
  *
- *  Alem dos dados da tabela, devolve o ID do vendedor e a razao social
- *  dele. A razao social e conveniente para a tela, mas o id e o que
- *  realmente identifica a relacao (e e o que a tela usa para montar
- *  links de navegacao).
- * ============================================================================
+ * Alem dos dados da tabela, devolve o id do vendedor e a razao social dele:
+ * o id e o que a tela precisa, a razao social e o que o usuario le.
  */
 @Data
 @Builder

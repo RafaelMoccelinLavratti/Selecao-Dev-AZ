@@ -14,7 +14,7 @@
 3. [Subir a API](#3-subir-a-api)
 4. [Subir o frontend](#4-subir-o-frontend)
 5. [Rodar os testes](#5-rodar-os-testes)
-6. [Gerar senhas com hash BCrypt](#6-gerar-senhas-com-hash-bcrypt)
+6. [Gerar senhas com hash](#6-gerar-senhas-com-hash)
 7. [Aplicar o menor privilégio no banco](#7-aplicar-o-menor-privilégio-no-banco)
 8. [Roteiro de demonstração](#8-roteiro-de-demonstração)
 9. [Verificação completa de saúde](#9-verificação-completa-de-saúde)
@@ -158,17 +158,21 @@ cd leilao-api
 mvn test
 ```
 
-**37 testes**, todos automatizados e **sem precisar de banco de dados** —
-rodam em qualquer máquina, em menos de 5 segundos.
+**63 testes**, todos automatizados e **sem precisar de banco de dados** —
+rodam em qualquer máquina, em menos de 30 segundos.
 
 | Arquivo de teste | Testes | O que verifica |
 |---|---|---|
 | `SegurancaIntegracaoTest` | 7 | A cadeia de segurança inteira (401, 429, bloqueio, dado do controller) |
+| `TokenJwtBOTest` | 8 | Emissão, adulteração, expiração e tipo dos tokens |
 | `LoginAttemptServiceTest` | 7 | As regras do controle de tentativas de login |
-| `ClientIpResolverTest` | 5 | A descoberta do IP real e a proteção contra `X-Forwarded-For` forjado |
+| `PasswordEncoderTest` | 7 | O codificador de senha (Argon2id, salt e hash legado) |
+| `AuditoriaBOTest` | 6 | A corrente de hashes da trilha de auditoria |
 | `EmpresaBOTest` | 6 | Regras de negócio da empresa (CNPJ único, senha hasheada) |
 | `UnidadeBOTest` | 5 | Regras de negócio da unidade (normalização, duplicidade) |
-| `PasswordEncoderTest` | 5 | O codificador BCrypt |
+| `ClientIpResolverTest` | 5 | A descoberta do IP real e a proteção contra `X-Forwarded-For` forjado |
+| `LimitadorDeRequisicoesFilterTest` | 5 | O limite por IP e o `Retry-After` |
+| `CorrelationIdFilterTest` | 5 | O identificador de correlação e o log forging |
 | `GeradorHashSenhaTest` | 2 | O gerador de hash usado para montar a massa de dados |
 
 **Rodar só um arquivo:**
@@ -191,22 +195,27 @@ mvn test && open leilao-api/target/surefire-reports/index.html
 
 ---
 
-## 6. Gerar senhas com hash BCrypt
+## 6. Gerar senhas com hash
 
-A massa de dados (`02_dml.sql`) já vem com senhas em hash BCrypt
-prontas. Mas, ao cadastrar uma empresa nova pela tela, a senha é
-hasheada automaticamente pela aplicação.
+A senha nunca é gravada em texto puro: o banco guarda um **hash**. A
+massa de dados (`02_dml.sql`) vem com hashes em **BCrypt**, o formato que
+existia no banco quando o projeto começou — e que o codificador delegado
+continua reconhecendo.
 
-Para gerar um hash manualmente (por exemplo, para inserir direto no
-banco), existe um utilitário dentro do próprio projeto:
+Para gerar hashes novos (no formato atual, **Argon2id**), existe um
+utilitário dentro do próprio projeto:
 
 ```bash
 cd leilao-api
 mvn test -Dtest=GeradorHashSenhaTest
 ```
 
-O teste imprime os hashes gerados no console. Alternativamente, use o
-JShell do Java 11 com o classpath do projeto:
+O teste imprime os hashes gerados no console. O mesmo teste confere que
+cada hash gravado no `02_dml.sql` corresponde à senha `Senha@N`
+correspondente — ou seja, ele é também a prova de que a migração para o
+Argon2id não trancou ninguém fora do sistema.
+
+Alternativamente, use o JShell do Java 11 com o classpath do projeto:
 
 ```bash
 cd leilao-api
@@ -215,8 +224,7 @@ jshell --class-path "target/classes;$(cat cp.txt)"
 ```
 
 ```java
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-var encoder = new BCryptPasswordEncoder(10);
+var encoder = new br.com.selecao.locadora.config.PasswordEncoderConfig().passwordEncoder();
 System.out.println(encoder.encode("MinhaSenhaForte123"));
 ```
 
@@ -360,13 +368,10 @@ cd leilao-api && mvn test
 
 # 4) Frontend
 cd ../leilao-app && npm run lint && npm run build
-
-# 5) Higiene do codigo (caracteres estranhos, palavras em ingles, erros de digitacao)
-cd .. && node scripts/verificar-higiene.js
 ```
 
-**Todos devem responder:** API `200`, suíte `BUILD SUCCESS`, lint
-`No lint errors found!` e higiene `Higiene OK`.
+**Todos devem responder:** API `200`, suíte `BUILD SUCCESS` e lint
+`No lint errors found!`.
 
 ---
 
@@ -394,7 +399,7 @@ cd .. && node scripts/verificar-higiene.js
 
 | Sintoma | Causa provável | Solução |
 |---|---|---|
-| `Port 5432 ... connection refused` num teste | algum teste exige banco | os 37 testes foram escritos para **não** exigir banco; se aparecer isso, é regressão |
+| `Port 5432 ... connection refused` num teste | algum teste exige banco | os 63 testes foram escritos para **não** exigir banco; se aparecer isso, é regressão |
 | `SegurancaIntegracaoTest` falha | contexto do Spring não subiu | rode `mvn test -Dtest=SegurancaIntegracaoTest` e leia a stack trace |
 
 ### A autenticação não está sendo exigida

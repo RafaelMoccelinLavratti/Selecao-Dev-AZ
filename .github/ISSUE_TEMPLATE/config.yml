@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Politica de Seguranca (vulnerabilidade privada)
-    url: https://github.com/cleitonalmeida1/Selecao-Dev-AZ/security/advisories/new
+    url: https://github.com/RafaelMoccelinLavratti/Selecao-Dev-AZ/security/advisories/new
     about: Reporte vulnerabilidades pelo canal privado - Nao abra issue publica.
-  - name: Dúvida sobre o projeto
-    url: https://github.com/cleitonalmeida1/Selecao-Dev-AZ/discussions
+  - name: Duvida sobre o projeto
+    url: https://github.com/RafaelMoccelinLavratti/Selecao-Dev-AZ/discussions
     about: Use as Discussions para perguntas gerais sobre o projeto.

@@ -1,28 +1,23 @@
 <template>
   <!--
-    ==========================================================================
-     VIEW: LEILOES   (views/leilao/Leiloes.vue)
-     EXERCICIO 7 - "tela de consulta parametrizada para cadastro de Leiloes.
-     Uma grid somente leitura (v-data-table) contendo os campos: razaoSocial
-     do vendedor, inicioPrevisto, total do leilao (soma dos totais
-     individuais de cada lote (quantidade * valorInicial))."
+     View: leiloes (views/leilao/Leiloes.vue).
+
+     Exercicio 7 - consulta dos leiloes em uma grid somente leitura, com a
+     razao social do vendedor, o inicio previsto e o total do leilao.
 
      URL da pagina.....: http://server/#/leiloes
      URL dos servicos..: http://server/leiloes (GET)
 
-     ------------------------------------------------------
      ONDE NASCE O "TOTAL"?
-     ------------------------------------------------------
-     O total NAO e um campo da tabela tb_leilao - ele e CALCULADO. O
-     trabalho acontece no banco de dados, na consulta do repositorio
-     (LeilaoRepository.findResumoLeiloes), que faz:
+
+     O total NAO e um campo da tabela tb_leilao - ele e CALCULADO, no banco,
+     na consulta do repositorio (LeilaoRepository.findResumoLeiloes):
 
          total = SUM(lote.quantidade * lote.valor_inicial)
 
-     grouped por leilao. Assim o navegador recebe o total pronto, e o
-     calculo nao depende de o frontend saber a regra de negocio (que
-     poderia mudar sem ninguem avisar a tela).
-    ==========================================================================
+     agrupado por leilao. Assim o navegador recebe o total pronto, e o
+     calculo nao depende de o frontend saber a regra de negocio (que poderia
+     mudar sem ninguem avisar a tela).
   -->
   <div>
     <h1 class="titulo-tela">Leiloes</h1>
@@ -104,7 +99,7 @@
           <strong>#{{ item.codigo }}</strong>
         </template>
 
-        <!-- DESCRICAO -->
+        <!-- descricao -->
         <template v-slot:item.descricao="{ item }">
           {{ item.descricao || '-' }}
         </template>
@@ -137,38 +132,12 @@
 
 <script>
 /**
- * ============================================================================
- *  SCRIPT DA VIEW: LEILOES
- * ============================================================================
+ * Script da tela de leiloes.
  *
- *  ------------------------------------------------------
- *  O QUE ESTA TELA FAZ
- *  ------------------------------------------------------
- *  Consulta dos leiloes e seus totais. E a tela do EXERCICIO 7.
+ * Consulta dos leiloes e seus totais.
  *
- *  ---------------------------------------------------------
- *  POR QUE ESTA TELA E "SO LEITURA"?
- *  ---------------------------------------------------------
- *  O enunciado do exercicio 7 pede apenas a consulta. Alem disso, um
- *  leilao e um registro que envolve lotes, comprador e valores
- *  financeiros - criar, editar ou excluir um leilao nao e uma operacao
- *  de "uma tabela com duas colunas". Faz-lo aqui exigiria mais validacao
- *  e mais cuidado do que a tela de unidades. Por isso, o escopo desta
- *  tela e a consulta.
- *
- *  ---------------------------------------------------------
- *  O QUE SAO OS "TOTAIS" AQUI?
- *  ---------------------------------------------------------
- *  O "total" de um leilao e o resultado de uma consulta no BANCO
- *  (veja LeilaoRepository, a JPQL que soma quantidade x valor de cada
- *  lote). O backend entrega o valor ja calculado - o frontend nao
- *  inventa nem recalcula a regra de negocio, apenas formata o numero
- *  para exibicao.
- *
- *  E uma divisao importante: a REGRA (como se calcula o total) mora no
- *  backend, que e a fonte da verdade. O frontend cuida so da FORMA
- *  (como o numero aparece na tela).
- * ============================================================================
+ * O total nao e calculado no navegador: vem de uma consulta no banco (veja
+ * LeilaoRepository), e por isso que a tela so faz leitura.
  */
 
 /**
@@ -183,9 +152,7 @@ export default {
   name: 'TelaLeiloes',
 
   /**
-   * ------------------------------------------------------------------
    *  DADOS REATIVOS (data)
-   * ------------------------------------------------------------------
    */
   data() {
     return {
@@ -207,9 +174,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  VALORES CALCULADOS (computed)
-   * ------------------------------------------------------------------
    *
    *  Um computed e recalculado pelo Vue SO quando suas dependencias
    *  mudam - e o resultado fica em cache ate la. Por isso ele e melhor
@@ -279,9 +244,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  CICLO DE VIDA: mounted
-   * ------------------------------------------------------------------
    *
    *  Carrega a lista quando a tela entra no ar.
    */
@@ -290,9 +253,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  METODOS (methods)
-   * ------------------------------------------------------------------
    */
   methods: {
     /**

@@ -103,8 +103,8 @@ cd leilao-api
 mvn test
 ```
 
-**37 testes**, todos automatizados e **sem precisar de banco de dados** —
-rodam em qualquer máquina, em menos de 5 segundos.
+**63 testes**, todos automatizados e **sem precisar de banco de dados** —
+rodam em qualquer máquina, em menos de 30 segundos.
 
 ---
 
@@ -153,22 +153,29 @@ leilao-api/src/main/java/br/com/selecao/locadora/
 ├── business/                       # camada de negócio (regras)
 │   ├── UnidadeBO.java  EmpresaBO.java
 │   ├── LeilaoBO.java   LoteBO.java
-│   └── CompradorBO.java
-├── config/                         # configurações (CORS, segurança, senhas)
-│   ├── CorsConfig.java
-│   ├── PasswordEncoderConfig.java
-│   ├── SecurityConfig.java
-│   └── SecurityHeadersFilter.java
-├── controller (service)/           # camada de serviço (controllers REST)
+│   ├── CompradorBO.java  AuditoriaBO.java
+│   └── TokenJwtBO.java  AutenticacaoBO.java
+├── config/                         # segurança, CORS, senhas e filtros
+│   ├── SecurityConfig.java         # cadeia de filtros e modo de autenticação
+│   ├── PasswordEncoderConfig.java  # Argon2id com fallback para BCrypt
+│   ├── ChaveJwtProvider.java       # chaves RSA e rotação
+│   ├── LoginAttemptService.java    # controle anti-força-bruta
+│   ├── LimitadorDeRequisicoesFilter.java  # rate limiting por IP
+│   ├── AuditTrailFilter.java       # trilha de auditoria das alterações
+│   ├── CorrelationIdFilter.java    # identificador de correlação
+│   └── CorsConfig.java
+├── service/                        # camada de serviço (controllers REST)
 │   ├── UnidadeService.java  EmpresaService.java
 │   ├── LeilaoService.java   LoteService.java
-│   └── CompradorService.java
+│   ├── CompradorService.java  AuditoriaService.java
+│   └── AutenticacaoService.java
 ├── dto/                            # objetos de entrada e saída da API
 ├── entity/                         # camada de domínio
 │   ├── Auditable.java              # base com created_at / updated_at
 │   ├── Unidade.java  Empresa.java
 │   ├── Leilao.java   Lote.java
-│   └── Comprador.java + CompradorId.java
+│   ├── Comprador.java + CompradorId.java
+│   ├── Auditoria.java + RefreshToken.java
 ├── exception/                      # tratamento global de erros
 └── repository/                     # camada de acesso a dados
 
@@ -179,6 +186,7 @@ leilao-app/src/
 ├── plugins/vuetify.js              # configuração do Vuetify (tema, ícones)
 ├── router/index.js                 # rotas com hash (#/unidades)
 ├── services/api.js                 # único ponto de contato com a API
+├── store/index.js                  # estado global (Vuex)
 ├── utils/mascaras.js               # máscaras e validadores (pt-BR)
 └── views/
     ├── unidade/Unidades.vue        # exercício 5
@@ -198,7 +206,7 @@ leilao-api/src/main/resources/sql/
 ├── 01_ddl.sql          estrutura das 5 tabelas   ← executado pelo Docker
 ├── 02_dml.sql          massa de dados inicial    ← executado pelo Docker
 ├── database.png        o diagrama do enunciado
-├── segurca/
+├── seguranca/
 │   └── 03_permissoes.sql   papel de menor privilégio (OPCIONAL, manual)
 └── exemplos/
     └── spcript.sql      script original do starter (NÃO é executado)
@@ -438,7 +446,7 @@ Todas as mudanças foram feitas **com motivo**, e o motivo está registrado.
 | 2 | **Vue 2.6 → 2.7** | Versão final do Vue 2, com correções de segurança e compatibilidade total com o Vuetify 2. |
 | 3 | **Vuetify 2 adicionado** | Não vinha no starter, mas os exercícios 5–8 exigem `v-data-table`. É a biblioteca de componentes mais usada em Vue 2 no mercado. Importada de forma completa (sem `sass`/`vuetify-loader`), o que reduz dependências e o risco de build. |
 | 4 | **`spring-boot-starter-validation` adicionado** | Removido do `spring-starter-web` no Spring Boot 2.3. Sem ele, as anotações `@NotBlank`/`@Size`/`@Pattern` dos DTOs **não são verificadas** — e o exercício 8 depende delas. |
-| 5 | **`spring-security-crypto` + `spring-boot-starter-security`** | BCrypt para a senha e cadeia de segurança configurável. Sem o `starter-security`, o Spring Boot geraria uma senha aleatória e bloquearia todos os endpoints. |
+| 5 | **`spring-security-crypto` + `spring-boot-starter-security`** | Hash de senha (Argon2id) e cadeia de segurança configurável. Sem o `starter-security`, o Spring Boot geraria uma senha aleatória e bloquearia todos os endpoints. |
 | 6 | **`spring-boot-starter-actuator`** | Health check (`/actuator/health`), que é o que um orquestrador consulta para saber se a aplicação está viva. Exposição restrita a `health` e `info`. |
 | 7 | **`POSTGRES_DB=az` no `variables.env`** | Sem essa variável, o container do Postgres cria só o banco `postgres` e a API falha com `database "az" does not exist`. |
 | 8 | **Colunas em `snake_case`** | Padrão do mercado; a ligação com o `camelCase` do diagrama é explícita no `@Column`. |
@@ -531,12 +539,10 @@ Exemplo de conferência do total do leilão 1001:
 | [`.github/SECURITY.md`](.github/SECURITY.md) | Política de segurança: como reportar uma vulnerabilidade pelo canal privado. |
 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | O pipeline: build, testes, lint e SBOM a cada push. |
 
-**Ferramentas de apoio** que acompanham o projeto:
+**Comandos do projeto:**
 
-| Ferramenta | Para quê |
+| Comando | Para quê |
 |---|---|
-| `node scripts/verificar-higiene.js` | Procura caracteres de outro alfabeto, palavras em inglês e erros de digitação nos comentários. |
-| `python scripts/enriquecer-javadocs.py` | Ferramenta usada durante o desenvolvimento para padronizar a documentação dos controllers. |
 | `mvn test` | **63 testes**, sem depender de banco de dados. |
 | `mvn package -DskipTests` | Gera o **SBOM** em `target/bom.json` (inventário de dependências). |
 | `mvn -Psecurity-scan verify` | Varredura de CVEs (falha o build em CVSS ≥ 7). Requer `NVD_API_KEY`. |

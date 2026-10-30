@@ -6,62 +6,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * ============================================================================
- *  CONFIGURACAO: CODIFICADOR DE SENHA (Argon2id com fallback para BCrypt)
- * ============================================================================
+ * Configuracao do codificador de senha.
  *
- *  POR QUE ISSO EXISTE?
- *  Um banco de dados vazado e uma situacao real de seguranca da
- *  informacao (acesso indevido, backup exposto, ataque de terceiros).
- *  Se a senha estiver guardada em texto puro ("123456"), quem tiver o
- *  banco consegue logar em TODOS os sistemas que reutilizam essa senha -
- *  e sabemos que pessoas reutilizam senha. Se guardamos apenas um HASH,
- *  o vazamento nao entrega a senha.
+ * Um banco vazado e um cenario real de seguranca da informacao. Por isso a
+ * senha nunca e gravada em texto puro: o banco guarda um hash, e o hash e
+ * o que a API compara.
  *
- *  POR QUE ARGON2ID E NAO SHA-256/MD5?
- *  1) "SALT" (serragem): o Argon2id sorteia um valor aleatorio e o mistura
- *     no hash. Duas empresas com a MESMA senha ficam com hashes DIFERENTES.
- *     Sem sal, um atacante que rouba o banco poderia casar hashes
- *     iguais e descobrir que varios usuarios compartilham a mesma senha
- *     (e testar contra outros sistemas). Com sal, isso e impossivel.
- *  2) "LENTIDAO PROPOSITAL": o Argon2id e configurado para ser caro de
- *     computar E de memoria. Um ataque de forca bruta testaria milhoes
- *     de senhas por segundo contra um SHA-256, mas contra o Argon2id
- *     testaria poucas por segundo. O custo sai do atacante e entra no
- *     servidor, que so faz isso uma vez por login.
- *  3) "SAL EMBUTIDO": o proprio hash carrega o sal e os parametros. Por
- *     isso nao precisamos guardar o sal em outra coluna.
- *
- *  ------------------------------------------------------
- *  A EVOLUCAO: DE BCrypt PARA ARGON2ID
- *  ------------------------------------------------------
- *  O projeto nasceu com BCrypt. Em 2023 a OWASP passou a recomendar o
- *  Argon2id como primeira opcao no "Password Storage Cheat Sheet",
- *  porque o Argon2id resiste muito melhor a ataques com hardware
- *  dedicado (GPU/ASIC): cada tentativa de ataque consome dezenas de
- *  megabytes de memoria, o que trava a capacidade de paralelizar o
- *  ataque na GPU.
- *
- *  Trocar o encoder "de um dia para o outro", sem cuidado, quebraria o
- *  acesso de TODO mundo cujas senhas ainda estivessem em BCrypt. Por
- *  isso o bean abaixo nao e um encoder simples: e o
- *  CodificadorDeSenhaDelegado, que sabe ler os dois formatos e gravar
- *  sempre no novo.
- *
- *  DETALHE IMPORTANTE: a defesa contra forca-bruta (o filtro que
- *  limita tentativas por IP) deixa de ser um extra e vira OBRIGATORIO
- *  com Argon2id - sem ele, cada tentativa de login seria uma alocacao
- *  de 64 MiB, e o proprio login viraria um vetor de esgotamento de
- *  memoria.
- *
- *  OBSERVACAO SOBRE DEPENDENCIA:
- *  Usamos APENAS o artefato "spring-security-crypto" (a parte que so
- *  codifica e compara senha), e nao o "spring-boot-starter-security"
- *  (que ativaria autenticacao em todas as rotas). Assim a API funciona
- *  exatamente como o enunciado pede - endpoints REST abertos para
- *  leitura/escrita - mas com a senha protegida. A ativacao completa de
- *  autenticacao esta documentada no README, no perfil de producao.
- * ============================================================================
+ * Usa-se apenas o artefato spring-security-crypto, e nao o starter inteiro,
+ * para nao ativar a cadeia de seguranca do Spring Boot sem querer.
  */
 @Configuration
 public class PasswordEncoderConfig {

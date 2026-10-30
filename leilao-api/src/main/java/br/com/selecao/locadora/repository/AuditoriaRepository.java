@@ -11,13 +11,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * ============================================================================
- *  REPOSITORIO: TRILHA DE AUDITORIA
- * ============================================================================
+ * Repositorio da trilha de auditoria.
  *
- *  Camada de ACESSO A DADOS. Nenhuma regra de negocio mora aqui - quem
- *  decide o que e gravado e o AuditoriaBO.
- * ============================================================================
+ * Camada de acesso a dados. Quem decide o que e gravado, e com que selo, e
+ * o AuditoriaBO.
  */
 @Repository
 public interface AuditoriaRepository extends JpaRepository<Auditoria, Long> {

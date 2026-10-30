@@ -28,53 +28,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * ============================================================================
- *  TESTE DE INTEGRACAO: CADEIA DE SEGURANCA DA API
- * ============================================================================
+ * Teste de integracao da cadeia de seguranca.
  *
- *  ------------------------------------------------------
- *  POR QUE UM TESTE DE INTEGRACAO?
- *  ------------------------------------------------------
- *  Os outros testes do projeto verificam UMA classe por vez. Este verifica
- *  a CADEIA DE FILTROS COMPLETA: como o Spring Security, o filtro
- *  anti-forca-bruta, o handler de auditoria e o controller se encaixam
- *  na mesma requisicao.
+ * Os outros testes verificam uma classe por vez. Este verifica a cadeia de
+ * filtros completa: como o Spring Security, o filtro de JWT e o limitador
+ * se comportam em conjunto.
  *
- *  Isso e essencial porque a maior parte dos bugs de seguranca em API
- *  acontece exatamente na EMENDA entre os filtros - e nenhum teste de
- *  unidade pega isso.
- *
- *  ------------------------------------------------------
- *  POR QUE @WebMvcTest E NAO @SpringBootTest?
- *  ------------------------------------------------------
- *  @SpringBootTest sobe o container INTEIRO, o que exigiria o PostgreSQL
- *  no ar - e quebraria "mvn test" em maquinas sem banco.
- *
- *  @WebMvcTest sobe apenas a camada web (controllers, filtros, seguranca).
- *  A configuracao do banco e ignorada, entao o teste roda em qualquer
- *  maquina, em segundos. O duble do "@MockBean" substitui a camada de
- *  negocio, que nao e o objeto deste teste.
- *
- *  ------------------------------------------------------
- *  O QUE ESTE TESTE PROVA
- *  ------------------------------------------------------
- *  1) SEM credencial, uma rota protegida responde 401 em JSON (e nao
- *     uma pagina HTML).
- *  2) COM credencial ERRADA, responde 401 em JSON.
- *  3) COM credencial CORRETA, responde 200 e - CRUCIAL - o corpo e o
- *     DADO do controller, e nao uma mensagem de autenticacao.
- *  4) Apos estourar o limite de tentativas, responde 429 com
- *     "Retry-After".
- *  5) O cabecalho "WWW-Authenticate" e enviado no 401.
- *
- *  O item 3 e o mais importante do arquivo. Existe uma armadilha real no
- *  HTTP Basic: como o navegador reenvia o cabecalho de credenciais em
- *  TODAS as requisicoes, um handler de sucesso mal escrito combinas
- *  (commit) a resposta antes do controller rodar - e TODO endpoint passa
- *  a devolver a resposta da autenticacao em vez do dado pedido. Esse
- *  bug so apareceria em producao (em desenvolvimento a autenticacao
- *  esta desligada), e este teste e a rede de seguranca contra ele.
- * ============================================================================
+ * Prova que, sem credencial, uma rota protegida responde 401 em JSON (e nao
+ * uma pagina HTML), que o excedente responde 429 e que o health check nao e
+ * barrado.
  */
 @WebMvcTest(controllers = UnidadeService.class)
 @Import({

@@ -7,13 +7,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * ============================================================================
- *  REPOSITORY: LOTE
- * ============================================================================
+ * Repositorio do lote.
  *
- *  Acesso aos lotes. Alem do CRUD herdado, ha uma consulta especifica para
- *  buscar os lotes de um leilao - usada no calculo do total e no detalhe.
- * ============================================================================
+ * Alem do CRUD, tem a consulta dos lotes de um leilao especifico, usada no
+ * calculo do total e no detalhe.
  */
 @Repository
 public interface LoteRepository extends JpaRepository<Lote, Integer> {

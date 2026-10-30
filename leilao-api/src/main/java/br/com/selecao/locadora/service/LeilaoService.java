@@ -20,22 +20,10 @@ import javax.validation.Valid;
 import java.util.List;
 
 /**
- * ============================================================================
- *  CONTROLADOR REST: LEILAO
- * ============================================================================
+ * Controller REST do leilao.
  *
- *  ------------------------------------------------------
- *  UM DETALHE IMPORTANTE DO EXERCICIO 7
- *  ------------------------------------------------------
- *  O exercicio 7 pede que GET /leiloes traga:
- *      - razao social do VENDEDOR
- *      - inicio previsto
- *      - TOTAL do leilao (soma de quantidade * valorInicial dos lotes)
- *
- *  Esse endpoint devolve o "resumo" (LeilaoResumoDTO), ja com o total
- *  calculado pelo banco de dados. Alem dele, o CRUD completo da tabela
- *  tb_leilao existe nos demais endpoints, como pede o exercicio 3.
- * ============================================================================
+ * O GET /leiloes devolve, alem dos dados, a razao social do vendedor e o
+ * total do leilao - que e o que o exercicio 7 pede.
  */
 @RestController
 @RequestMapping(value = {"/leiloes", "/leilao"})

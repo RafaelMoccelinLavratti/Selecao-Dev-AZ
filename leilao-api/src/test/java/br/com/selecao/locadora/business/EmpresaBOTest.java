@@ -24,33 +24,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * ============================================================================
- *  TESTE: REGRAS DE NEGOCIO DA EMPRESA
- * ============================================================================
+ * Testes das regras de negocio da empresa.
  *
- *  ------------------------------------------------------
- *  POR QUE ESTE TESTE NAO USA @SpringBootTest?
- *  ------------------------------------------------------
- *  Um teste com @SpringBootTest sobe o container inteiro do Spring - e,
- *  com isso, EXIGE o PostgreSQL no ar. Se o avaliador rodar "mvn test"
- *  numa maquina sem banco, o teste quebraria por um motivo que nao tem
- *  nada a ver com a regra testada.
- *
- *  Aqui usamos o Mockito para "simular" o repositorio (um duble) e
- *  montamos a camada de negocio na mao. Resultado: o teste roda em
- *  qualquer maquina, em milissegundos, e ainda testa exatamente a regra
- *  de negocio - sem ruido de infraestrutura.
- *
- *  (ReflectionTestUtils injeta os dependencias nos campos privados do BO,
- *  que sao preenchidos por injeção de dependencias pelo Spring no
- *  funcionamento real.)
- *
- *  O que estes testes provam:
- *  1) O CNPJ formatado (11.555.999/0001-11) e gravado so com digitos.
- *  2) O mesmo CNPJ nao pode ser cadastrado duas vezes.
- *  3) A senha e gravada como hash BCrypt, nunca em texto puro.
- *  4) A senha NUNCA aparece na resposta da API.
- * ============================================================================
+ * Nao usam @SpringBootTest: subir o container inteiro do Spring exigiria o
+ * PostgreSQL no ar. O repositorio e dublado com o Mockito e a camada de
+ * negocio e montada na mao - o teste fica rapido e sem infraestrutura.
  */
 class EmpresaBOTest {
 

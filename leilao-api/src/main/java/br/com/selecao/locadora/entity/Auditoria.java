@@ -10,58 +10,14 @@ import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 /**
- * ============================================================================
- *  ENTIDADE: REGISTRO DA TRILHA DE AUDITORIA
- * ============================================================================
+ * Registro da trilha de auditoria.
  *
- *  ------------------------------------------------------
- *  O QUE TORNAR ESTA TABELA DIFERENTE DAS OUTRAS
- *  ------------------------------------------------------
- *  Uma trilha de auditoria comum e apenas um LOG. O usuario com acesso ao
- *  banco pode apagar a prova - e, num incidente, e exatamente ele quem
- *  costuma ter acesso. Uma trilha que pode ser apagada por quem deveria
- *  ser auditado nao serve para nada.
+ * Cada linha guarda o HMAC-SHA256 do conteudo junto com o hash da linha
+ * anterior: e uma corrente. Alterar, forjar ou remover uma linha quebra a
+ * corrente, e a verificacao aponta a sequencia da ruptura.
  *
- *  Esta trilha e A PROVA DE ADULTERACAO (do ingles, "tamper-evident").
- *  Cada registro guarda o hash do registro ANTERIOR, e os hashes formam
- *  uma CORRENTE:
- *
- *      registro 1  hash = HMAC(chave, sequencia_1 + conteudo_1)
- *      registro 2  hash = HMAC(chave, sequencia_2 + hash_1 + conteudo_2)
- *      registro 3  hash = HMAC(chave, sequencia_3 + hash_2 + conteudo_3)
- *
- *  Se alguem alterar ou apagar um registro no MEIO da cadeia, o hash
- *  daquele registro deixa de bater com o seu conteudo, e todos os hashes
- *  seguintes deixam de bater tambem. A verificacao acusa, com precisao,
- *  EM QUE PONTO a cadeia foi rompida.
- *
- *  ------------------------------------------------------
- *  POR QUE HMAC E NAO "SHA-256 SIMPLES"?
- *  ------------------------------------------------------
- *  Um SHA-256 simples do conteudo seria facil de forjar: o atacante com
- *  acesso ao banco recalcula o hash do registro alterado e grava o
- *  resultado. O hash nao protege nada, porque a chave e a mesma para
- *  todos - basta ter o algoritmo.
- *
- *  Com HMAC (Hash-based Message Authentication Code), a verificacao
- *  depende de uma chave SECRETA que fica FORA do banco (variavel de
- *  ambiente). Quem tem acesso ao banco, mas nao a chave, nao consegue
- *  recalcular um hash valido: precisaria de uma chave de no minimo 256
- *  bits. E, como o HMAC e um PRF (pseudo-random function), o ataque de
- *  tabela pre-calculada (rainbow table) tambem nao se aplica.
- *
- *  ------------------------------------------------------
- *  POR QUE A "SEQUENCIA" E SEPARADA DO "ID"?
- *  ------------------------------------------------------
- *  Porque o ID (BIGSERIAL) pode ser reatribuido: se alguem apagar o
- *  registro 5, o proximo INSERT recebe o id 6 e a cadeia de hashes
- *  continuaria parecendo integra - o ataque ficaria invisivel.
- *
- *  A SEQUENCIA e um numero que NUNCA se repete e nunca anda para tras.
- *  Se o registro 5 some, a verificacao ve que a sequencia saltou de 4
- *  para 6, e acusa a remocao. Os dois mecanismos (hash e sequencia) se
- *  complementam: o hash detecta ALTERACAO, a sequencia detecta REMOCAO.
- * ============================================================================
+ * A sequencia e separada do id porque o id pode ser reatribuido se alguem
+ * apagar uma linha - a sequencia nao.
  */
 @Entity
 @Table(name = "tb_auditoria")

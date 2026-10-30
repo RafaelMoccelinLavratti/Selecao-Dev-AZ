@@ -20,84 +20,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * ============================================================================
- *  FILTRO: LIMITADOR DE REQUISICOES POR IP (RATE LIMITING)
- * ============================================================================
+ * Limitador de requisicoes por IP.
  *
- *  ------------------------------------------------------
- *  A DIFERENCA PARA O CONTROLE ANTI-FORCA-BRUTA
- *  ------------------------------------------------------
- *  Ja existe um filtro que bloqueia quem erra a senha (BruteForce-
- *  ProtectionFilter). Este e' outro: ele limita o VOLUME TOTAL de
- *  requisicoes vindas do mesmo IP, independentemente de serem de login ou
- *  nao.
+ * E o complemento do controle anti-forca-bruta: aquele conta falhas de
+ * login, este limita o volume total de requisicoes de um IP.
  *
- *  A razao de os dois existirem e' que eles defendem coisas diferentes:
- *
- *      - o anti-forca-bruta protege o CONTRO DE ACESSO (a conta do
- *        usuario);
- *      - o rate limiting protege o RECURSO (a API inteira).
- *
- *  Um atacante pode nao querer nem tentar logar: ele pode simplesmente
- *  disparar requisicoes para derrubar a API (ataque de negacao de
- *  servico) ou consumir recursos de proposito (cada requisicao de
- *  leitura pode custar uma consulta pesada ao banco).
- *
- *  ------------------------------------------------------
- *  POR QUE O LIMITE E POR IP E NAO POR USUARIO?
- *  ------------------------------------------------------
- *  Porque o atacante nao esta autenticado (ou esta tentando nao ser
- *  identificado). O IP e' a unica identidade disponivel antes da
- *  autenticacao. E por isso que a RESOLUCAO DO IP PRECISA SER CONFIAVEL:
- *
- *      - o cabecalho "X-Forwarded-For" pode ser enviado por QUALQUER
- *        cliente. Se confiassemos nele sem condicao, o atacante burlaria
- *        o limite trocando o valor do cabecalho a cada requisicao;
- *      - por isso o controle so usa o X-Forwarded-For quando existe um
- *        proxy reverso CONFIAVEL na frente (ver ClientIpResolver e a
- *        propriedade "app.security.trust-proxy").
- *
- *  ------------------------------------------------------
- *  O ALGORITMO: JANELA DESLIZANTE
- *  ------------------------------------------------------
- *  Uma "janela deslizante" conta as requisicoes dentro dos ultimos N
- *  segundos, e nao dentro de um bloco fixo (como "100 por minuto, a
- *  contar do minuto cheio").
- *
- *  A diferenca importa: no bloco fixo, um atacante pode disparar 100
- *  requisicoes no ultimo segundo do minuto e outras 100 no primeiro
- *  segundo do minuto seguinte - o dobro do limite em um instante.
- *  Com a janela deslizante, o limite e' sempre respeitado.
- *
- *  ------------------------------------------------------
- *  POR QUE O RESPOSTA E 429 E NAO 503?
- *  ------------------------------------------------------
- *  429 Too Many Requests e' o codigo oficial do HTTP para "voce fez
- *  requisicoes demais". Ele informa ao cliente que a situacao e'
- *  TEMPORARIA e que ele deve tentar de novo - que e' a verdade. O 503
- *  (servico indisponivel) diria que o problema e' do servidor, e
- *  faria o cliente desistir.
- *
- *  O cabecalho "Retry-After" diz QUANDO tentar de novo, em segundos.
- *  E' uma pratica que reduz drasticamente a Pressao sobre o servidor:
- *  em vez de o cliente repetir imediatamente, ele espera.
- *
- *  ------------------------------------------------------
- *  ONDE ESTE FILTRO SE POSICIONA?
- *  ------------------------------------------------------
- *  Ele roda no CONTAINER DE SERVLET (e nao dentro da cadeia do Spring
- *  Security), por dois motivos:
- *
- *      1) ele e um concern TRANSVERSAL - precisa valer para TODAS as
- *         requisicoes, inclusive as de monitoracao (/actuator/health),
- *         que nao passam pela cadeia de seguranca;
- *      2) ele precisa barrar o volume ANTES de qualquer trabalho caro
- *         (consulta ao banco, geracao de token, validacao de senha).
- *
- *  A ordem (@Order) garante que ele rode depois do identificador de
- *  correlacao (que precisa estar no log de toda requisicao, inclusive
- *  nas que forem barradas por aqui) e antes dos demais filtros.
- * ============================================================================
+ * A contagem usa janela deslizante (o que aconteceu nos ultimos N
+ * segundos), e o excesso responde 429 com Retry-After.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
@@ -196,7 +125,7 @@ public class LimitadorDeRequisicoesFilter extends OncePerRequestFilter {
         // ja passa do limite. Com limite 3, as tres primeiras passam e a
         // quarta e barrada.
         if (contador.quantidade.get() > maximoRequisicoes) {
-            LOG.warn("RATE LIMIT | Requisição excedeu o limite | ip={} limite={} janela_s={}",
+            LOG.warn("RATE LIMIT | Requisicao excedeu o limite | ip={} limite={} janela_s={}",
                     ip, maximoRequisicoes, janelaSegundos);
 
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());

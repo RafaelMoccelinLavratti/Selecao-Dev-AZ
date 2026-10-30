@@ -16,29 +16,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * ============================================================================
- *  TESTE: LIMITADOR DE REQUISICOES POR IP
- * ============================================================================
+ * Testes do limitador de requisicoes por IP.
  *
- *  ------------------------------------------------------
- *  POR QUE ESTE TESTE EXISTE?
- *  ------------------------------------------------------
- *  O limitador e' a ultima linha de defesa do RECURSO. Um defeito nele
- *  tem dois formatos possíveis, e os dois sao graves:
- *
- *      - deixar passar demais: o atacante derruba a API;
- *      - bloquear demais: a aplicacao para de funcionar para o usuario
- *        legitimo (um falso positivo e' um outage).
- *
- *  Por isso o teste cobre os dois lados, e nao so o "bloqueia".
- *
- *  O que ele prova:
- *      1) A requisicao DENTRO do limite passa (e o controller e' chamado);
- *      2) A requisicao ACIMA do limite e barrada com 429;
- *      3) A resposta traz "Retry-After" com um tempo REAL (nao zero);
- *      4) O limite e por IP: outro IP nao e afetado;
- *      5) Os cabecalhos informativos dizem o limite e o que resta.
- * ============================================================================
+ * Um defeito aqui tem dois formatos, e os dois sao graves: deixar passar
+ * quem estourou o limite, ou bloquear o IP errado. Os testes cobrem o 429, o
+ * Retry-After com tempo real e o isolamento entre IPs.
  */
 class LimitadorDeRequisicoesFilterTest {
 

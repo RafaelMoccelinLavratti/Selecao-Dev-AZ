@@ -16,29 +16,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * ============================================================================
- *  TRATAMENTO GLOBAL DE ERROS  (@RestControllerAdvice)
- * ============================================================================
+ * Tratamento global de erros.
  *
- *  PARA QUE SERVE?
- *  Para que NENHUM erro "vaze" cru para o navegador. Sem isso, uma excecao
- *  inesperada devolve uma pagina HTML com a pilha de execucao (stack trace),
- *  que revela nomes de classes, caminhos de arquivos, versoes de framework e
- *  ate trechos de SQL. Isso e vazamento de informacao - uma falha comum e
- *  grave de seguranca da informacao.
+ * Sem isso, uma excecao inesperada devolveria uma pagina HTML com a pilha
+ * de execucao. Cada tipo de excecao tem o seu metodo, e a resposta segue
+ * sempre o mesmo formato.
  *
- *  COMO FUNCIONA:
- *  O Spring chama o metodo @ExceptionHandler correspondente ao tipo da
- *  excecao e usa o retorno como resposta HTTP. Nos controllers usamos
- *  "@Valid @RequestBody", e quando a validacao falha o Spring lanca
- *  MethodArgumentNotValidException - que e tratada aqui, devolvendo HTTP 400
- *  com a lista exata dos campos invalidos e seus motivos.
- *
- *  REGRA DE OURO DA RESPOSTA DE ERRO:
- *  - O cliente recebe o QUÊ (qual campo falhou e por que).
- *  - O cliente NAO recebe o COMO (stack trace, SQL, nomes de classes).
- *  - O "como" fica apenas no log do servidor, onde a equipe de TI pode usar.
- * ============================================================================
+ * O cliente recebe o que houve (qual campo falhou e por que) e nunca o como
+ * (stack trace, SQL, nomes de classes).
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -109,7 +94,7 @@ public class GlobalExceptionHandler {
      * URL inexistente -> HTTP 404.
      *
      * Para este tratamento entrar em acao, o Spring precisa estar
-     * configurado para LANÇAR a excecao quando nao encontra nenhum
+     * configurado para LANCAR a excecao quando nao encontra nenhum
      * controller (em vez de tentar servir um arquivo estatico). Isso e
      * feito em application.properties:
      *     spring.mvc.throw-exception-if-no-handler-found=true

@@ -1,18 +1,15 @@
 <template>
   <!--
-    ==========================================================================
-     VIEW: EMPRESAS   (views/empresa/Empresas.vue)
-     EXERCICIO 6 - "tela de consulta parametrizada para cadastro de Empresas.
-     Uma grid somente leitura (v-data-table) contendo os campos: cnpj,
-     razaoSocial, telefone e email."
+     View: empresas (views/empresa/Empresas.vue).
 
-     EXERCICIO 8 (parte final) - "Nao esqueça de criar os links para editar
-     e excluir uma empresa na tela de consulta feita no exercicio 6.
-     O link de editar deve chamar a tela de cadastro usando a url #/empresa/:id"
+     Exercicio 6 - consulta parametrizada do cadastro de empresas, em uma
+     grid somente leitura com cnpj, razaoSocial, telefone e email.
+
+     Exercicio 8 (parte final) - os links para editar e excluir, sendo que
+     a edicao chama a tela de cadastro pela url #/empresa/:id.
 
      URL da pagina.....: http://server/#/empresas
      URL dos servicos..: http://server/empresas (GET)
-    ==========================================================================
   -->
   <div>
     <h1 class="titulo-tela">Empresas</h1>
@@ -141,46 +138,13 @@
 
 <script>
 /**
- * ============================================================================
- *  SCRIPT DA VIEW: EMPRESAS
- * ============================================================================
+ * Script da tela de empresas.
  *
- *  ------------------------------------------------------
- *  O QUE ESTA TELA FAZ
- *  ------------------------------------------------------
- *  Consulta (somente leitura) das empresas participantes dos leiloes.
- *  E a tela do EXERCICIO 6, acrescida dos links de editar e excluir
- *  exigidos pelo EXERCICIO 8.
+ * Consulta somente leitura das empresas participantes dos leiloes, com
+ * links para editar e excluir.
  *
- *  ---------------------------------------------------------
- *  UMA REGRA DE OURO QUE VALE LEMBRAR: A EXIBICAO NAO E O ARMAZENAMENTO
- *  ---------------------------------------------------------
- *  Repare que o CNPJ, o telefone e o CEP aparecem MASCARADOS na tela
- *  (11.422.377/0001-55), mas sao gravados SEM pontuacao no banco
- *  (11422377000155).
- *
- *  Isso e proposital e e uma pratica de seguranca de dados. Se o banco
- *  guardasse o valor como digitado, existiriam varias representacoes
- *  do mesmo dado ("11422377000155", "11.422.377/0001-55",
- *  "11 422 377 0001 55") e a busca por CNPJ deixaria de funcionar,
- *  porque a comparacao seria de texto.
- *
- *  A solucao adotada no projeto inteiro e:
- *      - na ENTRADA  : o backend remove a pontuacao (canonicaliza);
- *      - na SAIDA    : o frontend aplica a mascara so na exibicao.
- *
- *  Quem faz a canonicalizacao e o backend (a camada de negocio). O
- *  frontend so decora como mostrar.
- *
- *  ---------------------------------------------------------
- *  POR QUE A TABELA E SOMENTE LEITURA?
- *  ---------------------------------------------------------
- *  Porque o enunciado do exercicio 6 pede exatamente isso, e porque a
- *  edicao de empresa tem muitos campos (com validacao de formato). Editar
- *  tudo dentro da tabela deixaria a tela apertada e difficultosa de
- *  usar. Entao a edicao acontece na tela de cadastro (#/empresa/:id),
- *  e aqui ficam apenas o link para ela e o botao de excluir.
- * ============================================================================
+ * O CNPJ, o telefone e o CEP aparecem mascarados na tela, mas sao gravados
+ * sem pontuacao no banco: a exibicao nao e o armazenamento.
  */
 
 /**
@@ -228,9 +192,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  DADOS REATIVOS (data)
-   * ------------------------------------------------------------------
    */
   data() {
     return {
@@ -274,9 +236,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  VALORES CALCULADOS (computed)
-   * ------------------------------------------------------------------
    */
   computed: {
     /**
@@ -310,9 +270,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  CICLO DE VIDA: mounted
-   * ------------------------------------------------------------------
    *
    *  "mounted" e chamado quando o componente ja foi inserido na tela.
    *  E o lugar certo para buscar dados: a tela ja existe, o usuario
@@ -327,9 +285,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  METODOS (methods)
-   * ------------------------------------------------------------------
    */
   methods: {
     /**

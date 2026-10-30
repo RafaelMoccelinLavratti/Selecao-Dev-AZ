@@ -1,60 +1,31 @@
-/* ============================================================================
- *  TOKENS DE MARCA - AZ TECNOLOGIA EM GESTAO
- * ============================================================================
+/*
+ * Tokens de marca - AZ Tecnologia em Gestao.
  *
- *  O QUE E ISTO?
- *  A paleta oficial e a tipografia oficial da AZ Tecnologia em Gestao,
- *  extraidas do proprio tema do site institucional (azi.com.br, tema
- *  "aztheme"). Nao sao cores "aproximadas": sao os valores exatos que a
- *  empresa usa nas variaveis CSS do tema.
+ * A paleta e a tipografia oficiais da AZ, extraidas do proprio tema do
+ * site institucional (azi.com.br, tema "aztheme"). Nao sao cores
+ * "aproximadas": sao os valores exatos que a empresa usa nas variaveis
+ * CSS do tema.
  *
- *  ------------------------------------------------------
- *  DE ONDE VIERAM OS VALORES
- *  ------------------------------------------------------
- *  Extraidos de:
- *    https://www.azi.com.br/wp-content/themes/aztheme/style.css
- *  (o WordPress entrega esse arquivo minificado em
- *   /wp-content/cache/min/1/74ab08738a3f428bc1966ccd6c994daf.css)
+ * De onde vieram os valores:
+ *   https://www.azi.com.br/wp-content/themes/aztheme/style.css
+ * (o WordPress entrega esse arquivo minificado em
+ *  /wp-content/cache/min/1/74ab08738a3f428bc1966ccd6c994daf.css)
  *
- *  O logo (logo-az.svg) tambem veio de la:
- *    https://www.azi.com.br/wp-content/uploads/2023/06/logo_az_white.svg
+ * O logo (logo-az.svg) tambem veio de la:
+ *   https://www.azi.com.br/wp-content/uploads/2023/06/logo_az_white.svg
  *
- *  A AZ Tecnologia em Gestao LTDA (CNPJ 24.598.492/0001-27) e de Campo
- *  Grande/MS e opera o portal azi.com.br.
+ * A AZ Tecnologia em Gestao LTDA (CNPJ 24.598.492/0001-27) e de Campo
+ * Grande/MS e opera o portal azi.com.br.
  *
- *  ------------------------------------------------------
- *  A PALETA
- *  ------------------------------------------------------
- *  | Token                  | Valor                    | Uso                |
- *  |------------------------|--------------------------|--------------------|
- *  | --az-laranja-500       | #EA4F24                  | PRIMARIA (destaque) |
- *  | --az-azul-900          | #002436                  | SECONDARIA (fundo) |
- *  | --az-cinza-600         | #575756                  | texto do corpo     |
- *  | --az-branco            | #ffffff                  | superficie         |
- *  | --az-cinza-100         | #f8f9fa                  | fundo suave        |
- *  | --az-cinza-200         | #eeeeee                  | borda              |
- *  | --az-cinza-300         | #dee2e6                  | borda              |
- *  | --az-cinza-400         | #ced4da                  | placeholder        |
- *  | --az-cinza-500         | #adb5bd                  | texto terciario    |
- *  | --az-cinza-700         | #6c757d                  | texto secundario   |
- *  | --az-cinza-900         | #212529                  | texto principal    |
- *  | --az-vermelho-600      | #dc3545                  | erro               |
- *  | --az-verde-600         | #198754                  | sucesso            |
- *  | --az-amarelo-600       | #ffc107                  | atencao            |
+ * A regra de cor que o tema usa:
  *
- *  ------------------------------------------------------
- *  A REGRA DE COR QUE O TEMA USA
- *  ------------------------------------------------------
- *  Repare que o tema INVERTE as cores no hover:
+ *     a        { color: #EA4F24; }   <- link em laranja
+ *     a:hover  { color: #002436; }   <- no hover, azul-escuro
  *
- *      a        { color: #EA4F24; }   <- link em laranja
- *      a:hover  { color: #002436; }   <- no hover, azul-escuro
- *
- *  E o botao principal e laranja, enquanto a barra de navegacao e o
- *  rodape sao azul-escuro. A combinacao laranja + azul-marinho e o
- *  par de cores da marca - e a mesma ordem de trabalho aqui: fundo
- *  escuro, acao em laranja.
- * ========================================================================== */
+ * O botao principal e laranja, enquanto a barra de navegacao e o rodape
+ * sao azul-escuro. A combinacao laranja + azul-marinho e o par de cores da
+ * marca - e a mesma ordem de trabalho aqui: fundo escuro, acao em laranja.
+ */
 
 :root {
   /* ---- LARANJA: a cor de destaque (botoes, links, acoes) ---- */

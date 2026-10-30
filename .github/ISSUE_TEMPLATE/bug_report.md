@@ -2,16 +2,11 @@ name: Relato de Bug
 
 about: Reporta um comportamento inesperado
 
-title: "[modulo] resumo do problema"
+title: "[módulo] resumo do problema"
 
 labels: ["bug"]
 
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Obrigado por relatar! Um bom relato ajuda a corrigir mais rapido.
-
   - type: dropdown
     id: modulo
     attributes:
@@ -21,7 +16,7 @@ body:
         - Frontend - Vue
         - Banco de dados
         - Infraestrutura / Docker
-        - Documentacao
+        - Documentação
     validations:
       required: true
 
@@ -30,10 +25,10 @@ body:
     attributes:
       label: O que aconteceu?
       description: |
-        Descreva o que voce ESPERAVA e o que aconteceu de verdade.
+        Descreva o que você ESPERAVA e o que aconteceu de verdade.
       placeholder: |
         Esperava: a API devolve 401 em JSON quando o token expira.
-        Aconteceu: devolveu uma pagina HTML em branco.
+        Aconteceu: devolveu uma página HTML em branco.
     validations:
       required: true
 
@@ -42,8 +37,8 @@ body:
     attributes:
       label: Passos para reproduzir
       description: |
-        Numerados, do inicio ao fim. Inclua o comando curl, a tela, ou o
-        que quer que tenha sido feito.
+        Numerados, do início ao fim. Inclua o comando curl, a tela, ou o que
+        quer que tenha sido feito.
       placeholder: |
         1. Fazer login em POST /auth/login
         2. Usar o token em GET /unidades
@@ -57,8 +52,8 @@ body:
     attributes:
       label: Ambiente
       description: |
-        Versao do Java, do Node, do PostgreSQL; sistema operacional; perfil
-        de seguranca (app.security.enabled).
+        Versão do Java, do Node, do PostgreSQL; sistema operacional; perfil de
+        segurança (app.security.enabled).
       placeholder: |
         Java 11.0.32, Node 20, PostgreSQL 16, Windows 11, security.enabled=false
     validations:
@@ -67,11 +62,11 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: Saida de log ou mensagem de erro
+      label: Saída de log ou mensagem de erro
       description: |
-        Cole o trecho relevante. Se houver um correlation id (o codigo que
-        aparece no cabecalho X-Correlation-Id), inclua - ele localiza a
-        requisicao no servidor.
+        Cole o trecho relevante. Se houver um correlation id (o código que
+        aparece no cabeçalho X-Correlation-Id), inclua - ele localiza a
+        requisição no servidor.
       render: shell
     validations:
       required: false

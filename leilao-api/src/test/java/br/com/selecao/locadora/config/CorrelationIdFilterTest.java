@@ -19,26 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * ============================================================================
- *  TESTE: IDENTIFICADOR DE CORRELACAO
- * ============================================================================
+ * Testes do identificador de correlacao.
  *
- *  ------------------------------------------------------
- *  POR QUE ESTE TESTE EXISTE?
- *  ------------------------------------------------------
- *  O identificador de correlacao e o que liga "o erro que o usuario viu na
- *  tela" com "as linhas de log do servidor". Se ele nao for unico, ou se
- *  vazar de uma requisicao para a seguinte, o rastreamento vira
- * udio - e o time de TI perde horas procurando a causa.
- *
- *  Por isso o teste cobre os TRES riscos reais:
- *
- *      1) o ID precisa ser unico por requisicao;
- *      2) o ID precisa NAO vazar para a requisicao seguinte (a limpeza do
- *         MDC no "finally");
- *      3) o valor vindo do cliente precisa ser SANITIZADO - senao um
- *         atacante injeta linhas falsas no log (log forging).
- * ============================================================================
+ * O identificador e o que liga "o erro que o usuario viu na tela" com "as
+ * linhas de log do servidor". Os testes garantem que ele e unico por
+ * requisicao, que nao vaza para a requisicao seguinte e que um valor
+ * malicioso enviado pelo cliente e descartado.
  */
 class CorrelationIdFilterTest {
 

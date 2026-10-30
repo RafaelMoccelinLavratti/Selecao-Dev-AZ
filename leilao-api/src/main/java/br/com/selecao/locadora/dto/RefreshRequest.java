@@ -8,30 +8,13 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 /**
- * ============================================================================
- *  DTO: PEDIDO DE RENOVACAO DE TOKEN
- * ============================================================================
+ * Corpo do POST /auth/refresh.
  *
- *  E o corpo do POST /auth/refresh.
+ * Tem um campo, a resposta tem cinco: o pedido e "me de novo o acesso", a
+ * resposta e "aqui esta o acesso".
  *
- *  ------------------------------------------------------
- *  O REQUEST E O RESPONSE SAO DIFERENTES DE PROPOSITO
- *  ------------------------------------------------------
- *  Este DTO tem um campo; a resposta tem cinco. Sao coisas diferentes:
- *  o pedido e "me de novo o acesso", a resposta e "aqui esta o acesso,
- *  a proxima renovacao e esta, e voce tem ate tal hora".
- *
- *  Manter os dois separados deixa o contrato claro e permite evoluir a
- *  resposta (adicionar um campo) sem quebrar quem envia o pedido.
- *
- *  ------------------------------------------------------
- *  O LIMITE DE TAMANHO
- *  ------------------------------------------------------
- *  O token de renovacao tem tamanho previsivel (algumas centenas de
- *  caracteres). Limitar o tamanho da entrada evita que um cliente envie
- *  megabytes para o endpoint, que faz uma operacao de hash (e, portanto,
- *  consome CPU) em cada tentativa.
- * ============================================================================
+ * O tamanho e limitado porque o token tem tamanho previsivel - um limite de
+ * entrada evita que o cliente envie qualquer coisa.
  */
 @Data
 @NoArgsConstructor

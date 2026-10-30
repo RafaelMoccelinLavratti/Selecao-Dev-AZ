@@ -24,42 +24,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * ============================================================================
- *  CONTROLLER REST: AUTENTICACAO
- * ============================================================================
+ * Controller REST da autenticacao.
  *
- *  ------------------------------------------------------
- *  ONDE FICA E POR QUE
- *  ------------------------------------------------------
- *  No pacote "service", como o enunciado determina:
+ * POST /auth/login    - autentica e devolve o par de tokens
+ * POST /auth/refresh  - troca um token de renovacao por um par novo
+ * POST /auth/logout   - revoga a sessao
+ * GET  /auth/me       - devolve quem esta autenticado
  *
- *      "Controladores REST: pacote service - endpoints dos servicos rest"
- *
- *  Este controller tem UMA responsabilidade: traduzir HTTP em Java.
- *  Ele sabe qual URL responde a qual metodo, como ler o corpo do pedido
- *  e qual status code devolver. NAO sabe nenhuma regra de negocio -
- *  quem decide se a senha esta correta e a camada "business".
- *
- *  ------------------------------------------------------
- *  OS ENDPOINTS
- *  ------------------------------------------------------
- *  POST /auth/login    - autentica e devolve o par de tokens
- *  POST /auth/refresh  - troca um token de renovacao por um par novo
- *  POST /auth/logout   - revoga a sessao
- *  GET  /auth/me       - devolve quem esta autenticado
- *
- *  Os tres primeiros sao PUBLICOS por definicao (e o que permite a um
- *  cliente NAO autenticado obter um token). O ultimo exige autenticacao.
- *
- *  ------------------------------------------------------
- *  O STATUS CODE DE LOGIN
- *  ------------------------------------------------------
- *  Devolvemos 200, e nao 201 (Created). A diferenca nao e preciosismo:
- *  201 quer dizer "criei um recurso novo", e o login nao cria nada - ele
- *  entrega uma credencial temporaria. O recurso "criado" seria o token,
- *  e ele tem um tempo de vida curto demais para ser tratado como recurso
- *  enderecavel.
- * ============================================================================
+ * O login responde 200 e nao 201: ele nao cria um recurso novo, entrega uma
+ * credencial temporaria.
  */
 @RestController
 @RequestMapping(value = {"/auth", "/autenticacao"})

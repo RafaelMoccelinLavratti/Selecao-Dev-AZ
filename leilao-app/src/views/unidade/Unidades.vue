@@ -1,47 +1,36 @@
 <template>
   <!--
-    ==========================================================================
-     VIEW: UNIDADES   (views/unidade/Unidades.vue)
-     EXERCICIO 5 - "tela de consulta e edicao simples para o cadastro de
-     Unidade. Uma grid editavel capaz de realizar todas as operacoes CRUD
-     na tabela de Unidade (v-data-table)."
+     View: unidades (views/unidade/Unidades.vue).
 
-    ==========================================================================
+     Exercicio 5 - consulta e edicao do cadastro de unidades, em uma grid
+     editavel capaz de fazer todas as operacoes CRUD (v-data-table).
 
      URL da pagina......: http://server/#/unidades
      URL dos servicos...: http://server/unidades (GET | POST | PUT | DELETE)
-     Componente..........: este arquivo + components/
 
-     ------------------------------------------------------
      COMO A "GRID EDITAVEL" FUNCIONA
-     ------------------------------------------------------
-     Este e o padrao canonico de "tabela editavel" do Vuetify. A linha
-     tem TRES estados possiveis:
 
-       1. MODO CONSULTA - mostra os dados. No canto direito aparecem
-          os icones "editar" (lapis) e "excluir" (lixeira).
+     A linha tem TRES estados possiveis:
 
-       2. MODO EDICAO - ao clicar no lapis, a linha vira um FORMULARIO
-          (os textos viram campos) e os icones viram "salvar" (check) e
-          "cancelar" (X).
+       1. MODO CONSULTA - mostra os dados. No canto direito aparecem os
+          icones "editar" (lapis) e "excluir" (lixeira).
 
-       3. LINHA DE INCLUSAO - quando o usuario clica em "Nova unidade",
-          uma linha em branco aparece NO TOPO da tabela, pronta para
-          preencher. Ao confirmar, ela vira um registro novo na API.
+       2. MODO EDICAO - ao clicar no lapis, a linha vira um FORMULARIO e os
+          icones viram "salvar" (check) e "cancelar" (X).
 
-     Detalhe de implementacao: a lista exibida e um "computed" que
-     coloca a linha de inclusao (quando existe) na frente da lista real.
-     Assim nao existe uma segunda tabela na tela - e uma unica tabela,
-     que muda de conteudo.
+       3. LINHA DE INCLUSAO - ao clicar em "Nova unidade", uma linha em
+          branco aparece NO TOPO da tabela, pronta para preencher.
 
-     ------------------------------------------------------
+     A lista exibida e um "computed" que coloca a linha de inclusao na
+     frente da lista real. Assim nao existe uma segunda tabela na tela - e
+     uma unica, que muda de conteudo.
+
      POR QUE OS BOTOES DE EXCLUIR USAM UM DIALOGO?
-     ------------------------------------------------------
-     Exclusao nao tem "Ctrl+Z". Um clique acidental no icone de lixeira
-     - que fica a poucos pixels do lapis de editar - apagaria um
-     cadastro sem chance de recuperar. Por isso, o componente
-     ConfirmDialog e usado em TODA exclusao do sistema.
-    ==========================================================================
+
+     Exclusao nao tem "Ctrl+Z". Um clique acidental no icone de lixeira -
+     que fica a poucos pixels do lapis de editar - apagaria um cadastro sem
+     chance de recuperar. Por isso o componente ConfirmDialog e usado em
+     TODA exclusao do sistema.
   -->
   <div>
     <h1 class="titulo-tela">Unidades</h1>
@@ -97,7 +86,7 @@
       </v-card-title>
 
       <!--
-        TABELA.
+        Tabela.
         "headers"  = as colunas (definidas no metodo, no script).
         "items"    = os dados (a lista computada "linhasExibidas").
         "search"   = o texto do campo de busca (filtra automaticamente).
@@ -153,7 +142,7 @@
             @cancel="cancelarInclusao"
           ></v-edit-field>
 
-          <!-- MODO CONSULTA -->
+          <!-- modo consulta -->
           <span v-else>{{ item.nome }}</span>
         </template>
 
@@ -191,7 +180,7 @@
         </template>
 
         <!--
-          MENSAGEM QUANDO NAO HAI NENHUMA UNIDADE CADASTRADA.
+          Mensagem quando nao hai nenhuma unidade cadastrada.
         -->
         <template v-slot:no-data>
           <div class="pa-6 text-center grey--text">
@@ -205,7 +194,7 @@
       </v-data-table>
     </v-card>
 
-    <!-- DIALOGO DE CONFIRMACAO DE EXCLUSAO -->
+    <!-- dialogo de confirmacao de exclusao -->
     <confirm-dialog
       ref="dialogoExclusao"
       titulo="Excluir unidade"
@@ -217,52 +206,13 @@
 
 <script>
 /**
- * ============================================================================
- *  SCRIPT DA VIEW: UNIDADES
- * ============================================================================
+ * Script da tela de unidades.
  *
- *  ------------------------------------------------------
- *  O QUE ESTA TELA FAZ
- *  ------------------------------------------------------
- *  Cadastro completo (CRUD) das unidades - os locais fisicos onde os
- *  leiloes sao realizados. E a tela do EXERCICIO 5.
+ * A tela tem uma unica tabela, e o que muda e o conteudo das linhas
+ * conforme o estado: consulta, edicao ou a linha de inclusao no topo.
  *
- *  ---------------------------------------------------------
- *  A IDEIA CENTRAL: UMA TABELA, TRES ESTADOS
- *  ---------------------------------------------------------
- *  A tela tem uma unica tabela. O que muda e o CONTEUDO das linhas,
- *  conforme o estado:
- *
- *    1) CONSULTA  - mostra os dados. No canto direito, os botoes
- *                   "editar" (lapis) e "excluir" (lixeira).
- *
- *    2) EDICAO    - ao clicar no lapis, a linha vira um FORMULARIO
- *                   (o texto vira um campo editavel) e os botoes viram
- *                   "salvar" (check) e "cancelar" (X).
- *
- *    3) INCLUSAO - ao clicar em "Nova unidade", uma linha em branco
- *                   aparece NO TOPO da tabela, pronta para preencher.
- *                   Ao confirmar, ela vira um registro novo na API.
- *
- *  Como nao existe uma segunda tabela na tela, o usuario nunca fica
- *  "desorientado" sobre onde esta preenchendo alguma coisa: o que
- *  esta sendo editado esta sempre visivel, na propria linha.
- *
- *  ---------------------------------------------------------
- *  POR QUE A EDICAO ACONTECE NUMA COPIA?
- *  ---------------------------------------------------------
- *  Repare no objeto "editado": ele e uma COPIA da linha original, e
- *  nao a propria linha da lista.
- *
- *  Se editassemos o objeto original, o texto mudaria na tela
- *  imediatamente, ao digitar. Se o usuario clicasse em "cancelar", o
- *  valor original ja teria sumido - e nao teriamos como voltar atras
- *  sem recarregar a pagina inteira.
- *
- *  Com a copia, o cancelamento e simplesmente "esquecer a copia": o
- *  estado original nunca foi tocado. Esse padrao (editar uma copia,
- *  confirmar ou descartar) e o mesmo de qualquer formulario.
- * ============================================================================
+ * A edicao acontece numa copia da linha (o objeto "editado"), e nao na
+ * propria linha da lista: assim cancelar e so descartar a copia.
  */
 
 /**
@@ -293,9 +243,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  DADOS DA TELA (o "estado" reativo do componente).
-   * ------------------------------------------------------------------
    */
   data() {
     return {
@@ -353,10 +301,8 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  COMPUTED PROPS: valores que o Vue recalcula sozinho quando as
    *  dependencias mudam.
-   * ------------------------------------------------------------------
    */
   computed: {
     /**
@@ -423,9 +369,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  CICLO DE VIDA: mounted
-   * ------------------------------------------------------------------
    *
    *  Carregamos a lista quando a tela entra no ar (e nao no "created"),
    *  para que o usuario ja veja o indicador de carregamento.
@@ -435,9 +379,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  METODOS (methods)
-   * ------------------------------------------------------------------
    */
   methods: {
     /**

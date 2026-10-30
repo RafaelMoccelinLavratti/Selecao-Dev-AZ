@@ -1,32 +1,12 @@
 /**
- * ============================================================================
- *  MASCARAS E VALIDADORES (src/utils/mascaras.js)
- * ============================================================================
+ * Mascaras e validadores.
  *
- *  ------------------------------------------------------
- *  O QUE E UMA "MASCARA"?
- *  ------------------------------------------------------
- *  E uma funcao que formata o texto enquanto o usuario digita:
- *      "11422377000155"  ->  "11.422.377/0001-55"
- *      "01310100"        ->  "01310-100"
- *      "1130001100"      ->  "(11) 3000-1100"
+ * As mascaras formatam o texto enquanto o usuario digita:
+ * "11422377000155" vira "11.422.377/0001-55".
  *
- *  Deixar o campo aceitar qualquer coisa e correr o risco de o usuario
- *  digitar o numero errado. Com a mascara, o formato fica visivel
- *  enquanto ele digita, e o erro e praticamente impossivel.
- *
- *  ------------------------------------------------------
- *  POR QUE A VALIDACAO EXISTE AQUI E NO BACKEND?
- *  ------------------------------------------------------
- *  Aqui (frontend) a validacao e CONVENIENCIA: da erro na hora, mostra
- *  o campo em vermelho e nao perde o que ja foi digitado.
- *
- *  No backend a validacao e GARANTIA: e a camada que nao pode ser
- *  contornada, porque qualquer um pode chamar a API sem passar pela
- *  tela. As duascamadas usam as MESMAS regras (as expressoes regulares
- *  aqui espelham as anotacoes @Pattern do Java), para que o usuario
- *  nunca veja "a tela aceitou, mas a API recusou".
- * ============================================================================
+ * A validacao aqui e conveniencia (da erro na hora, sem perder o que ja foi
+ * digitado); a que vale e a do backend, que nao pode ser contornada. As
+ * regras dos dois lados sao as mesmas.
  */
 
 /**
@@ -115,11 +95,9 @@ export function mascaraDinheiro(valor) {
 }
 
 /**
- * ------------------------------------------------------------------
- *  VALIDADORES
+ *  Validadores
  *  Sao as mesmas regras aplicadas no backend (arquivo
  *  EmpresaRequest.java). Cada um devolve true (valido) ou false.
- * ------------------------------------------------------------------
  */
 
 /** Campo obrigatorio: nao pode ser vazio nem apenas espacos. */

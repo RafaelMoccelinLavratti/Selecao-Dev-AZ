@@ -1,40 +1,9 @@
 /**
- * ============================================================================
- *  CONFIGURACAO DAS ROTAS (src/router/index.js)
- * ============================================================================
+ * Configuracao das rotas.
  *
- *  ------------------------------------------------------
- *  O QUE SAO "ROTAS"?
- *  ------------------------------------------------------
- *  Rotas sao o mapa entre o endereco da URL e a tela que deve aparecer.
- *  O vue-router cuida disso sozinho: quando a URL muda, ele troca o
- *  componente renderizado.
- *
- *  ------------------------------------------------------
- *  POR QUE "mode: 'hash'"?  (exercicio 4)
- *  ------------------------------------------------------
- *  O enunciado pede que a URL fique assim:
- *      http://server/#/unidades
- *      http://server/#/empresas
- *      http://server/#/leiloes
- *
- *  O "#/unidades" e o que chamamos de "hash routing" (SPA com hash).
- *  A vantagem: nao precisa configurar o servidor web para devolver o
- *  index.html a cada URL - o que sempre funciona, ate em hospedagem
- *  simples ou dentro de um container, sem configurar "try_files".
- *
- *  (Se um dia a aplicacao rodar em producao com um dominio proprio, da
- *  para migrar para "mode: 'history'" trocando apenas esta linha - e
- *  ai o servidor web precisaria ser configurado para isso.)
- *
- *  ------------------------------------------------------
- *  O QUE E UM "GUARD"?
- *  ------------------------------------------------------
- *  Um guard (guardiao) e uma funcao que roda ANTES de entrar na tela.
- *  Aqui ele nao bloqueia nada (a aplicacao nao exige login), mas
- *  existe como exemplo do padrao e ja deixa o ponto de entrada
- *  preparado para uma regra de autenticacao no futuro.
- * ============================================================================
+ * O vue-router cuida do mapa entre a URL e a tela: quando a URL muda, ele
+ * troca o componente em tela. O endereco usa hash (#/unidades) porque e o
+ * que o enunciado pede.
  */
 import Vue from 'vue';
 import VueRouter from 'vue-router';

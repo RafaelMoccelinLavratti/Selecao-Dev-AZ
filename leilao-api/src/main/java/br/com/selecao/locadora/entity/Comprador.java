@@ -11,32 +11,10 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 /**
- * ============================================================================
- *  ENTIDADE: COMPRADOR
- * ============================================================================
+ * Vinculo entre empresa e leilao, no papel de compradora.
  *
- *  REPRESENTA O QUE?
- *  A participacao de uma empresa em um leilao como COMPRADORA.
- *  E uma tabela de juncao (tabela associativa): nao tem dados proprios,
- *  so liga "empresa" e "leilao".
- *
- *  POR QUE USAR @EmbeddedId E NAO @IdClass?
- *  - @IdClass : as duas colunas de FK ficam DENTRO da propria entidade.
- *    Funciona, mas deixa a entidade com dois campos "soltos".
- *  - @EmbeddedId : as duas colunas ficam dentro de uma classe separada
- *    (CompradorId), e a entidade tem UM campo so: o "id" composto.
- *    Fica mais legivel e permite passar o par (empresa, leilao) como
- *    parametro unico nos metodos do repositorio.
- *
- *  MAPEAMENTO DIAGRAMA -> BANCO
- *  ------------------------------------------------------------------
- *  | Diagrama (logico) | Coluna no banco | Tipo    | Obrigatorio? |
- *  ------------------------------------------------------------------
- *  | PK empresa         | empresa         | INTEGER | SIM (*)      |
- *  | PK leilao          | leilao          | INTEGER | SIM (*)      |
- *  ------------------------------------------------------------------
- *  Repare que as DUAS colunas formam a chave primaria (PK composta).
- * ============================================================================
+ * E uma tabela de juncao: nao tem dados proprios, apenas os dois ids que
+ * formam a chave primaria composta.
  */
 @Data
 @Builder

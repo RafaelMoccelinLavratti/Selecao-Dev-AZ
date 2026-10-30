@@ -19,26 +19,14 @@ import javax.validation.Valid;
 import java.util.List;
 
 /**
- * ============================================================================
- *  CONTROLADOR REST: EMPRESA
- * ============================================================================
+ * Controller REST da empresa.
  *
- *  MESMO PADRAO DO CONTROLADOR DE UNIDADE, com uma diferenca importante:
- *  aqui o DTO de entrada tem MUITAS validacoes de formato (CNPJ, CEP,
- *  telefone, e-mail, site, tamanhos maximos). E o que atende a exigencia
- *  do EXERCICIO 8 ("validar as mascaras e os formatos de numero, email,
- *  url e tamanho maximo do texto").
+ * Segue o mesmo padrao do controller de unidade, com uma diferenca: o DTO
+ * de entrada tem varias validacoes de formato (CNPJ, CEP, telefone,
+ * e-mail).
  *
- *  A validacao acontece em DOIS lugares, de proposito:
- *    - no BACKEND (aqui, via @Valid): e a garantia. Qualquer cliente
- *      que chamar a API passa por ela.
- *    - no FRONTEND (tela de cadastro): e a conveniencia. O usuario ve o
- *      erro na hora, sem perder o que ja digitou.
- *
- *  OBSERVACAO DE SEGURANCA:
- *  A senha recebida aqui e convertida em hash BCrypt na camada de
- *  negocio, e NUNCA volta na resposta (veja EmpresaResponse).
- * ============================================================================
+ * A senha recebida aqui vira hash na camada de negocio e nunca volta na
+ * resposta.
  */
 @RestController
 @RequestMapping(value = {"/empresas", "/empresa"})

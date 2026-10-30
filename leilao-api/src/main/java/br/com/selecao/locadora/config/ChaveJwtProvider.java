@@ -30,71 +30,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * ============================================================================
- *  GERENCIADOR DAS CHAVES DE ASSINATURA DOS TOKENS JWT
- * ============================================================================
+ * Gerenciador das chaves de assinatura dos tokens JWT.
  *
- *  ------------------------------------------------------
- *  O QUE E ISTO?
- *  ------------------------------------------------------
- *  Um token JWT e um objeto que o servidor assina para provar que foi ele
- *  que o emitiu. A assinatura e feita com uma chave PRIVADA, e a
- *  verificacao e feita com a chave PUBLICA correspondente. Essa e a
- *  propriedade que torna o JWT confiavel: ninguem que nao tenha a chave
- *  privada consegue forjar um token.
+ * O token e assinado com uma chave privada e verificado com a publica.
+ * RSA (RS256) e nao HMAC (HS256) porque, no HMAC, quem consegue verificar
+ * um token consegue tambem assinar um token falso.
  *
- *  Esta classe cuida de duas coisas:
- *
- *    1) GERAR ou CARREGAR o par de chaves (RSA de 2048 bits).
- *    2) IDENTIFICAR cada chave por um "kid" (key id), que vai dentro do
- *       cabecalho do token. E o que permite ROTACIONAR a chave sem
- *       derrubar os tokens ja emitidos.
- *
- *  ------------------------------------------------------
- *  POR QUE RSA (RS256) E NAO HMAC (HS256)?
- *  ------------------------------------------------------
- *  Com HMAC, a MESMA chave assina e verifica. Quem consegue verificar
- *  um token consegue tambem assinar um token falso. Isso significa que
- *  qualquer servico que precise VERIFICAR o token (outro microsservico,
- *  um gateway) precisa receber a chave de assinatura - e passa a poder
- *  emitir tokens.
- *
- *  Com RSA (RS256), a chave publica (que pode ser distribuida livremente)
- *  so VERIFICA. A chave privada fica apenas no emissor. E a separacao
- *  correta entre "quem pode falar" e "quem pode so ouvir".
- *
- *  ------------------------------------------------------
- *  A ROTACAO DE CHAVE ("kid")
- *  ------------------------------------------------------
- *  Uma chave criptografica tem prazo de validade. Quando ela se aproxima
- *  do fim, trocamos por uma nova - mas os tokens ja emitidos continuam
- *  valendo ate expirar.
- *
- *  O cabecalho "kid" do token diz QUAL chave foi usada. O validador
- *  procura essa chave no seu conjunto e verifica com ela. Assim:
- *
- *    - a chave NOVA assina os tokens novos;
- *    - a chave ANTIGA ainda verifica os tokens que ela emitiu;
- *    - quando a ultima token da chave antiga expira, a chave antiga e
- *      removida do conjunto.
- *
- *  Sem o "kid", trocar a chave invalidaria todos os tokens em circulo -
- *  e forcaria todo mundo a se autenticar de novo, sem necessidade.
- *
- *  ------------------------------------------------------
- *  COMO AS CHAVES SAO OBTIDAS
- *  ------------------------------------------------------
- *  - Se "app.security.jwt.keys-dir" apontar para uma pasta, cada arquivo
- *    "<kid>.private.pem" e "<kid>.public.pem" dentro dela forma uma chave.
- *    E o modo de producao: as chaves ficam em arquivo, montadas por
- *   infraestrutura (Kubernetes Secret, Vault, mounted volume).
- *
- *  - Se a pasta nao existir (desenvolvimento), o par e GERADO em memoria
- *    na inicializacao. Isso e seguro do ponto de vista de seguranca
- *    (a chave nunca e gravada em disco), mas tem uma consequencia
- *    importante: os tokens emitidos antes de um REINICIO do servidor
- *    deixam de valer. Por isso o log avisa com um AVISO.
- * ============================================================================
+ * As chaves vem de uma pasta (um par de arquivos .pem por identificador) ou,
+ * em desenvolvimento, sao geradas em memoria.
  */
 @Component
 public class ChaveJwtProvider {

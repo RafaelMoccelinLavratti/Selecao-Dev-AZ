@@ -19,14 +19,10 @@ import javax.validation.Valid;
 import java.util.List;
 
 /**
- * ============================================================================
- *  CONTROLADOR REST: LOTE
- * ============================================================================
+ * Controller REST do lote.
  *
- *  Alem do CRUD padrao, existe um endpoint extra:
- *  GET /lotes/leilao/{leilaoId} - lista os lotes de um leilao especifico.
- *  Ele existe porque e assim que a aplicacao monta o total do leilao.
- * ============================================================================
+ * Alem do CRUD, tem GET /lotes/leilao/{leilaoId}, que lista os lotes de um
+ * leilao especifico.
  */
 @RestController
 @RequestMapping(value = {"/lotes", "/lote"})

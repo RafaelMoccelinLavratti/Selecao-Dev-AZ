@@ -16,28 +16,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * ============================================================================
- *  CAMADA DE NEGOCIO (business): UNIDADE
- * ============================================================================
+ * Regras de negocio da unidade.
  *
- *  ONDE ESTA CAMADA SE ENCAIXA?
- *  O enunciado define a arquitetura em 4 camadas:
- *
- *      service  -> business -> repository -> entity
- *      (HTTP)     (regras)    (dados)      (modelo)
- *
- *  A camada "business" e o CORACAO do sistema: e onde mora o "como" as
- *  regras de negocio sao respeitadas. Ela:
- *    - verifica se o registro existe;
- *    - verifica se a operacaoviola alguma regra (unicidade, integridade);
- *    - normaliza os dados que chegam;
- *    - chama o repositorio para gravar ou ler;
- *    - devolve o resultado ja no formato de resposta (DTO).
- *
- *  REGRA QUE EU SIGO: o controller (camada service) nao deve conter
- *  regra de negocio nenhuma - ele so traduz HTTP <-> Java. Isso deixa
- *  a regra testavel e reusavel.
- * ============================================================================
+ * A camada de negocio fica entre o controller e o repositorio. Aqui o nome
+ * e normalizado e a duplicidade e recusada antes de gravar, para que o
+ * usuario receba uma mensagem util em vez de um erro do banco.
  */
 @Service
 public class UnidadeBO {

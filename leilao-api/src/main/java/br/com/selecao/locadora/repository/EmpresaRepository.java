@@ -7,31 +7,11 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 /**
- * ============================================================================
- *  REPOSITORY: EMPRESA
- * ============================================================================
+ * Repositorio da empresa.
  *
- *  O QUE E UM REPOSITORY?
- *  E a camada que fala com o BANCO DE DADOS. Ela extends JpaRepository e,
- *  com isso, o Spring Data JPA gera sozinho todas as queries basicas
- *  (listar, buscar por id, salvar, apagar). Nao ha SQL escrito a mao aqui -
- *  o framework monta o SQL parametrizado.
- *
- *  POR QUE ISSO E SEGURO CONTRA SQL INJECTION?
- *  Porque o Hibernate envia os valores como PARAMETROS separados da
- *  consulta ("prepared statement"), e nunca cola o texto digitado pelo
- *  usuario dentro do SQL. Um usuario que digitar "'; DROP TABLE tb_empresa; --"
- *  no filtro vai ser tratado como TEXTO a buscar, nunca como comando.
- *  Esse e o motivo de a aplicacao inteira passar por aqui.
- *
- *  METODOS DE BUSCA PERSONALIZADOS (consultas derivadas):
- *  O Spring Data le o nome do metodo e monta o SQL. Por exemplo,
- *  "existsByCnpjAndIdNot" vira:
- *      SELECT count(*) FROM tb_empresa WHERE cnpj = ? AND id <> ?
- *  Isso permite validar a regra de unicidade ANTES de gravar, devolvendo
- *  uma mensagem de erro clara em vez de deixar o banco estourar com uma
- *  excecao tecnica.
- * ============================================================================
+ * O Spring Data JPA gera as queries a partir dos metodos declarados. Nao ha
+ * concatenacao de texto digitado pelo usuario em lugar nenhum: o Hibernate
+ * envia os valores como parametros separados da consulta.
  */
 @Repository
 public interface EmpresaRepository extends JpaRepository<Empresa, Integer> {

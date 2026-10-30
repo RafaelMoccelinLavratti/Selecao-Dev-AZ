@@ -11,31 +11,10 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 /**
- * ============================================================================
- *  DTO DE ENTRADA: EMPRESA  (POST /empresas e PUT /empresas/:id)
- * ============================================================================
+ * DTO de entrada da empresa.
  *
- *  Este e o DTO mais importante do projeto: e ele que implementa a
- *  validacao pedida no EXERCICIO 8 ("validar os campos obrigatorios
- *  especificados no modelo de banco de dados... validar tambem as mascaras
- *  e os formatos de numero, email, url e tamanho maximo do texto").
- *
- *  UMA REGRA DE OURO: A VALIDACAO NUNCA E SÓ NO FRONTEND.
- *  O frontend valida para dar uma experiencia boa (erro na hora, sem
- *  perder o que o usuario digitou). Mas a validacao que IMPORTA e a do
- *  backend, porque qualquer um pode chamar a API direto (curl, Postman,
- *  outro sistema). O frontend e conveniência; o backend e a garantia.
- *
- *  SOBRE AS MASCARAS (formatos):
- *  Os padroes abaixo aceitam o valor COM ou SEM pontuacao:
- *      CNPJ      -> "11422377000155" ou "11.422.377/0001-55"
- *      CEP       -> "01310100"      ou "01310-100"
- *      Telefone  -> "1130001100"    ou "(11) 3000-1100"
- *  A camada de negocio (business) NORMALIZA o valor (tira a pontuacao)
- *  antes de gravar, para que a busca por CNPJ funcione tanto com o valor
- *  digitado quanto com o valor formatado. Isso e "canonicalizar a
- *  entrada" - pratica padrao em seguranca de dados.
- * ============================================================================
+ * A validacao mora aqui e nao so no frontend: qualquer um pode chamar a API
+ * sem passar pela tela, e e o backend que nao pode ser contornado.
  */
 @Data
 @NoArgsConstructor
@@ -118,13 +97,11 @@ public class EmpresaRequest {
     private String senha;
 
     /**
-     * -------------------------------------------------------
      *  AJUSTE FINO (e importante) NA SENHA
-     * -------------------------------------------------------
      *  Este setter e escrito a mao (o Lombok nao gera um porque ja
      *  existe um) e converte uma senha em BRANCO em null.
      *
-     *  POR QUE ISSO E NECESSARIO?
+     *  Por que isso e necessario?
      *  Quando o usuario EDITA uma empresa e nao troca a senha, o formulario
      *  envia o campo vazio. O @Size(min = 8) rejeitaria uma string vazia
      *  ("") - e so ignoraria null. Resultado: o usuario nao conseguiria

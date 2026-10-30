@@ -8,9 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * ============================================================================
  *  DTO DE SAIDA: EMPRESA  (o que a API devolve)
- * ============================================================================
  *
  *  OBSERVACAO DE SEGURANCA (a mais importante deste arquivo):
  *  NAO existe campo "senha" aqui. A senha - nem em texto puro, nem o
@@ -19,7 +17,6 @@ import java.time.LocalDateTime;
  *
  *  O "usuario" aparece, porque a tela precisa mostrar quem e a empresa,
  *  mas sem qualquer segredo associado.
- * ============================================================================
  */
 @Data
 @Builder

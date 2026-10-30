@@ -9,33 +9,11 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * ============================================================================
- *  REPOSITORY: LEILAO
- * ============================================================================
+ * Repositorio do leilao.
  *
- *  Alem do CRUD padrao herdado do JpaRepository, aqui mora a query do
- *  EXERCICIO 7: a listagem de leiloes ja com o NOME do vendedor e o TOTAL
- *  do leilao.
- *
- *  O QUE E O "TOTAL DO LEILAO"?
- *  total = soma de (quantidade * valor_inicial) de todos os lotes do leilao.
- *
- *  POR QUE A CONSULTA FOI ESCrita ASSIM?
- *  - "SELECT new ...": o JPQL (a linguagem de consulta do Hibernate) permite
- *    construir o objeto de resposta direto, sem passar por uma entidade e
- *    sem que o codigo Java tenha que remontar o objeto depois.
- *  - A subconsulta "(SELECT ... FROM Lote lo WHERE lo.leilao = l.id)" e uma
- *    "subconsulta correlacionada": ela roda uma vez para cada leilao da
- *    listagem e soma apenas os lotes daquele leilao. E o padrao correto
- *    para calcular total por agrupamento sem perder a ordem da listagem.
- *  - "COALESCE(..., 0)": se o leilao ainda nao tem nenhum lote, a soma seria
- *    NULL (vazio). O COALESCE troca NULL por 0, garantindo que a tela
- *    nunca mostre "null" como total.
- *
- *  SEGURANCA: como TODO o SQL do projeto e gerado pelo Hibernate com
- *  parametros vinculados, nao existe concatenacao de texto do usuario
- *  dentro de uma consulta (SQL injection).
- * ============================================================================
+ * Alem do CRUD, mora aqui a query do exercicio 7: a listagem com o nome do
+ * vendedor e o total do leilao (soma de quantidade x valor inicial dos
+ * lotes), calculada no banco.
  */
 @Repository
 public interface LeilaoRepository extends JpaRepository<Leilao, Integer> {

@@ -1,39 +1,12 @@
 /**
- * ============================================================================
- *  SERVICO DE COMUNICACAO COM A API (src/services/api.js)
- * ============================================================================
+ * Comunicacao com a API.
  *
- *  ------------------------------------------------------
- *  POR QUE CENTRALIZAR AS CHAMADAS HTTP EM UM SO LUGAR?
- *  ------------------------------------------------------
- *  Se cada tela chamasse o axios direto, a URL da API, o tratamento de
- *  erro e o tempo limite estariam espalhados por N arquivos. Mudar a
- *  porta da API seria uma edicao em 5 lugares.
+ * Se cada tela chamasse o axios direto, a URL da API, o tempo limite e o
+ * tratamento de erro estariam espalhados por N arquivos. Aqui ficam em um
+ * lugar so.
  *
- *  Aqui ha UM unico ponto de contato com o backend. Se a API mudar de
- *  endereco, muda-se uma linha (a variavel de ambiente).
- *
- *  ------------------------------------------------------
- *  TRATAMENTO DE ERRO CENTRALIZADO
- *  ------------------------------------------------------
- *  O backend responde os erros sempre no mesmo formato (ver
- *  GlobalExceptionHandler no projeto Java):
- *      { "status": 400, "erro": "...", "mensagem": "...", "campos": {...} }
- *
- *  O interceptor abaixo traduz esse formato em um objeto simples, para
- *  que a tela mostre a mensagem certa sem precisar entender o formato
- *  do erro.
- *
- *  ------------------------------------------------------
- *  SEGURANCA
- *  ------------------------------------------------------
- *  - Nao ha segredo (token, senha) no codigo do frontend: o frontend
- *    roda no navegador do usuario e QUALQUER coisa escrita nele pode
- *    ser lida por qualquer pessoa. Segredo no frontend e seguranca de
- *    papel - nao existe.
- *  - O "timeout" evita que a tela fique travada para sempre se a API
- *    estiver fora do ar.
- * ============================================================================
+ * Nao ha segredo neste arquivo: o frontend roda no navegador do usuario, e
+ * qualquer coisa escrita nele e publica.
  */
 import axios from 'axios';
 

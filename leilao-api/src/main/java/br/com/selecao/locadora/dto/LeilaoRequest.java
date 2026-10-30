@@ -9,19 +9,10 @@ import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 /**
- * ============================================================================
- *  DTO DE ENTRADA: LEILAO
- * ============================================================================
+ * DTO de entrada do leilao.
  *
- *  "vendedor" e o ID da empresa vendedora (e nao um objeto empresa inteiro).
- *  Isso e proposital: o cliente informa QUAL empresa, e o backend busca
- *  a entidade no banco. Assim:
- *   - o payload fica pequeno e previsivel;
- *   - nao existe a chance de o cliente "inventar" uma empresa no corpo
- *     da requisicao (o que em uma API sem cuidado permitiria gravar
- *     dados inconsistentes);
- *   - a integridade referencial fica garantida pelo banco e pelo codigo.
- * ============================================================================
+ * "vendedor" e o id da empresa vendedora, nao um objeto empresa inteiro: o
+ * cliente informa qual empresa, e o backend busca o resto.
  */
 @Data
 @NoArgsConstructor

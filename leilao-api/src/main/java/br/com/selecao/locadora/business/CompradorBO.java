@@ -21,45 +21,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * ============================================================================
- *  CAMADA DE NEGOCIO (business): COMPRADOR
- * ============================================================================
+ * Regras de negocio do vinculo entre empresa e leilao.
  *
- *  ------------------------------------------------------
- *  O QUE ESTA TABELA REPRESENTA
- *  ------------------------------------------------------
- *  O vinculo entre uma EMPRESA e um LEILAO, no papel de compradora. E
- *  uma tabela de relacionamento: ela nao tem dados proprios, apenas
- *  liga duas outras tabelas.
- *
- *  ------------------------------------------------------
- *  POR QUE ESTA TABELA E DIFERENTE DAS OUTRAS?
- *  ------------------------------------------------------
- *  Porque ela nao tem "id" PROPRIO. A chave primaria e o PAR
- *  (empresa, leilao) - uma chave primaria COMPOSTA.
- *
- *  Consequencias praticas em todo o codigo:
- *    - todo metodo recebe DOIS ids, e nao um;
- *    - o "findById" recebe um objeto "CompradorId" (e nao um Integer);
- *    - o mapeamento da entidade usa @EmbeddedId (veja a classe
- *      CompradorId e a anotacao @MapsId nas entidades).
- *
- *  O que a chave composta garante: a mesma empresa nao pode estar duas
- *  vezes no mesmo leilao. Isso nao e uma validacao do negocio - e uma
- *  garantia do proprio banco de dados.
- *
- *  ------------------------------------------------------
- *  SOBRE O PUT (alterar) NESSA TABELA
- *  ------------------------------------------------------
- *  Como a chave primaria e o proprio relacionamento, "alterar" um
- *  comprador significa TROCAR O PAR - por exemplo, a empresa 3 comprou o
- *  leilao 1, e agora o registro passa a dizer "empresa 3 no leilao 2".
- *
- *  Tecnicamente isso e apagar + inserir. E e isso que o codigo faz,
- *  dentro de uma transacao: ou os dois passos acontecem, ou nenhum.
- *  Sem a transacao, um erro no meio deixaria o vinculo antigo apagado
- *  e o novo nao criado - perda de dados sem possibilidade de recuperacao.
- * ============================================================================
+ * A tabela comprador e uma juncao: liga uma empresa a um leilao no papel
+ * de compradora. A chave primaria e o proprio par (empresa, leilao), o que
+ * torna o vinculo unico por definicao.
  */
 @Service
 public class CompradorBO {

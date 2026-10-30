@@ -1,109 +1,85 @@
-# Politica de Seguranca
+# Política de Segurança
 
-Obrigado por se importar com a seguranca deste projeto. Este documento
-explica **como reportar uma vulnerabilidade** e **o que NAO e' uma
-vulnerabilidade**.
+Este documento explica **como reportar uma vulnerabilidade** e **o que não
+é uma vulnerabilidade**.
 
----
+## Como reportar
 
-## Como reportar uma vulnerabilidade
+**Não abra uma issue pública para reportar uma vulnerabilidade.** Uma
+issue pública fica visível para todo mundo — inclusive para quem pretende
+explorar o problema — no tempo exato em que a correção ainda não existe.
 
-**Nao abra uma issue publica para reportar uma vulnerabilidade.**
+Use o canal privado do GitHub:
 
-Uma issue publica fica visivel para todo mundo - inclusive para quem
-pretende explorar o problema - no tempo exato em que a correcao ainda nao
-existe. Isso daria ao atacante uma vantagem real.
-
-Em vez disso, use o canal privado do GitHub:
-
-1. Abra a aba **Security** do repositorio
+1. Abra a aba **Security** do repositório
 2. Clique em **Report a vulnerability**
-3. Descreva o problema com o maximo de detalhe
-
-Ou envie um e-mail direto para o mantenedor do projeto.
+3. Descreva o problema com o máximo de detalhe
 
 ### O que incluir no relato
 
-Um bom relato de vulnerabilidade responde a quatro perguntas:
-
 | Pergunta | Por que importa |
 |---|---|
-| **O que acontece?** | Qual e' o impacto observavel |
-| **Como reproduzir?** | Os passos exatos, do inicio ao fim |
-| **Qual e' o ambiente?** | Versao do Java, perfil de seguranca, banco |
-| **Qual e' a correcao sugerida?** (opcional) | Se voce ja sabe a correcao, economiza tempo |
+| **O que acontece?** | Qual é o impacto observável |
+| **Como reproduzir?** | Os passos exatos, do início ao fim |
+| **Qual é o ambiente?** | Versão do Java, perfil de segurança, banco |
+| **Qual é a correção sugerida?** (opcional) | Se você já sabe a correção, economiza tempo |
 
 ### O que acontece depois
 
-1. Voce recebe um acknowledgment em ate **3 dias uteis**.
-2. A vulnerabilidade e' confirmada (ou nao) em ate **7 dias uteis**.
-3. Uma correcao e' preparada e testada.
-4. A correcao e' publicada, e voce e' creditado(a) no changelog - a menos
-   que voce prefira nao ser creditado(a).
-5. A issue publica e' aberta depois que a correcao estiver disponivel.
-
-**Nunca ha retaliação.** Quem reporta uma vulnerabilidade de boa fe esta
-ajudando o projeto.
+1. Você recebe a confirmação de recebimento em até **3 dias úteis**.
+2. A vulnerabilidade é confirmada (ou não) em até **7 dias úteis**.
+3. A correção é preparada e testada.
+4. A correção é publicada, e você é creditado(a) no changelog — a menos
+   que prefira não ser creditado(a).
+5. A issue pública é aberta depois que a correção estiver disponível.
 
 ---
 
-## O que NAO e' uma vulnerabilidade
+## O que **não** é uma vulnerabilidade
 
-Estas situacoes **nao** sao tratadas como vulnerabilidades:
-
-- **Erros de configuracao que exigem acesso previo.** Por exemplo, rodar
-  a aplicacao com `app.security.enabled=false` em producao e' uma escolha
-  de implantacao, nao uma vulnerabilidade. O perfil `prod` ja liga a
-  autenticacao.
-- **Ataques de negacao de servico com recursos infinitos.** O projeto ja
-  tem controle anti-forca-bruta e limitador de requisicoes por IP.
-- **Ausencia de HTTPS na configuracao local.** O TLS e' responsabilidade
-  da infraestrutura (proxy reverso, balanceador). O projeto ja envia HSTS
-  em producao.
-- **Segredos de ambiente.** As variaveis de ambiente nao fazem parte do
-  repositorio. Se voce encontrar uma senha real versionada no Git, isso
-  **e'** uma vulnerabilidade - reporte.
-- **Relatos sem passos de reproducao.** Um relato teorico ("acho que da
-  para fazer X") precisa de pelo menos uma indicacao de como chegar ate
-  la.
-
----
+- **Erros de configuração que exigem acesso prévio.** Rodar a aplicação
+  com `app.security.enabled=false` em produção é uma escolha de
+  implantação, não uma vulnerabilidade — o perfil `prod` liga a
+  autenticação.
+- **Ataques de negação de serviço com recursos infinitos.** O projeto já
+  tem controle anti-força-bruta e limitador de requisições por IP.
+- **Ausência de HTTPS na configuração local.** O TLS é responsabilidade da
+  infraestrutura (proxy reverso, balanceador). O projeto já envia HSTS em
+  produção.
+- **Segredos de ambiente.** As variáveis de ambiente não fazem parte do
+  repositório. Se você encontrar uma senha real versionada no Git, isso
+  **é** uma vulnerabilidade — reporte.
+- **Relatos sem passos de reprodução.** Um relato teórico precisa de ao
+  menos uma indicação de como chegar até lá.
 
 ## Escopo
 
-Este projeto e' uma API de leilao (leilao-api) e seu frontend (leilao-app).
-
 **Em escopo:**
-- Falhas de autenticacao ou autorizacao
+- Falhas de autenticação ou autorização
 - Injections (SQL, XSS, comando, LDAP)
-- Vazamento de dado sensivel
-- Bypass de controles de seguranca
-- Fraquezas criptograficas na implementacao
+- Vazamento de dado sensível
+- Bypass de controles de segurança
+- Fraquezas criptográficas na implementação
 
 **Fora de escopo:**
-- Vulnerabilidades do proprio Spring Boot, Vue, PostgreSQL ou do JDK
-  (essas sao reportadas aos seus respectivos mantenedores - o Dependabot
-  deste repositorio ja sinaliza as atualizacoes)
-- Problemas de configuracao de infraestrutura do avaliador
-- Falta de cabecalhos de seguranca em ambientes que desativam a API
+- Vulnerabilidades do próprio Spring Boot, Vue, PostgreSQL ou do JDK
+  (reportadas aos respectivos mantenedores — o Dependabot deste
+  repositório já sinaliza as atualizações)
+- Problemas de configuração de infraestrutura
+- Falta de cabeçalhos de segurança em ambientes que desativam a API
 
----
-
-## Praticas ja adotadas pelo projeto
-
-Para que voce nao reporte algo que o projeto ja faz, e para que saiba o
-que esperar de um sistema maduro:
+## Práticas já adotadas
 
 | Controle | Onde |
 |---|---|
-| Hash de senha Argon2id com migracao automatica de BCrypt | `config/CodificadorDeSenhaDelegado.java` |
-| JWT RS256 com rotacao de chaves (`kid`) | `config/ChaveJwtProvider.java` |
-| Renovacao de token com deteccao de reuso | `business/AutenticacaoBO.java` |
-| Trilha de auditoria a prova de adulteracao (cadeia HMAC) | `business/AuditoriaBO.java` |
-| Controle anti-forca-bruta e limitador por IP | `config/LoginAttemptService.java`, `config/LimitadorDeRequisicoesFilter.java` |
-| Identificador de correlacao em todas as requisicoes | `config/CorrelationIdFilter.java` |
-| Cabecalhos de seguranca (CSP, COOP, CORP, Permissions-Policy) | `config/SecurityHeadersFilter.java` |
-| Sem exposicao de stack trace ao cliente | `exception/GlobalExceptionHandler.java` |
+| Hash de senha Argon2id com migração automática de BCrypt | `config/CodificadorDeSenhaDelegado.java` |
+| JWT RS256 com rotação de chaves (`kid`) | `config/ChaveJwtProvider.java` |
+| Renovação de token com detecção de reuso | `business/AutenticacaoBO.java` |
+| Trilha de auditoria a prova de adulteração (cadeia HMAC) | `business/AuditoriaBO.java` |
+| Controle anti-força-bruta e limitador por IP | `config/LoginAttemptService.java`, `config/LimitadorDeRequisicoesFilter.java` |
+| Identificador de correlação em todas as requisições | `config/CorrelationIdFilter.java` |
+| Cabeçalhos de segurança (CSP, COOP, CORP, Permissions-Policy) | `config/SecurityHeadersFilter.java` |
+| Sem exposição de stack trace ao cliente | `exception/GlobalExceptionHandler.java` |
 | SBOM gerado a cada build | `pom.xml` (cyclonedx-maven-plugin) |
-| Analise de dependencias automatizada | `.github/dependabot.yml` |
-| Varredura de vulnerabilidades (CVSS >= 7) | `pom.xml` (perfil `security-scan`) |
+| Análise de dependências automatizada | `.github/dependabot.yml` |
+| Varredura de vulnerabilidades (CVSS ≥ 7) | `pom.xml` (perfil `security-scan`) |

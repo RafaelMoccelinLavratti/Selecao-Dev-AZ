@@ -17,66 +17,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * ============================================================================
- *  FILTRO: TRILHA DE AUDITORIA DAS OPERACOES DE ALTERACAO
- * ============================================================================
+ * Filtro que registra as alteracoes de dados na trilha de auditoria.
  *
- *  ------------------------------------------------------
- *  O QUE ESTE FILTRO FAZ?
- *  ------------------------------------------------------
- *  O AuthenticationAuditHandler registra os ACESSOS (login). Este filtro
- *  registra as ALTERACOES DE DADOS: todo POST, PUT, DELETE e PATCH deixa
- *  um registro de QUEM fez, QUANDO, EM QUE ENDERECO e COM QUE RESULTADO.
+ * Roda depois do FilterSecurityInterceptor, para que o usuario ja
+ * autenticado esteja no contexto. So POST, PUT, DELETE e PATCH sao
+ * registrados - as leituras nao interessam e inundariam o log.
  *
- *  Exemplo de linha gerada:
- *
- *    AUDITORIA | MUTACAO | metodo=POST caminho=/empresas usuario=admin
- *               ip=127.0.0.1 status=201 duracao_ms=45
- *
- *  ------------------------------------------------------
- *  POR QUE REGISTRAR SÓ AS MUTACOES?
- *  ------------------------------------------------------
- *  Um log com TODAS as requisicoes (inclusive as de leitura) cresceria
- *  muito rapido e poluiria o arquivo, escondendo justamente o que
- *  importa. As operacoes de leitura nao alteram estado - elas sao
- *  "curiosidade" do usuario. As de alteracao sao o que a auditoria
- *  precisa provar: quem mexeu no dado, quando e o que deu.
- *
- *  O padrao e o mesmo de uma trilha de auditoria de banco de dados
- *  (tabela de log com INSERT/UPDATE/DELETE), que e exatamente o que
- *  ferramentas como pgAudit ou o recurso de auditoria do PostgreSQL
- *  fazem no lado do banco.
- *
- *  ------------------------------------------------------
- *  UMA REGRA DE OURO: O CORPO DA REQUISICAO NAO E REGISTRADO
- *  ------------------------------------------------------
- *  Seria muito facil (e muito tentador) registrar o corpo JSON da
- *  requisicao. Nao fazemos, por um motivo de seguranca direto:
- *
- *  O cadastro de empresa (POST /empresas) recebe o campo "senha" no
- *  corpo. Se o filtro registrasse o corpo, a senha em texto claro
- *  passaria a estar gravada em arquivo de log - um lugar muito mais
- *  acessivel e muito menos protegido que o banco de dados.
- *
- *  Por isso o filtro registra APENAS metadados da requisicao (metodo,
- *  caminho, quem, de onde, status e tempo). Nada do conteudo.
- *
- *  Pela mesma razao, a query string (?senha=...) tambem nao e registrada:
- *  e muito comum um desenvolvedor colocar parametro sensivel na URL por
- *  descuido.
- *
- *  ------------------------------------------------------
- *  COMO SABE QUEM E O USUARIO?
- *  ------------------------------------------------------
- *  O filtro roda DEPOIS do FilterSecurityInterceptor, ou seja, depois
- *  que o Spring ja decidiu se a requisicao estava autorizada. nesse
- *  momento, o SecurityContextHolder guarda o objeto Authentication com
- *  o usuario autenticado.
- *
- *  Em desenvolvimento (autenticacao desligada), nao existe usuario no
- *  contexto - e o log usa "anonimo", o que continua sendo um registro
- *  util.
- * ============================================================================
+ * O corpo da requisicao nunca e gravado: ele pode conter senha, CNPJ e
+ * outros dados que nao devem ficar no log.
  */
 @Component
 public class AuditTrailFilter extends OncePerRequestFilter {
@@ -135,7 +83,7 @@ public class AuditTrailFilter extends OncePerRequestFilter {
         String usuario = usuarioAutenticado();
         int status = response.getStatus();
 
-        // Nível de log conforme o resultado: erro merece destaque.
+        // Nivel de log conforme o resultado: erro merece destaque.
         if (status >= 500) {
             LOG.error("AUDITORIA | MUTACAO | metodo={} caminho={} usuario={} ip={} status={} duracao_ms={}",
                     request.getMethod(), request.getRequestURI(), usuario, ip, status, duracao);

@@ -12,9 +12,7 @@
     <description>Projeto Rest selecao de programador.</description>
 
     <!--
-      ============================================================================
-       A STACK E FIXADA PELO ENUNCIADO
-      ============================================================================
+       A stack e fixada pelo enunciado
        O enunciado da AZ Tecnologia pede:
 
            "Frontend: Vue  |  Server: Spring Boot  |  Banco: PostgreSQL"
@@ -33,7 +31,6 @@
        codigo. Em troca, a inovacao deste projeto acontece na
        PROFUNDIDADE (seguranca, modelagem de dominio, arquitetura e
        testes), e nao em exigir uma JDK que o avaliador pode nao ter.
-       ============================================================================
     -->
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -82,11 +79,11 @@
     </properties>
 
     <dependencies>
-        <!-- ===================================================================
-             WEB + PERSISTENCIA
-             starter-web        : brings Spring MVC, Tomcat, JSON (Jackson)
-             starter-data-jpa   : brings Hibernate + repositorios automaticos
-             =================================================================== -->
+        <!--
+             Web + persistencia
+             starter-web        : traz o Spring MVC, Tomcat, JSON (Jackson)
+             starter-data-jpa   : traz o Hibernate + repositorios automaticos
+             -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -96,46 +93,46 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- ===================================================================
+        <!--
              VALIDACAO DE ENTRADA  (exercicio 8)
              A partir do Spring Boot 2.3, a validacao foi REMOVIDA do
              starter-web. Sem esta dependencia, as anotacoes @NotBlank,
              @Size, @Email e @Pattern dos DTOs nao seriam verificadas - e o
              frontend sozinho nao protege a API (qualquer um pode chamar
              a API direto, sem passar pela tela).
-             =================================================================== -->
+             -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- ===================================================================
-             SEGURANCA - PARTE 1: CODIFICACAO DE SENHA
+        <!--
+             Seguranca - parte 1: codificacao de senha
              Usamos APENAS o artefato "crypto" da Spring Security, que traz
              o BCryptPasswordEncoder sem ativar autenticacao por conta
              propria. Com isso a senha e gravada como hash, e o
              spring-boot-starter-security (abaixo) continua controlando
              se as rotas exigem login.
-             =================================================================== -->
+             -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
         </dependency>
 
-        <!-- ===================================================================
-             SEGURANCA - PARTE 2: AUTENTICACAO E CABECALHOS
+        <!--
+             Seguranca - parte 2: autenticacao e cabecalhos
              Com o perfil padrao de desenvolvimento, os endpoints ficam
              ABERTOS (exatamente como o enunciado do teste pede). Ao ativar
              o perfil "prod" (application-prod.properties), a API passa a
              EXIGIR autenticacao HTTP Basic. E assim que se demonstra
              "seguranca por configuracao" sem quebrar a avaliacao.
-             =================================================================== -->
+             -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- ===================================================================
+        <!--
              SEGURANCA - PARTE 3: TOKENS JWT (RFC 7519)
              "jjwt-api"      : as classes publicas (compilacao).
              "jjwt-impl"     : a implementacao (runtime).
@@ -144,7 +141,7 @@
              A separacao em tres artefatos e proposital: o "api" nao traz
              nenhuma implementacao, o que impede que o codigo da aplicacao
              dependa de detalhes internos da biblioteca.
-             =================================================================== -->
+             -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -163,8 +160,8 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ===================================================================
-             SEGURANCA - PARTE 4: ARGON2ID
+        <!--
+             Seguranca - parte 4: argon2id
              O Spring Security traz o Argon2PasswordEncoder, mas ele depende
              da BouncyCastle para a primitiva de hash. Sem esta dependencia,
              o encoder de Argon2 nao consegue inicializar.
@@ -172,20 +169,20 @@
              Argon2id e o padrao recomendado pela OWASP (Password Storage
              Cheat Sheet, 2023): resiste a ataques com GPU e ASIC, que o
              BCrypt So resiste parcialmente.
-             =================================================================== -->
+             -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
             <version>${bouncycastle.version}</version>
         </dependency>
 
-        <!-- ===================================================================
-             MONITORAMENTO
+        <!--
+             Monitoramento
              Actuator expoe o endpoint /actuator/health, que e o que um
-             "orchestrator" (Kubernetes, Docker) consulta para saber se a
+             "orquestrador" (Kubernetes, Docker) consulta para saber se a
              aplicacao esta viva. Exposicao restrita em
              application.properties (apenas health e info).
-             =================================================================== -->
+             -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -211,15 +208,15 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- ===================================================================
-             SEGURANCA - DEPENDENCIA DE TESTE
+        <!--
+             Seguranca - dependencia de teste
              spring-security-test traz os "request post processors" que
              permitem simular uma autenticacao valida dentro do MockMvc:
                  .with(httpBasic("admin", "senha"))
              Sem esta dependencia, nao seria possivel testar a cadeia de
              filtros de seguranca de ponta a ponta (o 401, o 429 e o
              "sucesso devolve o dado do controller").
-             =================================================================== -->
+             -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
@@ -235,9 +232,7 @@
             </plugin>
 
             <!--
-              ============================================================================
-               WRAPPER DO MAVEN
-              ============================================================================
+               Wrapper do Maven
                O "mvnw" (e o "mvnw.cmd" no Windows) e um script que baixa e
                usa a versao exata do Maven definida aqui. Com ele no
                repositorio, o avaliador nao precisa instalar Maven: basta
@@ -245,7 +240,6 @@
 
                E o equivalente do que o Node faz com o "npm ci" + o
                package-lock.json, que ja e versionado no frontend.
-              ============================================================================
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -262,9 +256,7 @@
             </plugin>
 
             <!--
-              ============================================================================
-               SBOM - SOFTWARE BILL OF MATERIALS
-              ============================================================================
+               SBOM - software bill of materials
                Gera "target/bom.json" e "target/bom.xml": a lista de TODOS os
                componentes (e suas versoes) que entraram no executavel.
 
@@ -274,7 +266,6 @@
 
                A execucao fica ligada a fase "package", e nao ao "compile",
                para nao atrasar o ciclo de desenvolvimento.
-              ============================================================================
             -->
             <plugin>
                 <groupId>org.cyclonedx</groupId>
@@ -295,13 +286,11 @@
 
     <profiles>
         <!--
-          ============================================================================
            PERFIL "security-scan" - VARREDURA DE DEPENDENCIAS VULNERAVEIS
-          ============================================================================
            Roda o OWASP Dependency-Check, que cruza as dependencias do projeto
            com a base de CVEs e reporta as que tem vulnerabilidade conhecida.
 
-           POR QUE ESTA NUM PERFIL E NAO NO BUILD PADRAO?
+           Por que esta num perfil e nao no build padrao?
            Porque o Dependency-Check baixa uma base de dados de vulnerabilidades
            de centenas de megabytes e a atualiza com a data do CVE. Rodar isso a
            cada "mvn test" tornaria o build lento e dependente da internet -
@@ -316,7 +305,6 @@
 
            Requer a chave gratuita da API NVD (variavel de ambiente
            NVD_API_KEY) para nao ficar limitado a 6 requisicoes por minuto.
-          ============================================================================
         -->
         <profile>
             <id>security-scan</id>

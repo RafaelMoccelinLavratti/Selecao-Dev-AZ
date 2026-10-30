@@ -7,30 +7,11 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * ============================================================================
- *  TESTE: DESCOBERTA DO IP REAL DO CLIENTE
- * ============================================================================
+ * Testes da descoberta do IP real do cliente.
  *
- *  ------------------------------------------------------
- *  POR QUE ISTO MERECE UM TESTE?
- *  ------------------------------------------------------
- *  Porque e aqui que mora uma falha de seguranca silenciosa.
- *
- *  Se a aplicacao confiasse no cabecalho "X-Forwarded-For" sem
- *  condicao, o atacante burlaria o bloqueio de forca bruta assim:
- *
- *      curl -H "X-Forwarded-For: 1.2.3.4" ...
- *      curl -H "X-Forwarded-For: 5.6.7.8" ...
- *
- *  Cada tentativa pareceria vir de um IP diferente, o contador nunca
- *  estouraria e o controle anti-forca-bruta viraria decoracao.
- *
- *  Estes testes travam o comportamento correto:
- *  - SEM proxy confiavel: usa sempre o IP do socket (que o cliente nao
- *    consegue forjar);
- *  - COM proxy confiavel: usa o primeiro IP da cadeia do
- *    X-Forwarded-For.
- * ============================================================================
+ * E aqui que mora uma falha de seguranca silenciosa: se a aplicacao
+ * confiasse no X-Forwarded-For sem proxy confiavel, qualquer cliente
+ * poderia escapar do bloqueio escrevendo o cabecalho.
  */
 class ClientIpResolverTest {
 

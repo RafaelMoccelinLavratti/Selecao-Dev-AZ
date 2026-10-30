@@ -1,25 +1,21 @@
 ---
-  # ==========================================================================
-  #  DOCKER COMPOSE - BANCO DE DADOS POSTGRESQL
-  # ==========================================================================
-  #  PARA QUE SERVE?
-  #  Sobe o PostgreSQL com a estrutura e a massa de dados ja prontas, sem
-  #  precisar instalar o Postgres na maquina.
+  # Docker Compose - banco de dados PostgreSQL.
   #
-  #  COMO USAR:
-  #      docker compose -f docker-database.yml up -d     (sobe o banco)
-  #      docker compose -f docker-database.yml down      (derruba o banco)
-  #      docker compose -f docker-database.yml logs -f   (ve o log)
+  # Sobe o PostgreSQL com a estrutura e a massa de dados ja prontas, sem
+  # precisar instalar o Postgres na maquina.
   #
-  #  O QUE ACONTECE NA PRIMEIRA SUBIDA?
-  #  O container oficial do Postgres executa, na primeira vez, TODOS os
-  #  arquivos .sql da pasta /docker-entrypoint-initdb.d, em ordem alfabetica.
-  #  Como nossos arquivos comecam com 01_ e 02_, a ordem e garantida:
-  #      01_ddl.sql  -> cria as tabelas
-  #      02_dml.sql  -> insere a massa de dados
-  #  (O volume "postgresqldata" garante que isso so acontece na primeira
-  #   vez: se o volume ja existe, o Postgres nao reexecuta os scripts.)
-  # ==========================================================================
+  # Como usar:
+  #     docker compose -f docker-database.yml up -d     (sobe o banco)
+  #     docker compose -f docker-database.yml down      (derruba o banco)
+  #     docker compose -f docker-database.yml logs -f   (ve o log)
+  #
+  # Na primeira subida, o container oficial do Postgres executa TODOS os
+  # arquivos .sql da pasta /docker-entrypoint-initdb.d, em ordem alfabetica.
+  # Como os nossos comecam com 01_ e 02_, a ordem e garantida:
+  #     01_ddl.sql  -> cria as tabelas
+  #     02_dml.sql  -> insere a massa de dados
+  # O volume "postgresqldata" garante que isso so acontece na primeira vez:
+  # se o volume ja existe, o Postgres nao reexecuta os scripts.
   version: "3"
 
   services:

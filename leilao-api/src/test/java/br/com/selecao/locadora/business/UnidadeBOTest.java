@@ -22,47 +22,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * ============================================================================
- *  TESTE: REGRAS DE NEGOCIO DA UNIDADE
- * ============================================================================
+ * Testes das regras de negocio da unidade.
  *
- *  ------------------------------------------------------
- *  POR QUE ESTE TESTE NAO USA @SpringBootTest?
- *  ------------------------------------------------------
- *  Um teste com @SpringBootTest sobe o container inteiro do Spring - e,
- *  com isso, EXIGE o PostgreSQL no ar. Se o avaliador rodar "mvn test"
- *  numa maquina sem banco, o teste quebraria por um motivo que nao tem
- *  nada a ver com a regra testada.
- *
- *  Aqui usamos o Mockito para "simular" o repositorio (um duble) e
- *  montamos a camada de negocio na mao. Resultado: o teste roda em
- *  qualquer maquina, em milissegundos, e ainda testa exatamente a regra
- *  de negocio - sem ruido de infraestrutura.
- *
- *  (ReflectionTestUtils injeta as dependencias nos campos privados do BO,
- *  que sao preenchidos por injecao de dependencias pelo Spring no
- *  funcionamento real.)
- *
- *  ------------------------------------------------------
- *  O QUE E UM "DUBLE"?
- *  ------------------------------------------------------
- *  E um objeto falso que se passa pelo original. O Mockito cria um
- *  duble do repositorio no qual:
- *    - "when(...)" define o que o duble DEVE responder;
- *    - "verify(...)" confere se determinado metodo foi CHAMADO.
- *
- *  Assim o teste verifica duas coisas diferentes e ambas importantes:
- *    - o COMPORTAMENTO (o BO normalizou o nome? lancou o erro certo?);
- *    - a INTERACAO (o BO chamou o repositorio com o argumento certo?).
- *
- *  ------------------------------------------------------
- *  O QUE ESTES TESTES PROVAM
- *  ------------------------------------------------------
- *  1) O nome e gravado sem espacos sobrando (normalizacao).
- *  2) Nome repetido e recusado, com mensagem clara.
- *  3) Id inexistente devolve o erro de "nao encontrado" (HTTP 404).
- *  4) Excluir remove o registro do banco.
- * ============================================================================
+ * O repositorio e dublado com o Mockito (um "duble" e um objeto falso que
+ * se passa pelo original), entao o teste roda sem banco.
  */
 class UnidadeBOTest {
 
