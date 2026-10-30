@@ -34,12 +34,14 @@ jobs:
           cache: 'maven'
 
       - name: Compila e roda os testes
+        working-directory: leilao-api
         run: mvn -B -DskipTests=false test
 
       # O SBOM e o inventario das dependencias do artefato. Com ele da
       # para responder em segundos "usamos essa versao?" quando uma
       # vulnerabilidade aparece em uma biblioteca.
       - name: Gera o SBOM (Ciclo de Vida das Dependencias)
+        working-directory: leilao-api
         run: mvn -B package -DskipTests
         env:
           CYCLONEDX: 'true'
