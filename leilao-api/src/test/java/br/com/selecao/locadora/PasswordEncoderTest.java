@@ -25,7 +25,7 @@ class PasswordEncoderTest {
     /**
      * O mesmo codificador usado pela aplicacao.
      *
-     * Note que o codificador e criado DIRETO (new PasswordEncoderConfig()
+     * Note que o codificador e criado direto (new PasswordEncoderConfig()
      * .passwordEncoder()), e nao injetado pelo Spring. Isso e possivel
      * porque o metodo "passwordEncoder()" e um metodo de fabrica comum -
      * nao depende de nada do container. E o que torna o teste independente
@@ -34,7 +34,7 @@ class PasswordEncoderTest {
     private final PasswordEncoder encoder = new PasswordEncoderConfig().passwordEncoder();
 
     /**
-     * Teste 1: a senha gravada e um HASH, e nao o texto digitado.
+     * Teste 1: a senha gravada e um hash, e nao o texto digitado.
      *
      * O hash do Argon2id tem o formato
      * "{argon2}$argon2id$v=19$m=...,t=...,p=...$<sal>$<hash>". O
@@ -85,7 +85,7 @@ class PasswordEncoderTest {
     }
 
     /**
-     * Teste 4: duas senhas IGUAIS produzem hashes DIFERENTES.
+     * Teste 4: duas senhas iguais produzem hashes diferentes.
      *
      * Este teste prova a existencia do **salt** - e e o mais importante
      * do arquivo.
@@ -145,7 +145,7 @@ class PasswordEncoderTest {
     /**
      * Teste 6: o hash legado em BCrypt continua funcionando.
      *
-     * Este e o teste que garante a TRANSIACAO sem queda de acesso.
+     * Este e o teste que garante a transicao sem queda de acesso.
      *
      * A base de dados deste projeto foi criada com BCrypt. Se a troca
      * para o Argon2id fosse feita de uma vez, todas as empresas ja

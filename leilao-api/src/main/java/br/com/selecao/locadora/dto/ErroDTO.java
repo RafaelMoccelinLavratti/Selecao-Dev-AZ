@@ -8,14 +8,13 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- *  DTO DE ERRO (formato unico de resposta de erro da API)
+ * Formato unico de resposta de erro da API.
  *
- *  Por que um padrao unico de erro?
- *  O frontend (e qualquer outro consumidor) passa a ter UMA regra para
- *  ler erros, em vez de cada endpoint ter um formato diferente. E mais
- *  importante: o corpo NUNCA contem stack trace, SQL ou nomes de classes.
- *  O campo "mensagem" e a unica informacao sobre o erro que sai da
- *  aplicacao - e ela e escrita para ser lida por uma pessoa.
+ * Por que um padrao unico? O frontend (e qualquer outro consumidor) passa
+ * a ter uma regra so pra ler erros, em vez de cada endpoint ter um formato
+ * diferente. E o mais importante: o corpo nunca contem stack trace, SQL ou
+ * nomes de classes. O campo "mensagem" e a unica informacao sobre o erro
+ * que sai da aplicacao - e ela e escrita pra ser lida por uma pessoa.
  */
 @Data
 @Builder

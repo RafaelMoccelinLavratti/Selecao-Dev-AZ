@@ -45,7 +45,7 @@ public class CompradorService {
     /**
      * GET /compradores/{empresaId}/{leilaoId} - busca um vinculo.
      *
-     * Como a chave e COMPOSTA, a URL leva os dois ids.
+     * Como a chave e composta, a URL leva os dois ids.
      *
      * @param empresaId id da empresa
      * @param leilaoId  id do leilao

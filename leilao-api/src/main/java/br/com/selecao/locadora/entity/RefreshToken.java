@@ -71,9 +71,9 @@ public class RefreshToken implements Serializable {
     /**
      * O token ja foi utilizado em uma renovacao?
      *
-     * Um token de renovacao e de USO UNICO: assim que ele troca o
-     * token de acesso, ele e marcado como usado. presented-lo de novo e
-     * a evidencia de reuso.
+     * Um token de renovacao e de uso unico: assim que ele troca o token
+     * de acesso, ele e marcado como usado. Apresenta-lo de novo e a
+     * evidencia de reuso.
      */
     @Column(name = "utilizado", nullable = false)
     private Boolean utilizado;

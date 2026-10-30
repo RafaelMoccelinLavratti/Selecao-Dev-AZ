@@ -13,15 +13,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Controle das tentativas de login.
+ * Controla as tentativas de login.
  *
- * O bloqueio existe em dois niveis: por usuario e por IP, porque os dois
- * ataques sao reais - um contra uma conta especifica e outro contra o
- * sistema em geral.
+ * O bloqueio existe em dois niveis: por usuario e por IP, porque sao dois
+ * ataques diferentes - um mira numa conta especifica, o outro mira no
+ * sistema inteiro.
  *
- * Os contadores ficam em memoria (ConcurrentHashMap). E uma escolha
- * consciente: o estado se perde ao reiniciar a aplicacao, mas nao se paga
- * o custo de um banco a cada tentativa.
+ * Os contadores ficam em memoria. Um banco resolveria o problema de perder
+ * o estado no restart, mas custaria uma escrita a cada tentativa - e
+ * justamente a tentativa de login que o atacante faz em rajada que
+ * precisaria aguentar essa carga.
  */
 @Service
 public class LoginAttemptService {
@@ -29,23 +30,21 @@ public class LoginAttemptService {
     private static final Logger LOG = LoggerFactory.getLogger(LoginAttemptService.class);
 
     /**
-     * Chave usada para agregar (juntar) as tentativas de um mesmo IP, ignorando
-     * o usuario. Separada da chave por usuario para nao misturar os dois
-     * limites.
+     * Separador entre as partes da chave. Precisa ser um caracter que
+     * nunca apareca num nome de usuario nem num IP.
      */
     private static final String SEPARADOR = "|";
 
     /**
      * Contadores de falhas.
      *
-     * CHAVE -> ESTRUTURA DE CONTAGEM
-     *   "usuario|ip"   -> falhas daquele usuario naquele IP
-     *   "ip"           -> falhas totais vindas daquele IP (qualquer usuario)
+     * As chaves tem dois formatos:
+     *   "ip|usuario" - falhas desse usuario vindo desse IP;
+     *   "ip|ip"      - falhas totais desse IP, somando todos os usuarios.
      *
-     * ConcurrentHashMap: thread-safe. Isso e obrigatorio aqui, porque a API
-     * atende varias requisicoes ao mesmo tempo (o Tomcat usa um pool de
-     * threads) e dois acessos simultaneos ao mesmo HashMap corromperiam
-     * a estrutura.
+     * E um ConcurrentHashMap porque a API atende varias requisicoes ao
+     * mesmo tempo (o Tomcat usa um pool de threads) e dois acessos
+     * simultaneos a um HashMap comum corromperiam a estrutura.
      */
     private final Map<String, RegistroTentativa> tentativas = new ConcurrentHashMap<>();
 
@@ -57,22 +56,21 @@ public class LoginAttemptService {
     private boolean habilitado;
 
     /**
-     * Maximo de falhas do MESMO USUARIO (no mesmo IP) antes de bloquear.
-     * Padrao: 5 tentativas.
+     * Quantas falhas do mesmo usuario (no mesmo IP) o sistema aceita antes
+     * de bloquear. Padrao: 5.
      */
     @Value("${app.security.rate-limit.max-attempts:5}")
     private int maxTentativasPorUsuario;
 
     /**
-     * Maximo de falhas vindas do MESMO IP (somando todos os usuarios)
-     * antes de bloquear o IP inteiro.
-     * Padrao: 20 tentativas.
+     * Quantas falhas vindas do mesmo IP (somando todos os usuarios) o
+     * sistema aceita antes de bloquear o IP inteiro. Padrao: 20.
      */
     @Value("${app.security.rate-limit.max-attempts-per-ip:20}")
     private int maxTentativasPorIp;
 
     /**
-     * Duracao da janela de tempo, em MINUTOS.
+     * Duracao da janela, em minutos.
      * Depois de 15 minutos sem nova falha, o contador zera sozinho.
      * Padrao: 15 minutos.
      */
@@ -80,10 +78,10 @@ public class LoginAttemptService {
     private long janelaMinutos;
 
     /**
-     * Registra uma tentativa de autenticacao FALHADA.
+     * Registra uma tentativa de autenticacao que deu errado.
      *
-     * E chamada pelo AuthenticationAuditHandler sempre que o Spring
-     * Security recusa as credenciais.
+     * Chamado pelo AuthenticationAuditHandler sempre que o Spring Security
+     * recusa as credenciais.
      *
      * @param ip      endereco IP de origem da requisicao
      * @param usuario nome de usuario informado na tentativa
@@ -104,22 +102,19 @@ public class LoginAttemptService {
                         + "falhas_usuario={} falhas_ip={}",
                 usuario, ip, contar(chaveUsuario(ip, usuario)), contar(chaveIp(ip)));
     }
-
     /**
-     * Registra uma autenticacao BEM-SUCEDIDA.
+     * Registra uma autenticacao que deu certo.
      *
-     * E chamada pelo AuthenticationSuccessAuditListener sempre que o
-     * Spring Security aceitou as credenciais.
+     * Chamado pelo AuthenticationSuccessAuditListener sempre que o Spring
+     * Security aceitou as credenciais.
      *
-     * Ao autenticar com sucesso, o contador de falhas do usuario e
-     * zerado. O zeraimento e feito para o usuario INTEIRO (todos os IPs),
-     * e nao apenas para o par (usuario, IP). A justificativa e de
-     * seguranca: quem provou que sabe a senha nao deve continuar
-     * bloqueado por tentativas antigas - inclusive tentativas que
-     * vieram de um IP diferente do atual.
+     * Um login bem-sucedido zera o contador de falhas do usuario. O
+     * zeraimento vale pro usuario inteiro, de qualquer IP: quem acabou de
+     * provar que sabe a senha nao precisa ficar preso por tentativas
+     * antigas, nem por tentativas vindas de outro lugar.
      *
-     * O contador do IP NAO e zerado, porque ele existe para detectar o
-     * volume total de ataques, nao o historico de um usuario especifico.
+     * O contador do IP nao e zerado, porque ele existe pra medir o volume
+     * total de ataques, e nao o historico de um usuario.
      *
      * @param usuario nome de usuario autenticado
      */
@@ -129,9 +124,8 @@ public class LoginAttemptService {
             return;
         }
 
-        // Remove todos os registros (de qualquer IP) que pertencem a este
-        // usuario. O filtro usa "removeIf", que e seguro mesmo com
-        // acesso concorrente ao mapa.
+        // Tira todos os registros (de qualquer IP) que pertencem a este
+        // usuario. O removeIf e seguro mesmo com acesso concorrente ao mapa.
         String sufixo = SEPARADOR + (usuario == null ? "" : usuario);
 
         tentativas.entrySet().removeIf(entry ->
@@ -141,12 +135,12 @@ public class LoginAttemptService {
     }
 
     /**
-     * Diz se o IP esta bloqueado no momento.
+     * Diz se o IP esta bloqueado agora.
      *
-     * Este metodo e chamado ANTES da autenticacao (no
-     * BruteForceProtectionFilter). Se o IP ja estourou o limite global,
-     * nem vale a pena tentar validar a senha - responder 429 direto economiza
-     * CPU (o BCrypt e caro) e encurta o ataque.
+     * Chamado antes da autenticacao, no BruteForceProtectionFilter. Se o
+     * IP ja estourou o limite global, nem vale a pena tentar validar a
+     * senha: responder 429 na hora economiza CPU (o hash de senha e caro
+     * de proposito) e encurta o ataque.
      *
      * @param ip endereco IP de origem
      * @return true se o IP deve ser bloqueado
@@ -183,9 +177,9 @@ public class LoginAttemptService {
     /**
      * Calcula quantos segundos faltam para o bloqueio expirar.
      *
-     * Serve para montar o cabecalho HTTP "Retry-After", que diz ao cliente
-     * "tente de novo em N segundos". E uma boa pratica de UX e de seguranca:
-     * o cliente sabe o tempo de espera em vez de martelar o servidor.
+     * Serve pra montar o cabecalho HTTP "Retry-After", que diz ao cliente
+     * "tente de novo em N segundos". E bom pra UX e pra seguranca: o
+     * cliente sabe o tempo de espera em vez de martelar o servidor.
      *
      * @param ip endereco IP de origem
      * @return segundos restantes (0 se nao houver bloqueio)
@@ -204,12 +198,12 @@ public class LoginAttemptService {
     }
 
     /**
-     * Calcula quantos segundos faltam para o bloqueio DESTE USUARIO
+     * Calcula quantos segundos faltam para o bloqueio deste usuario
      * expirar.
      *
-     * Verifica primeiro o registro do par (usuario, IP) e, se nao houver,
-     * cai para o registro do IP. A ordem importa: o bloqueio do usuario
-     * e o mais especifico e, portanto, o que o cliente precisa esperar.
+     * Olha primeiro o registro do par (usuario, IP) e, se nao houver, cai
+     * para o registro do IP. A ordem importa porque o bloqueio do usuario
+     * e o mais especifico, e portanto o que o cliente precisa esperar.
      *
      * @param ip      endereco IP de origem
      * @param usuario nome de usuario informado
@@ -240,7 +234,7 @@ public class LoginAttemptService {
     /**
      * Zera todos os contadores.
      * Usado nos testes e como ponto de partida caso a aplicacao precise
-     * liberar todo mundo (por exemplo, apos um alerta falso).
+     * liberar todo mundo (por exemplo, depois de um alarme falso).
      */
     public void limpar() {
         tentativas.clear();
@@ -253,18 +247,18 @@ public class LoginAttemptService {
 
         Instant agora = Instant.now();
 
-        // compute(): calcula e atualiza o contador de forma ATOMICA.
-        // Sem isso, duas threads que chegam ao mesmo tempo poderiam
-        // sobrescrever o contador uma da outra e perder uma tentativa.
+        // compute() calcula e atualiza o contador de forma atomica. Sem
+        // isso, duas threads que chegassem ao mesmo tempo poderiam
+        // sobrescrever uma a outra e perder uma tentativa.
         tentativas.compute(chave, (k, existente) -> {
             if (existente == null || existente.expirada(agora)) {
                 // primeira tentativa (ou a janela anterior ja venceu)
                 return new RegistroTentativa(1, agora.plus(Duration.ofMinutes(janelaMinutos)));
             }
             existente.contador.incrementAndGet();
-            // A cada nova falha, a janela e renovada: e assim que o
-            // controle "deslizante" funciona (o atacante tem 5 falhas
-            // a cada 15 minutos, nao 5 no total para sempre).
+            // Cada nova falha renova a janela: e assim que o controle
+            // "deslizante" funciona (o atacante tem 5 falhas a cada 15
+            // minutos, nao 5 no total pra sempre).
             existente.expiraEm = agora.plus(Duration.ofMinutes(janelaMinutos));
             return existente;
         });
@@ -280,14 +274,14 @@ public class LoginAttemptService {
 
     /**
      * Devolve os registros que ainda estao dentro da janela de tempo.
-     * Remove da memoria os registros ja expirados (limpeza em tempo de
-     * acesso, para nao precisar de um agendador).
+     * Joga fora da memoria os que ja venceram (limpeza em tempo de
+     * acesso, pra nao precisar de um agendador).
      */
     private Map<String, RegistroTentativa> registrosAtivos() {
 
         Instant agora = Instant.now();
 
-        // removeIf: apaga do mapa as entradas vencidas.
+        // removeIf apaga do mapa as entradas vencidas.
         tentativas.entrySet().removeIf(entry -> entry.getValue().expirada(agora));
 
         return tentativas;
@@ -295,7 +289,7 @@ public class LoginAttemptService {
 
     /**
      * Monta a chave do par (usuario, IP).
-     * O IP vem primeiro para deixar a chave legivel no log.
+     * O IP vem primeiro pra deixar a chave legivel no log.
      */
     private String chaveUsuario(String ip, String usuario) {
         return ip + SEPARADOR + (usuario == null ? "" : usuario);
@@ -312,10 +306,10 @@ public class LoginAttemptService {
      * Tarefa agendada que limpa periodicamente os registros expirados.
      *
      * A limpeza em tempo de acesso (registrosAtivos) ja resolve o
-     * crescimento da estrutura. Esta tarefa e a "rede de seguranca":
-     * garante que a memoria e liberada mesmo que ninguem mais faca
-     * requisicao ao sistema (por exemplo, de madrugada, com o servidor
-     * ocioso e o contador parado).
+     * crescimento da estrutura. Esta tarefa e a rede de seguranca: garante
+     * que a memoria seja liberada mesmo quando ninguem mais faz
+     * requisicao (de madrugada, com o servidor ocioso e o contador
+     * parado).
      *
      * A anotacao @Scheduled exige que a aplicacao tenha @EnableScheduling.
      * Ver LeilaoApplication.
@@ -333,11 +327,11 @@ public class LoginAttemptService {
     }
 
     /**
-     *  REGISTRO DE TENTATIVAS (classe interna)
+     * Registro de tentativas (classe interna).
      *
-     *  Agrupa o CONTADOR (quantas falhas) e o VALIDADE (ate quando vale).
-     *  O contador e um AtomicInteger porque varias threads podem falhar ao
-     *  mesmo tempo no mesmo par (usuario, IP).
+     * Junta o contador (quantas falhas) com a validade (ate quando vale).
+     * O contador e um AtomicInteger porque varias threads podem falhar ao
+     * mesmo tempo no mesmo par (usuario, IP).
      */
     private static class RegistroTentativa {
 

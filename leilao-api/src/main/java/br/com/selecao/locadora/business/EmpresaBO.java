@@ -31,7 +31,7 @@ public class EmpresaBO {
     @Autowired
     private EmpresaRepository empresaRepository;
 
-    /** Codificador BCrypt (injetado pelo Spring - ver config/PasswordEncoderConfig). */
+    /** Codificador de senha (injetado pelo Spring, ver config/PasswordEncoderConfig). */
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -61,15 +61,15 @@ public class EmpresaBO {
     @Transactional
     public EmpresaResponse salvar(EmpresaRequest request, Integer id) {
 
-        // --- PASSO 1: NORMALIZAR (tirar pontuacao e espacos) ---
+        // Passo 1: normaliza os dados (tira pontuacao e espacos).
         String cnpj = somenteDigitos(request.getCnpj());
         String cep = request.getCep() == null ? null : somenteDigitos(request.getCep());
         String telefone = request.getTelefone() == null ? null : somenteDigitos(request.getTelefone());
         String usuario = request.getUsuario() == null ? null : request.getUsuario().trim();
 
-        // Passo 2: verificar unicidade
-        // "id == null" -> we're incluindo (checa se ja existe algum).
-        // "id != null" -> estamos alterando (o proprio registro nao conta).
+        // Passo 2: confere se o cadastro e unico.
+        // id == null -> estamos incluindo (checa se ja existe algum).
+        // id != null -> estamos alterando (o proprio registro nao conta).
         if (id == null) {
             if (empresaRepository.existsByCnpj(cnpj)) {
                 throw new RegraNegocioException("Ja existe uma empresa cadastrada com o CNPJ " + cnpj + ".");
@@ -92,7 +92,7 @@ public class EmpresaBO {
             }
         }
 
-        // Passo 3: montar a entidade
+        // Passo 3: monta a entidade.
         Empresa empresa = (id == null) ? new Empresa() : buscarEntidade(id);
 
         empresa.setRazaoSocial(request.getRazaoSocial().trim());
@@ -108,11 +108,11 @@ public class EmpresaBO {
         empresa.setSite(request.getSite());
         empresa.setUsuario(usuario);
 
-        // Passo 4: tratar a senha
-        // Se o cliente mandou senha, codificamos com BCrypt.
-        // Se NAO mandou (alteracao sem mexer na senha), mantemos o hash
-        // que ja estava gravado - assim uma edicao de e-mail nao apaga
-        // a senha do usuario.
+        // Passo 4: trata a senha.
+        // Se o cliente mandou senha, a gente codifica.
+        // Se nao mandou (alteracao sem mexer na senha), o hash que ja
+        // estava gravado continua valendo - assim uma edicao de e-mail nao
+        // apaga a senha do usuario.
         if (request.getSenha() != null && !request.getSenha().isBlank()) {
             empresa.setSenha(passwordEncoder.encode(request.getSenha()));
         } else if (id == null) {
@@ -120,11 +120,11 @@ public class EmpresaBO {
             empresa.setSenha(null);
         }
 
-        // Passo 5: gravar
-        // "saveAndFlush": o flush e imediato, entao o @PreUpdate ja
-        // preencheu o updated_at e a resposta traz o valor correto.
-        // (Com "save" puro, o SQL rodaria no fim da transacao e a
-        //  resposta mostraria o updated_at antigo.)
+        // Passo 5: grava.
+        // saveAndFlush: o flush e imediato, entao o @PreUpdate ja
+        // preencheu o updated_at e a resposta traz o valor certo. Com
+        // "save" puro o SQL rodaria no fim da transacao e a resposta
+        // mostraria o updated_at antigo.
         Empresa salva = empresaRepository.saveAndFlush(empresa);
         LOG.info("Empresa {} gravada (id={}).", salva.getRazaoSocial(), salva.getId());
         return paraResponse(salva);
@@ -133,10 +133,10 @@ public class EmpresaBO {
     /**
      * Exclui uma empresa (DELETE /empresas/:id).
      *
-     * REGRA: o banco tem ON DELETE RESTRICT em tb_leilao.vendedor, ou
-     * seja, uma empresa que vendeu leiloes nao pode ser apagada. O
-     * banco protege a integridade; nos interceptamos essa recusa para
-     * devolver uma mensagem clara em vez de um erro tecnico.
+     * O banco tem ON DELETE RESTRICT em tb_leilao.vendedor, ou seja, uma
+     * empresa que vendeu leiloes nao pode ser apagada. O banco protege a
+     * integridade; nos interceptamos essa recusa pra devolver uma mensagem
+     * clara em vez de um erro tecnico.
      */
     @Transactional
     public void excluir(Integer id) {
@@ -170,8 +170,8 @@ public class EmpresaBO {
     /**
      * Converte a entidade no DTO de resposta.
      *
-     * ATENCAO: o campo "senha" NAO e copiado para a resposta.
-     * E o que garante que nem o hash escape da API.
+     * Repare que o campo "senha" nao e copiado. E o que garante que nem
+     * o hash escape da API.
      */
     private EmpresaResponse paraResponse(Empresa empresa) {
         return EmpresaResponse.builder()

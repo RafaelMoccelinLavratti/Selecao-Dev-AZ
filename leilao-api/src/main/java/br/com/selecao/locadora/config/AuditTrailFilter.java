@@ -19,9 +19,9 @@ import java.io.IOException;
 /**
  * Filtro que registra as alteracoes de dados na trilha de auditoria.
  *
- * Roda depois do FilterSecurityInterceptor, para que o usuario ja
- * autenticado esteja no contexto. So POST, PUT, DELETE e PATCH sao
- * registrados - as leituras nao interessam e inundariam o log.
+ * Roda depois do FilterSecurityInterceptor, pra que o usuario autenticado
+ * ja esteja no contexto. So POST, PUT, DELETE e PATCH entram na trilha -
+ * as leituras nao interessam e inundariam o log.
  *
  * O corpo da requisicao nunca e gravado: ele pode conter senha, CNPJ e
  * outros dados que nao devem ficar no log.
@@ -43,8 +43,8 @@ public class AuditTrailFilter extends OncePerRequestFilter {
     private static final String[] METODOS_DE_MUTACAO = {"POST", "PUT", "PATCH", "DELETE"};
 
     /**
-     * Camada de negocio que grava a trilha em forma A PROVA DE
-     * ADULTERACAO (cadeia de hashes com HMAC).
+     * Camada de negocio que grava a trilha selada por hash (cadeia de
+     * hashes com HMAC).
      */
     @Autowired
     private AuditoriaBO auditoriaBO;
@@ -69,13 +69,13 @@ public class AuditTrailFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Instante de inicio: serve para medir a duracao da operacao.
+        // Instante de inicio: serve pra medir a duracao da operacao.
         long inicio = System.currentTimeMillis();
 
         // Executa o restante da cadeia (ate o controller).
         chain.doFilter(request, response);
 
-        // Calcula quanto tempo a operacao levou.
+        // Quanto tempo a operacao levou.
         long duracao = System.currentTimeMillis() - inicio;
 
         // Monta o registro.
@@ -95,11 +95,11 @@ public class AuditTrailFilter extends OncePerRequestFilter {
                     request.getMethod(), request.getRequestURI(), usuario, ip, status, duracao);
         }
 
-        // Grava na trilha selada por hash. O registro acontece em uma
-        // TRANSACAO SEPARADA (REQUIRES_NEW) da operacao de negocio: se a
-        // gravacao falhar, a operacao do usuario NAO e perdida. E uma
-        // falha na trilha tambem nao derruba a requisicao - o AuditoriaBO
-        // trata a excecao internamente e registra no log.
+        // Grava na trilha selada por hash. A gravacao acontece numa
+        // transacao separada (REQUIRES_NEW) da operacao de negocio: se ela
+        // falhar, a operacao do usuario nao se perde. E uma falha na trilha
+        // tambem nao derruba a requisicao - o AuditoriaBO trata a excecao
+        // por dentro e registra no log.
         auditoriaBO.registrar(
                 usuario,
                 ip,
@@ -114,9 +114,9 @@ public class AuditTrailFilter extends OncePerRequestFilter {
     /**
      * Descreve a acao a partir do metodo HTTP e do caminho.
      *
-     * A descricao e o que o auditor le: "CRIAR EMPRESA" e muito mais
-     * util do que "POST /empresas". A API e' porem a fonte da verdade,
-     * entao o caminho completo tambem e gravado (campo "caminho").
+     * A descricao e o que o auditor le: "CRIAR EMPRESA" diz muito mais do
+     * que "POST /empresas". A API continua sendo a fonte da verdade, entao
+     * o caminho completo tambem e gravado (campo "caminho").
      *
      * @param request requisicao HTTP
      * @return a descricao da acao

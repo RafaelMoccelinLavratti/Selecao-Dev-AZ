@@ -46,9 +46,9 @@ public class TokenJwtBO {
     public static final String TIPO_RENOVACAO = "refresh";
 
     /**
-     * Leitor de JSON usado para ler o cabecalho do token.
+     * Leitor de JSON usado pra ler o cabecalho do token.
      *
-     * E' uma instancia unica e imutavel: o Jackson e' seguro para uso
+     * E uma instancia unica e imutavel: o Jackson e seguro pra uso
      * concorrente, entao nao ha necessidade de criar um por chamada.
      */
     private static final com.fasterxml.jackson.databind.ObjectMapper OBJECT_MAPPER =
@@ -124,7 +124,7 @@ public class TokenJwtBO {
     }
 
     /**
-     * Valida um token de ACESSO.
+     * Valida um token de acesso.
      *
      * @param token o token recebido no cabecalho Authorization
      * @return as claims do token
@@ -135,7 +135,7 @@ public class TokenJwtBO {
     }
 
     /**
-     * Valida um token de RENOVACAO.
+     * Valida um token de renovacao.
      *
      * @param token o token de renovacao
      * @return as claims do token
@@ -148,15 +148,15 @@ public class TokenJwtBO {
     /**
      * Valida um token, exigindo que ele seja do tipo esperado.
      *
-     * A verificacao acontece em tres etapas, e o ORDEM importa:
+     * A verificacao acontece em tres etapas, e a ordem importa:
      *
      *   1) a assinatura confere? (a chave publica valida)
      *   2) o emissor e o esperado?
      *   3) o tipo e o esperado?
      *
-     * A assinatura vem primeiro de proposito: e a verificacao cara e e
-     * a unica que garante a integridade. Se ela falhar, nada mais precisa
-     * ser checado - e o token inteiro e descartado.
+     * A assinatura vem primeiro de proposito: e a verificacao cara, e a
+     * unica que garante a integridade. Se ela falhar, nada mais precisa
+     * ser checado - o token inteiro e descartado.
      */
     private Claims validar(String token, String tipoEsperado) {
 
@@ -203,11 +203,11 @@ public class TokenJwtBO {
     }
 
     /**
-     * Le o "kid" (key id) do cabecalho do token, SEM validar a assinatura.
+     * Le o "kid" (key id) do cabecalho do token, sem validar a assinatura.
      *
      * E o unico ponto do fluxo em que o conteudo do token ainda nao foi
-     * verificado. Por isso o valor so e usado para LOCALIZAR a chave -
-     * nunca para tomar decisao. A decisao vem sempre da verificacao
+     * verificado. Por isso o valor so serve pra localizar a chave, nunca
+     * pra tomar decisao. A decisao vem sempre da verificacao
      * criptografica, logo abaixo.
      */
     private String extrairKid(String token) {
@@ -222,11 +222,11 @@ public class TokenJwtBO {
             String cabecalho = new String(
                     java.util.Base64.getUrlDecoder().decode(partes[0]), StandardCharsets.UTF_8);
 
-            // O cabecalho e um JSON pequeno. Ele e' lido com o Jackson
-            // (que ja e' dependencia do projeto, via spring-boot-starter-web)
-            // em vez de busca manual de texto: um parser de JSON nao erra
-            // com aspas, ordem das chaves ou escapamentos - e um erro nessa
-            // leitura faria TODOS os tokens serem recusados.
+            // O cabecalho e um JSON pequeno. Ele e' lido com o Jackson (que
+            // ja e' dependencia do projeto, via spring-boot-starter-web) em
+            // vez de busca manual de texto: um parser de JSON nao erra com
+            // aspas, ordem das chaves ou escapamentos - e um erro nessa
+            // leitura faria todos os tokens serem recusados.
             com.fasterxml.jackson.databind.JsonNode no =
                     OBJECT_MAPPER.readTree(cabecalho);
 
@@ -248,7 +248,7 @@ public class TokenJwtBO {
     /**
      * Calcula o hash SHA-256 de um texto, em hexadecimal.
      *
-     * E o que permite guardar o token de renovacao NO BANCO sem guardar o
+     * E o que permite guardar o token de renovacao no banco sem guardar o
      * token em si: o banco recebe apenas o hash. Se alguem obtiver o
      * conteudo da tabela, nao consegue usar os tokens - porque o valor
      * guardado e o hash, e nao o token. E como uma senha: guardamos o

@@ -7,12 +7,21 @@
 -- permite abrir a aplicacao e ver telas com conteudo real sem cadastrar
 -- nada na mao.
 --
--- Sobre as senhas: a coluna "senha" da tb_empresa guarda um HASH BCrypt,
--- nunca a senha em texto puro. Se o banco vazar, o atacante leva hashes e
--- nao as senhas. Cada empresa da massa de teste tem uma senha diferente, no
--- padrao "Senha@<id>", mas o que fica gravado e so o hash. Os hashes sao
--- gerados por src/test/java/br/com/selecao/locadora/GeradorHashSenha.java
--- (rode: mvn test -Dtest=GeradorHashSenha).
+-- Sobre as senhas: a coluna "senha" da tb_empresa guarda um hash, nunca a
+-- senha em texto puro. Se o banco vazar, o atacante leva hashes e nao as
+-- senhas. Cada empresa da massa de teste tem uma senha diferente, no padrao
+-- "Senha@<id>", mas o que fica gravado e so o hash.
+--
+-- Os hashes gravados aqui ainda estao no formato BCrypt legado ("$2a$10$...").
+-- Isso e de proposito: o codificador delegado reconhece esse formato e
+-- reescreve cada hash no Argon2id no primeiro login. E o que permite a
+-- migracao acontecer sozinha, sem script e sem janela de manutencao.
+--
+-- Para gerar os hashes:
+--   mvn test -Dtest=GeradorHashSenhaTest
+--
+-- Para conferir os hashes que ja estao no script:
+--   mvn test -Dtest=GeradorHashSenhaTest#verificarHashesDoScriptDeDados
 --
 -- Para rodar:
 --   docker compose -f docker-database.yml up -d   (ja roda sozinho)
@@ -58,10 +67,10 @@ INSERT INTO tb_unidade (nome) VALUES
 -- -----------------------------------------------------------------------------
 -- PASSO 3 - EMPRESAS (12 registros)
 -- -----------------------------------------------------------------------------
--- Cada empresa e VENDEDORA e/ou COMPRADORA de leiloes.
+-- Cada empresa e vendedora e/ou compradora de leiloes.
 --   cnpj    -> 14 digitos, todos validos (digitos verificadores conferidos)
 --   usuario -> unico (restricao UNIQUE do banco)
---   senha   -> HASH BCrypt (nunca texto puro)
+--   senha   -> hash (nunca texto puro)
 -- -----------------------------------------------------------------------------
 INSERT INTO tb_empresa
     (razao_social, cnpj, logadouro, municipio, numero, complemento,
@@ -103,9 +112,9 @@ INSERT INTO tb_leilao (codigo, descricao, vendedor, inicio_previsto) VALUES
 -- PASSO 5 - LOTES (18 registros)
 -- -----------------------------------------------------------------------------
 -- Cada lote pertence a um leilao existente.
--- "valorInicial" e o preco inicial de cada unidade do lote.
--- O TOTAL do leilao (mostrado na tela do exercicio 7) e a soma de
--- (quantidade * valorInicial) de todos os lotes daquele leilao.
+-- "valor_inicial" e o preco inicial de cada unidade do lote.
+-- O total do leilao (mostrado na tela do exercicio 7) e a soma de
+-- (quantidade * valor_inicial) de todos os lotes daquele leilao.
 --
 -- Exemplos de calculo:
 --   Leilao 1001 -> 5 * 12.500,00 + 2 * 8.750,00 = 80.000,00
@@ -144,7 +153,7 @@ INSERT INTO tb_lote (numero_lote, descricao, quantidade, valor_inicial, unidade,
 -- PASSO 6 - COMPRADORES (14 registros)
 -- -----------------------------------------------------------------------------
 -- Tabela de junção: cada linha diz "a empresa X comprou o leilao Y".
--- A chave primaria e COMPOSTA (empresa, leilao) - por isso nao existe
+-- A chave primaria e composta (empresa, leilao) - por isso nao existe
 -- uma coluna "id" nesta tabela.
 -- -----------------------------------------------------------------------------
 INSERT INTO tb_comprador (empresa, leilao) VALUES
@@ -178,10 +187,10 @@ COMMIT;
 --   UNION ALL SELECT 'unidade', count(*) FROM tb_unidade
 --   UNION ALL SELECT 'comprador', count(*) FROM tb_comprador;
 --
--- O esperado e: 12 / 12 / 18 / 12 / 14 - ou seja, TODAS as tabelas com
+-- O esperado e: 12 / 12 / 18 / 12 / 14 - ou seja, todas as tabelas com
 -- pelo menos 10 registros, como o enunciado pede.
 --
 -- Para conferir o total de um leilao (mesma conta que a tela faz):
---   SELECT l.id, l.codigo, sum(lo.quantidade * lo.valorInicial) AS total
+--   SELECT l.id, l.codigo, sum(lo.quantidade * lo.valor_inicial) AS total
 --     FROM tb_leilao l JOIN tb_lote lo ON lo.leilao = l.id
 --    GROUP BY l.id, l.codigo ORDER BY l.id;

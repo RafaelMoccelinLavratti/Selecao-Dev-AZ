@@ -34,7 +34,7 @@ public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
     private boolean confiarEmProxy;
 
     /**
-     * Mensagem UNICA devolvida em qualquer falha de autenticacao.
+     * Mensagem unica devolvida em qualquer falha de autenticacao.
      * Nunca muda - ver a explicacao sobre enumeracao de usuarios na
      * classe AuthenticationAuditHandler.
      */
@@ -67,11 +67,11 @@ public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
         if (contaBloqueada) {
 
             // Tempo de espera informado pelo handler de auditoria.
-            // ATENCAO: o valor e um "long", que o Java empacota como
-            // "Long" (e nao como "Integer"). Por isso a conversao e feita
-            // via "Number", que aceita os dois tipos - se fizessemos
-            // "(Integer) atributo", teriamos um ClassCastException e o
-            // cabecalho "Retry-After" sairia sempre zerado.
+            // O valor e um "long", que o Java empacota como "Long" (e nao
+            // como "Integer"). Por isso a conversao e feita via "Number",
+            // que aceita os dois tipos - se fizessemos "(Integer)
+            // atributo", teriamos um ClassCastException e o cabecalho
+            // "Retry-After" sairia sempre zerado.
             Object segundos = request.getAttribute(AuthenticationAuditHandler.ATRIBUTO_SEGUNDOS);
             long tempoDeEspera = (segundos instanceof Number) ? ((Number) segundos).longValue() : 0L;
 
@@ -105,7 +105,7 @@ public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 
-        // Mensagem GENERICA e IDENTICA para qualquer motivo de recusa.
+        // Mensagem generica e identica para qualquer motivo de recusa.
         response.getWriter().write(
                 "{\"status\":401,"
                         + "\"erro\":\"Nao autorizado\","

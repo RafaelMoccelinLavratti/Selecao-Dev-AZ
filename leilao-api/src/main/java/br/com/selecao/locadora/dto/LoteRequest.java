@@ -75,10 +75,10 @@ public class LoteRequest {
      *
      * @NotNull - e obrigatorio (asterisco no diagrama).
      *
-     * O "@NotNull" garante que o campo chegou preenchido. Ele NAO
-     * garante que o leilao exista no banco - essa e uma REGRA DE
-     * NEGOCIO, verificada na camada "business" (LoteBO), que lanca
-     * RegraNegocioException com uma mensagem clara para o usuario.
+     * O "@NotNull" garante que o campo chegou preenchido. Ele nao
+     * garante que o leilao exista no banco - isso e regra de negocio,
+     * verificada na camada de negocio (LoteBO), que lanca
+     * RegraNegocioException com uma mensagem clara pro usuario.
      */
     @NotNull(message = "O leilao e obrigatorio.")
     private Integer leilao;

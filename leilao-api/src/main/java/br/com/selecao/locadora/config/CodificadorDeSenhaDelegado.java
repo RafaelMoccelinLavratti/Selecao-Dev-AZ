@@ -32,7 +32,7 @@ public class CodificadorDeSenhaDelegado implements PasswordEncoder {
     private static final String PREFIXO_BCRYPT = "{bcrypt}";
 
     /**
-     * Identificador do algoritmo PADRAO (o usado para gravar novas senhas).
+     * Identificador do algoritmo padrao (o usado pra gravar senhas novas).
      */
     private static final String ID_PADRAO = "argon2";
 
@@ -43,17 +43,17 @@ public class CodificadorDeSenhaDelegado implements PasswordEncoder {
     private final DelegatingPasswordEncoder delegador;
 
     /**
-     * Codificador de BCrypt, mantido para ler os hashes ja gravados
-     * no formato antigo (sem prefixo).
+     * Codificador de BCrypt, mantido pra ler os hashes ja gravados no
+     * formato antigo (sem prefixo).
      */
     private final BCryptPasswordEncoder bcryptLegado;
 
     /**
      * Construtor com os parametros de Argon2id explicitos.
      *
-     * NOTA SOBRE A ASSINATURA: no Spring Security 5.7 a ordem e
+     * Um detalhe sobre a assinatura: no Spring Security 5.7 a ordem e
      * (saltLength, hashLength, parallelism, memory, iterations) - a
-     * memoria e o PENULTIMO parametro, e o valor e em KB.
+     * memoria e o penultimo parametro, e o valor e em KB.
      *
      * @param comprimentoSal    tamanho do sal, em bytes (16 e o padrao)
      * @param tamanhoHash       tamanho do hash, em bytes (32 e o padrao)
@@ -81,9 +81,9 @@ public class CodificadorDeSenhaDelegado implements PasswordEncoder {
     /**
      * Codifica a senha, sempre usando Argon2id.
      *
-     * O prefixo "{argon2}" e gravado junto com o hash. E ele que permite,
-     * no futuro, trocar o algoritmo de novo sem perder as senhas - e o
-     * que permite ler hoje os hashes em BCrypt sem prefixo.
+     * O prefixo "{argon2}" e gravado junto com o hash. E ele que permite
+     * trocar o algoritmo de novo no futuro sem perder as senhas - e o que
+     * permite ler hoje os hashes em BCrypt sem prefixo.
      *
      * @param senhaBruta a senha em texto puro
      * @return o hash, com prefixo de algoritmo
@@ -94,8 +94,8 @@ public class CodificadorDeSenhaDelegado implements PasswordEncoder {
     }
 
     /**
-     * Confere a senha contra o hash gravado, escolhendo o algoritmo
-     * certo pelo formato do hash.
+     * Confere a senha contra o hash gravado, escolhendo o algoritmo certo
+     * pelo formato do hash.
      *
      * @param senhaBruta  a senha em texto puro
      * @param hashGravado o hash como esta no banco
@@ -113,8 +113,8 @@ public class CodificadorDeSenhaDelegado implements PasswordEncoder {
             return delegador.matches(senhaBruta, hashGravado);
         }
 
-        // Formatos ANTIGOS, sem prefixo. Ainda existem no banco deste
-        // projeto (gravados antes da migracao para Argon2id) e precisam
+        // Formatos antigos, sem prefixo. Ainda existem no banco deste
+        // projeto (gravados antes da migracao pra Argon2id) e precisam
         // continuar funcionando.
         if (hashGravado.startsWith("$argon2")) {
             return delegador.matches(senhaBruta, PREFIXO_ARGON2 + hashGravado);
@@ -124,8 +124,8 @@ public class CodificadorDeSenhaDelegado implements PasswordEncoder {
             return bcryptLegado.matches(senhaBruta, hashGravado);
         }
 
-        // Formato desconhecido: a senha nao pode ser conferida, e
-        // recusar e mais seguro do que aceitar.
+        // Formato desconhecido: a senha nao pode ser conferida, e recusar
+        // e mais seguro do que aceitar.
         throw new IllegalArgumentException("Formato de hash de senha nao reconhecido.");
     }
 
@@ -134,7 +134,7 @@ public class CodificadorDeSenhaDelegado implements PasswordEncoder {
      *
      * O Spring Security chama este metodo depois de um login bem-sucedido:
      * se a resposta for "true", o hash e regravado no formato novo. E o que
-     * faz a migracao do BCrypt para o Argon2id acontecer sozinha, sem script
+     * faz a migracao do BCrypt pra Argon2id acontecer sozinha, sem script
      * e sem janela de manutencao.
      *
      * @param hashGravado o hash como esta no banco

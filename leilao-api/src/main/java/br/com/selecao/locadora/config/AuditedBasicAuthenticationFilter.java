@@ -18,13 +18,13 @@ import java.io.IOException;
 /**
  * Autenticacao basica com auditoria.
  *
- * O BasicAuthenticationFilter do Spring Security 5.7 nao permite trocar o
+ * O BasicAuthenticationFilter do Spring Security 5.7 nao deixa trocar o
  * handler de falha, que por padrao devolve uma pagina HTML. Esta subclasse
  * devolve o mesmo JSON das demais respostas de erro e registra a tentativa
  * no log.
  *
- * Em caso de falha, o contexto de seguranca e limpo: do contrario, uma
- * requisicao seguinte poderia reaproveitar a autenticacao de outra.
+ * Quando a autenticacao falha, o contexto de seguranca e limpo: sem isso,
+ * uma requisicao seguinte poderia reaproveitar a autenticacao de outra.
  */
 public class AuditedBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
@@ -47,8 +47,7 @@ public class AuditedBasicAuthenticationFilter extends BasicAuthenticationFilter 
      * Construtor do filtro.
      *
      * @param authenticationManager       objeto que sabe validar
-     *                                    usuario e senha (confere o
-     *                                    hash com o BCrypt)
+     *                                    usuario e senha (confere o hash)
      * @param authenticationFailureHandler handler de falha auditado
      * @param loginAttemptService         controle de tentativas de login
      */
@@ -61,20 +60,21 @@ public class AuditedBasicAuthenticationFilter extends BasicAuthenticationFilter 
         this.authenticationAuditHandler = authenticationAuditHandler;
         this.loginAttemptService = loginAttemptService;
 
-        // A API e STATELESS: nao ha sessao de servidor, portanto nada
-        // deve ser guardado em repositorio de contexto. O NullSecurity-
-        // ContextRepository faz exatamente isso: nao guarda nada.
+        // A API e stateless: nao ha sessao de servidor, portanto nada deve
+        // ser guardado em repositorio de contexto. O
+        // NullSecurityContextRepository faz exatamente isso, nao guarda
+        // nada.
         SecurityContextRepository contextoSemSessao = new NullSecurityContextRepository();
         setSecurityContextRepository(contextoSemSessao);
     }
 
     /**
-     * Chamado quando as credenciais foram ACEITAS.
+     * Chamado quando as credenciais foram aceitas.
      *
      * Delega ao comportamento original (que coloca o usuario no contexto
      * de seguranca) e registra o evento na trilha de auditoria.
      *
-     * IMPORTANTE: nao escreve NADA na resposta HTTP.
+     * Este metodo nao escreve nada na resposta HTTP.
      *
      * @param request     requisicao HTTP
      * @param response    resposta HTTP
@@ -90,9 +90,9 @@ public class AuditedBasicAuthenticationFilter extends BasicAuthenticationFilter 
         // contexto de seguranca da thread.
         super.onSuccessfulAuthentication(request, response, authResult);
 
-        // Registro na trilha de auditoria. E aqui (e nao no controller)
-        // porque este e o ponto exato em que sabemos que a credencial
-        // foi conferida com sucesso.
+        // Registro na trilha de auditoria. Fica aqui, e nao no controller,
+        // porque este e o ponto exato em que sabemos que a credencial foi
+        // conferida com sucesso.
         String usuario = authResult == null ? "desconhecido" : authResult.getName();
 
         LOG.info("AUDITORIA | AUTENTICACAO_CONFIRMADA | usuario={}", usuario);
@@ -105,17 +105,16 @@ public class AuditedBasicAuthenticationFilter extends BasicAuthenticationFilter 
     }
 
     /**
-     * Chamado quando as credenciais foram RECUSADAS.
+     * Chamado quando as credenciais foram recusadas.
      *
-     * Repare que este metodo NAO escreve na resposta. Ele apenas:
-     *  1) limpa o contexto de seguranca da thread;
-     *  2) registra a tentativa no log de auditoria e conta a falha;
-     *  3) MARCA a requisicao com o resultado.
+     * Repare que este metodo nao escreve na resposta. Ele apenas limpa o
+     * contexto de seguranca da thread, registra a tentativa no log de
+     * auditoria e conta a falha, e marca a requisicao com o resultado.
      *
-     * Quem escreve a resposta (401 ou 429) e o
-     * JsonAuthenticationEntryPoint, chamado pelo ExceptionTranslationFilter
-     * no fim da cadeia de filtros. O motivo de existir apenas UM escritor
-     * de resposta esta explicado em detalhe no AuthenticationAuditHandler.
+     * Quem escreve a resposta (401 ou 429) e o JsonAuthenticationEntryPoint,
+     * chamado pelo ExceptionTranslationFilter no fim da cadeia de filtros.
+     * O motivo de existir um unico escritor de resposta esta explicado no
+     * AuthenticationAuditHandler.
      *
      * @param request requisicao HTTP
      * @param response resposta HTTP

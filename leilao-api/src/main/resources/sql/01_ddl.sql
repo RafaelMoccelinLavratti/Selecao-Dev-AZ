@@ -17,7 +17,7 @@
 -- A ligacao entre os dois fica explicita no @Column(name = "razao_social")
 -- de cada entidade.
 --
--- Decisoes de projeto:
+-- Algumas decisoes de projeto:
 --   - todo id e INTEGER e nasce de uma SEQUENCE (nextval), o que evita
 --     "duplicate key" quando duas pessoas cadastram ao mesmo tempo;
 --   - os asteriscos do diagrama viraram NOT NULL e os sublinhados viraram
@@ -39,10 +39,10 @@ BEGIN;
 -- -----------------------------------------------------------------------------
 -- PASSO 1 - Limpeza (idempotencia)
 -- -----------------------------------------------------------------------------
--- Por que apagar antes de criar? Para este script poder ser executado
+-- Por que apagar antes de criar? Pra este script poder ser executado
 -- varias vezes sem erro (com DROP IF EXISTS nao da erro se nao existir).
--- O CASCADE apaga tambem as chaves estrangeiras que apontam para as tabelas.
--- ATENCAO: em producao isso NAO deve ser executado, porque apaga dados reais.
+-- O CASCADE apaga tambem as chaves estrangeiras que apontam pra as tabelas.
+-- Em producao isso nao deve ser executado, porque apaga dados reais.
 -- -----------------------------------------------------------------------------
 DROP TABLE IF EXISTS tb_comprador CASCADE;
 DROP TABLE IF EXISTS tb_lote      CASCADE;
@@ -73,9 +73,9 @@ CREATE SEQUENCE seq_leilao  INCREMENT 1 MINVALUE 1 MAXVALUE 9999999 START 1 CACH
 CREATE SEQUENCE seq_lote    INCREMENT 1 MINVALUE 1 MAXVALUE 9999999 START 1 CACHE 1;
 CREATE SEQUENCE seq_unidade INCREMENT 1 MINVALUE 1 MAXVALUE 9999999 START 1 CACHE 1;
 
--- NOTA: as tabelas ainda nao existem neste ponto do script, entao o
--- vinculo "OWNED BY" (explicado no PASSO 9) e criado logo depois que as
--- cinco tabelas sao criadas.
+-- As tabelas ainda nao existem neste ponto do script, entao o vinculo
+-- "OWNED BY" (explicado no PASSO 9) e criado logo depois que as cinco
+-- tabelas sao criadas.
 
 -- -----------------------------------------------------------------------------
 -- PASSO 3 - Tabela UNIDADE
@@ -99,15 +99,15 @@ CREATE TABLE tb_unidade (
 -- -----------------------------------------------------------------------------
 -- PASSO 4 - Tabela EMPRESA
 -- -----------------------------------------------------------------------------
--- A empresa e a RAIZ do modelo: ela e VENDEDORA (via leilao.vendedor) e
--- tambem COMPRADORA (via tabela tb_comprador).
+-- A empresa e a raiz do modelo: ela e vendedora (via leilao.vendedor) e
+-- tambem compradora (via tabela tb_comprador).
 --
 -- Colunas com * no diagrama => NOT NULL: razaoSocial, cnpj.
 -- Colunas sublinhadas no diagrama => UNIQUE: cnpj, usuario.
 --
--- Sobre `usuario` e `senha`: no desenho eles NAO tem asterisco, entao aqui
+-- Sobre `usuario` e `senha`: no desenho eles nao tem asterisco, entao aqui
 -- ficam opcionais no banco (e o que o diagrama pede). Em contrapartida,
--- a senha NUNCA e gravada em texto puro - a aplicacao grava apenas o
+-- a senha nunca e gravada em texto puro - a aplicacao grava apenas o
 -- hash (Argon2id, com o prefixo "{argon2}" que identifica o algoritmo).
 -- Os hashes antigos em BCrypt continuam valendo: a aplicacao os reconhece
 -- e os reescreve sozinha no login. Ver
@@ -168,9 +168,9 @@ CREATE TABLE tb_leilao (
 
     CONSTRAINT tb_leilao_pk PRIMARY KEY (id),
 
-    -- CHAVE ESTRANGEIRA: o vendedor tem que existir em tb_empresa.
-    -- O que e isso? E uma regra que o proprio banco fiscaliza: e impossivel
-    -- cadastrar um leilao apontando para uma empresa inexistente.
+    -- Chave estrangeira: o vendedor tem que existir em tb_empresa.
+    -- O que e isso? E uma regra que o proprio banco fiscaliza: nao da pra
+    -- cadastrar um leilao apontando pra uma empresa que nao existe.
     -- "ON DELETE RESTRICT" = nao deixa apagar a empresa se ela tiver
     -- leilao. Escolha deliberada: apagar a vendedora quebraria o
     -- historico dos leiloes que ela vendeu.
@@ -204,7 +204,7 @@ CREATE TABLE tb_lote (
 
     CONSTRAINT tb_lote_pk PRIMARY KEY (id),
 
-    -- O lote SEMPRE pertence a um leilao (o * no diagrama confirma).
+    -- O lote sempre pertence a um leilao (o * no diagrama confirma).
     CONSTRAINT tb_lote_leilao_fk FOREIGN KEY (leilao)
         REFERENCES tb_leilao (id) ON DELETE CASCADE ON UPDATE CASCADE,
 
@@ -221,7 +221,7 @@ CREATE INDEX tb_lote_leilao_idx ON tb_lote (leilao);
 -- PASSO 7 - Tabela COMPRADOR
 -- -----------------------------------------------------------------------------
 -- Tabela de juncao: liga "empresa" e "leilao" - ou seja, registra qual
--- empresa comprou qual leilao. Por isso a CHAVE PRIMARIA E COMPOSTA:
+-- empresa comprou qual leilao. Por isso a chave primaria e composta:
 -- (empresa, leilao). A mesma empresa nao pode comprar o mesmo leilao
 -- duas vezes, e o mesmo par nao pode se repetir.
 -- No JPA isso e mapeado com @EmbeddedId (ver entity/CompradorId.java).
@@ -246,25 +246,25 @@ CREATE TABLE tb_comprador (
 -- -----------------------------------------------------------------------------
 -- Armazena os tokens de renovacao (o "refresh token") do fluxo JWT.
 --
--- POR QUE ESSA TABELA EXISTE:
--- Um token de renovacao e, por definicao, de LONGA duracao (o usuario nao
+-- Por que essa tabela existe:
+-- Um token de renovacao e, por definicao, de longa duracao (o usuario nao
 -- deve digitar a senha a cada 15 minutos). Isso o torna o alvo perfeito
--- para um atacante: e o token que, se roubado, da acesso por dias.
+-- pra um atacante: e o token que, se roubado, da acesso por dias.
 --
--- Por isso esta tabela aplica TRES protecoes:
+-- Por isso esta tabela aplica tres protecoes:
 --
---  1) O token NUNCA e guardado em texto puro. Guardamos apenas o SHA-256
---     dele. Se o banco vazar, os hashes sao inuteis para o atacante (a
---     senha e o token sao differentes, entao o hash do token nao
+--  1) O token nunca e guardado em texto puro. Guardamos apenas o SHA-256
+--     dele. Se o banco vazar, os hashes sao inuteis pra o atacante (a
+--     senha e o token sao diferentes, entao o hash do token nao
 --     ajuda a descobrir o token - seria preciso reverter o SHA-256).
 --     O proprio token so existe na hora em que e emitido.
 --
---  2) Cada token pertence a uma FAMILIA. Todos os tokens gerados a
+--  2) Cada token pertence a uma familia. Todos os tokens gerados a
 --     partir do mesmo login compartilham o mesmo identificador de familia.
 --     Quando um token usado e reapresentado (sinal de token copiado),
 --     toda a familia e revogada de uma vez.
 --
---  3) Cada token e de USO UNICO. Ao renovar, ele e marcado como usado.
+--  3) Cada token e de uso unico. Ao renovar, ele e marcado como usado.
 --
 -- O indice em "familia" existe porque a revogacao em lote (logout e
 -- deteccao de reuso) busca por ele.
@@ -300,12 +300,12 @@ CREATE INDEX tb_refresh_token_expiracao_idx ON tb_refresh_token (data_expiracao)
 -- -----------------------------------------------------------------------------
 -- Registra as operacoes que alteram dados (POST, PUT, PATCH, DELETE).
 --
--- POR QUE ESSA TABELA E DIFERENTE DAS OUTRAS:
--- Uma trilha de auditoria comum e so um LOG: o usuario com acesso ao
--- banco pode apagar a prova. Isso nao serve para nada numa investigacao.
+-- Por que essa tabela e diferente das outras:
+-- Uma trilha de auditoria comum e so um log: quem tem acesso ao banco
+-- pode apagar a prova. Isso nao serve pra nada numa investigacao.
 --
--- Esta trilha e A PROVA DE ADULTERACAO (tamper-evident). Cada registro
--- guarda o hash do registro ANTERIOR, formando uma CORRENTE:
+-- Esta trilha e a prova de adulteracao (tamper-evident). Cada registro
+-- guarda o hash do registro anterior, formando uma corrente:
 --
 --     registro 1  hash = HMAC(conteudo_1)
 --     registro 2  hash = HMAC(hash_1 + conteudo_2)
@@ -313,14 +313,14 @@ CREATE INDEX tb_refresh_token_expiracao_idx ON tb_refresh_token (data_expiracao)
 --     ...
 --
 -- Se alguem alterar um registro no meio da cadeia, todos os hashes
--- seguintes deixam de bater - e a verificacao acusa exatamente ONDE a
+-- seguintes deixam de bater - e a verificacao acusa exatamente onde a
 -- adulteracao aconteceu.
 --
--- A chave do HMAC fica FORA do banco (variavel de ambiente). Sem ela,
+-- A chave do HMAC fica fora do banco (variavel de ambiente). Sem ela,
 -- nem quem tem acesso ao banco consegue forjar um registro valido.
 --
 -- "sequencia" e um numero monotonico, gravado junto com o registro. Ele
--- impede o ataque mais obvio: apagar um registro do MEIO. Se o registro 5
+-- impede o ataque mais obvio: apagar um registro do meio. Se o registro 5
 -- sumir, a sequencia salta de 4 para 6, e a verificacao ve a quebra.
 -- -----------------------------------------------------------------------------
 CREATE TABLE tb_auditoria (
@@ -355,7 +355,7 @@ CREATE INDEX tb_auditoria_data_idx ON tb_auditoria (data_evento);
 -- -----------------------------------------------------------------------------
 -- "OWNED BY" amarra a sequencia a uma coluna da tabela. Isso nao e
 -- decoracao: e o que faz o "TRUNCATE ... RESTART IDENTITY" do script de
--- massa de dados (02_dml.sql) voltar os contadores para 1.
+-- massa de dados (02_dml.sql) voltar os contadores pra 1.
 -- Sem esse vinculo, o PostgreSQL nao sabe que a sequencia pertence a
 -- tabela e o TRUNCATE deixa os ids continuarem de onde pararam - o que
 -- quebraria a massa de dados (a empresa de id 1 deixaria de existir).

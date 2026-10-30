@@ -2,7 +2,7 @@
 --
 -- Este script nao e executado automaticamente. Ele fica na subpasta
 -- "seguranca/" porque o container do Postgres so executa os .sql que estao
--- DIRETAMENTE na pasta montada em /docker-entrypoint-initdb.d (o utilitario
+-- diretamente na pasta montada em /docker-entrypoint-initdb.d (o utilitario
 -- find do container usa "maxdepth 1" e nao entra em subpastas).
 --
 -- A ideia e aplicar "principio do menor privilegio" no banco. Sem isso, a
@@ -63,9 +63,9 @@ GRANT TEMPORARY ON DATABASE az TO leilao_app;
 -- USAGE no schema: permite enxergar os objetos (tabelas) do schema.
 -- SELECT / INSERT / UPDATE / DELETE: exatamente o que a aplicação faz.
 --
--- Repare no que NÃO está aqui: CREATE, ALTER, DROP, TRUNCATE, REFERENCES,
--- GRANT. A aplicação não cria nem altera estrutura (quem faz isso é o
--- script 01_ddl.sql, executado pelo DBA) e não pode destruir o schema.
+-- Repare no que nao esta aqui: CREATE, ALTER, DROP, TRUNCATE, REFERENCES,
+-- GRANT. A aplicacao nao cria nem altera estrutura (quem faz isso e o
+-- script 01_ddl.sql, executado pelo DBA) e nao pode destruir o schema.
 -- -----------------------------------------------------------------------------
 GRANT USAGE ON SCHEMA public TO leilao_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO leilao_app;
@@ -81,10 +81,10 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO leilao_app;
 -- -----------------------------------------------------------------------------
 -- 5) Regra para o FUTURO
 -- -----------------------------------------------------------------------------
--- "ALTER DEFAULT PRIVILEGES" faz com que QUALQUER tabela ou sequência que
--- for criada DEPOIS daqui já nasça com as permissões da aplicação. Sem
--- isso, bastaria alguém criar uma nova tabela para o usuário leilao_app
--- perder o acesso a ela (e o sistema quebraria em silêncio).
+-- "ALTER DEFAULT PRIVILEGES" faz com que qualquer tabela ou sequencia que
+-- for criada depois daqui ja nasca com as permissoes da aplicacao. Sem
+-- isso, bastaria alguem criar uma nova tabela para o usuario leilao_app
+-- perder o acesso a ela (e o sistema quebraria em silencio).
 -- -----------------------------------------------------------------------------
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO leilao_app;
@@ -107,6 +107,6 @@ COMMIT;
 --     -- poder mexer na estrutura):
 --     DROP TABLE tb_empresa;
 --
--- E para confirmar o NAO acesso a outros bancos do servidor:
+-- E para confirmar que nao ha acesso a outros bancos do servidor:
 --     psql -U leilao_app -d postgres
 --     -- deve falhar com "permission denied for database postgres"

@@ -50,7 +50,7 @@ class EmpresaBOTest {
         ReflectionTestUtils.setField(empresaBO, "empresaRepository", empresaRepository);
         ReflectionTestUtils.setField(empresaBO, "passwordEncoder", passwordEncoder);
 
-        // Por padrao, nenhum CNPJ e nenhum usuario existem ainda.
+        // Comeca sem nenhum CNPJ e sem nenhum usuario cadastrado.
         when(empresaRepository.existsByCnpj(anyString())).thenReturn(false);
         when(empresaRepository.existsByUsuario(anyString())).thenReturn(false);
 
@@ -92,7 +92,7 @@ class EmpresaBOTest {
      * Teste 1: CNPJ, CEP e telefone sao normalizados (gravados so com digitos).
      *
      * Este e um dos testes mais importantes do arquivo, porque ele
-     * verifica a DECISAO DE MODELO do projeto inteiro:
+     * verifica a decisao de modelo do projeto inteiro:
      *
      * O banco guarda o CNPJ **sem pontuacao** ("11555999000111"), e a
      * tela aplica a mascara **so na exibicao** ("11.555.999/0001-11").
@@ -102,7 +102,7 @@ class EmpresaBOTest {
      * "11.555.999000111", "11555999000111") - e a busca por CNPJ
      * deixaria de funcionar, porque a comparacao seria de texto.
      *
-     * A canonicalizacao acontece no BACKEND, e nao so no frontend,
+     * A canonicalizacao acontece no backend, e nao so no frontend,
      * porque o frontend pode ser contornado: qualquer um pode chamar a
      * API direto, sem passar pela tela.
      */
@@ -120,7 +120,7 @@ class EmpresaBOTest {
      * Teste 2: CNPJ duplicado e recusado com mensagem clara.
      *
      * Alem de verificar que a excecao correta foi lancada, o teste
-     * verifica que a MENSAGEM cita o campo envolvido ("CNPJ"). Isso
+     * verifica que a mensagem cita o campo envolvido ("CNPJ"). Isso
      * importa para quem usa o sistema: uma mensagem generica
      * ("dados invalidos") nao ajuda ninguem a entender o que houve.
      */
@@ -159,7 +159,7 @@ class EmpresaBOTest {
      * Este teste usa o **ArgumentCaptor** do Mockito, que e a forma de
      * inspecionar o objeto que foi realmente passado ao repositorio:
      * em vez de so conferir o que o duble devolve, ele captura o
-     * ARGUMENTO da chamada.
+     * argumento da chamada.
      *
      * As tres verificacoes juntas cobrem o ciclo completo:
      *   1) o valor gravado NAO e a senha digitada;
@@ -199,7 +199,7 @@ class EmpresaBOTest {
      * entao ele nao teria como saber qual era.
      *
      * O teste verifica as duas metades do comportamento:
-     *   1) o hash ANTERIOR foi preservado intacto;
+     *   1) o hash anterior foi preservado intacto;
      *   2) o valor preservado continua sendo um hash - nao a senha em
      *      texto puro que "deu certo" por acidente.
      */
@@ -234,7 +234,7 @@ class EmpresaBOTest {
     }
 
     /**
-     * Teste 6: a resposta da API NUNCA contem o campo senha.
+     * Teste 6: a resposta da API nunca contem o campo senha.
      *
      * Este teste usa **reflexao** para olhar a estrutura da classe
      * `EmpresaResponse` e verificar, campo a campo, que nenhum se chama
@@ -243,7 +243,7 @@ class EmpresaBOTest {
      * E uma garantia de **estrutura**, e nao de comportamento: mesmo
      * que ninguem preencha o campo hoje, a simples existencia dele no
      * DTO de saida seria um risco - qualquer preenchimento futuro
-     * passaria a vazar a senha. Verificar a ESTRUTURA impede a
+     * passaria a vazar a senha. Verificar a estrutura impede a
      * regressao na origem.
      *
      * A forma mais simples e mais forte de proteger isso seria o

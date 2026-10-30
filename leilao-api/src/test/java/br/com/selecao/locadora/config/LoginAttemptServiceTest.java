@@ -38,7 +38,7 @@ class LoginAttemptServiceTest {
     }
 
     /**
-     * Testa 1: antes do limite, NENHUM bloqueio acontece.
+     * Testa 1: antes do limite, nenhum bloqueio acontece.
      *
      * Este e um requisito de usabilidade (e de Justica): bloquear uma
      * pessoa que digitou a senha errada duas vezes seria inaceitavel.
@@ -141,7 +141,7 @@ class LoginAttemptServiceTest {
     }
 
     /**
-     * Testa 6: com o controle DESLIGADO, nada e bloqueado.
+     * Testa 6: com o controle desligado, nada e bloqueado.
      *
      * Permite desligar a protecao sem desinstalar o codigo - util para
      * depurar um bloqueio indevido em um ambiente de teste.

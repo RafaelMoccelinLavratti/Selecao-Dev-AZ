@@ -25,7 +25,7 @@ import java.util.Optional;
  *
  * Cada registro e selado com um HMAC-SHA256 e encadeado no registro
  * anterior. Alterar, forjar ou remover uma linha quebra a corrente, e a
- * sequencia indica onde a ruptura aconteceu.
+ * sequencia mostra onde a ruptura aconteceu.
  *
  * A gravacao roda em transacao separada da operacao de negocio: se as
  * duas dividissem a mesma transacao, uma falha na trilha derrubaria junto
@@ -60,10 +60,9 @@ public class AuditoriaBO {
     /**
      * Chave secreta do HMAC, vinda do ambiente.
      *
-     * Se nao for informada, e gerada uma chave efemera: o funcionamento
-     * esta correto, mas a chave muda a cada reinicio - o que significa
-     * que a trilha gravada antes do reinicio nao podera mais ser
-     * verificada. Em producao, a variavel DEVE ser definida.
+     * Sem ela, geramos uma chave efemera: o funcionamento fica correto,
+     * mas a chave muda a cada reinicio - e a trilha gravada antes do
+     * reinicio nao da mais pra verificar. Em producao, defina a variavel.
      */
     @Value("${app.security.audit.hmac-key:}")
     private String chaveConfigurada;
@@ -123,7 +122,7 @@ public class AuditoriaBO {
      * @param statusHttp  codigo de status da resposta
      * @param duracaoMs   duracao da operacao
      * @param acao        acao realizada
-     * @param detalhe     detalhe textual (NUNCA o corpo da requisicao)
+     * @param detalhe     detalhe textual (nunca o corpo da requisicao)
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void registrar(String usuario,
@@ -137,13 +136,13 @@ public class AuditoriaBO {
 
         try {
 
-            // 1) Descobre o ultimo hash da corrente.
+            // Descobre o ultimo hash da corrente.
             Optional<Auditoria> anterior = auditoriaRepository.findTopByOrderBySequenciaDesc();
 
             String hashAnterior = anterior.map(Auditoria::getHashAtual).orElse(null);
             long sequencia = anterior.map(a -> a.getSequencia() + 1).orElse(1L);
 
-            // 2) Monta o registro.
+            // Monta o registro.
             Auditoria registro = new Auditoria();
             registro.setSequencia(sequencia);
             registro.setDataEvento(LocalDateTime.now());
@@ -157,17 +156,17 @@ public class AuditoriaBO {
             registro.setDetalhe(detalhe);
             registro.setHashAnterior(hashAnterior);
 
-            // 3) Calcula o hash deste registro, encadeando no anterior.
+            // Calcula o hash deste registro, encadeando no anterior.
             registro.setHashAtual(calcularHash(registro, hashAnterior));
 
-            // 4) Grava.
+            // Grava.
             auditoriaRepository.save(registro);
 
         } catch (RuntimeException ex) {
-            // A trilha NUNCA pode derrubar a operacao de negocio. Se a
-            // gravacao falhar, o problema e registrado no log e a
-            // requisicao segue - perder o registro e melhor do que
-            // perder a operacao do usuario.
+            // A trilha nunca pode derrubar a operacao de negocio. Se a
+            // gravacao falhar, o problema vai pro log e a requisicao
+            // segue - perder o registro e melhor do que perder a operacao
+            // do usuario.
             LOG.error("AUDITORIA | FALHA ao registrar o evento | acao={} caminho={} erro={}",
                     acao, caminho, ex.getMessage(), ex);
         }
@@ -177,7 +176,7 @@ public class AuditoriaBO {
      * Verifica a integridade da cadeia.
      *
      * Percorre os registros em ordem e recalcula o hash de cada um. O
-     * primeiro que nao bater e o ponto exato da adulteracao.
+     * primeiro que nao bate e o ponto exato da adulteracao.
      *
      * @param aPartirDe sequencia inicial da verificacao (0 = do comeco)
      * @return o resultado da verificacao
@@ -188,7 +187,7 @@ public class AuditoriaBO {
         List<Auditoria> registros = auditoriaRepository
                 .findBySequenciaGreaterThanEqualOrderBySequenciaAsc(Math.max(aPartirDe, 1L));
 
-        // Sem chave valida, nao ha como verificar nada.
+        // Sem chave valida, nao ha o que verificar.
         if (chaveEfemera) {
             return new ResultadoVerificacao(false, 0, 0, null,
                     "A chave HMAC e efemera (gerada nesta instancia). "
@@ -205,8 +204,8 @@ public class AuditoriaBO {
 
         for (Auditoria registro : registros) {
 
-            // 1) O encadeamento bate? O hash_anterior deste registro
-            //    precisa ser o hash_atual do registro anterior.
+            // O encadeamento bate? O hash_anterior deste registro precisa
+            // ser o hash_atual do registro anterior.
             if (!igual(hashEsperado, registro.getHashAnterior())) {
                 return new ResultadoVerificacao(false, verificados, registros.size(),
                         registro.getSequencia(),
@@ -214,7 +213,7 @@ public class AuditoriaBO {
                                 + ": o encadeamento com o registro anterior nao confere.");
             }
 
-            // 2) O conteudo bate com o hash gravado?
+            // O conteudo bate com o hash gravado?
             String hashRecalculado = calcularHash(registro, registro.getHashAnterior());
 
             if (!igual(hashRecalculado, registro.getHashAtual())) {
@@ -228,7 +227,7 @@ public class AuditoriaBO {
             verificados++;
         }
 
-        // 3) A sequencia tem buracos? (detecta remocao de registro)
+        // A sequencia tem buracos? (isso detecta remocao de registro)
         long maiorSequencia = auditoriaRepository.obterMaiorSequencia();
         long total = registros.size();
 
@@ -246,9 +245,9 @@ public class AuditoriaBO {
     /**
      * Calcula o hash selado de um registro.
      *
-     * O conteudo canonico concatena os campos relevantes em uma ordem
-     * FIXA. A ordem precisa ser estavel: se mudasse, a verificacao
-     * acusaria adulteracao em tudo.
+     * O conteudo canonico concatena os campos relevantes numa ordem fixa.
+     * A ordem precisa ser estavel: se mudasse, a verificacao acusaria
+     * adulteracao em tudo.
      *
      * @param registro     o registro a selar
      * @param hashAnterior o hash do registro anterior da cadeia
@@ -291,7 +290,8 @@ public class AuditoriaBO {
     }
 
     /**
-     * Compara dois hashes semieszacao de tempo (evita o ataque de tempo).
+     * Compara dois hashes sem levar em conta o tempo (evita o ataque de
+     * tempo).
      */
     private boolean igual(String a, String b) {
 

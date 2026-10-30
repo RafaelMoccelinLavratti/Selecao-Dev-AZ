@@ -47,7 +47,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Inte
     /**
      * Revoga (marca com data) todos os tokens validos de uma familia.
      *
-     * E a operacao de resposta ao DETAECCAO DE REUSO: quando um token ja
+     * E a operacao de resposta a deteccao de reuso: quando um token ja
      * usado aparece de novo, toda a familia e invalidada de uma vez.
      *
      * @param familia identificador da familia de tokens

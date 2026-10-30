@@ -17,37 +17,39 @@ const routes = [
     redirect: '/unidades'
   },
   {
-    // EXERCICIO 5 - tela de consulta e edicao de unidades.
+    // Exercicio 5 - consulta e edicao de unidades.
     path: '/unidades',
     name: 'Unidades',
     component: () => import(/* webpackChunkName: "unidades" */ '../views/unidade/Unidades.vue')
   },
   {
-    // EXERCICIO 6 - tela de consulta de empresas (somente leitura).
+    // Exercicio 6 - consulta de empresas (somente leitura).
     path: '/empresas',
     name: 'Empresas',
     component: () => import(/* webpackChunkName: "empresas" */ '../views/empresa/Empresas.vue')
   },
   {
-    // EXERCICIO 7 - tela de consulta de leiloes (somente leitura).
-    // Observacao: o enunciacao do exercicio 4 escreve "leiloes.vue" com
-    // a inicial minuscula e o exercicio 7 escreve "Leiloes.vue". Em
-    // Windows os dois nomes funcionam; em Linux, so um existe. Adotamos
-    // "Leiloes.vue" (comeca com maiuscula, como as outras views).
+    // Exercicio 7 - consulta de leiloes (somente leitura).
+    //
+    // O enunciado do exercicio 4 escreve "leiloes.vue" com a inicial
+    // minuscula e o do exercicio 7 escreve "Leiloes.vue". No Windows os
+    // dois funcionam; no Linux so um existe. Adotamos "Leiloes.vue", com
+    // maiuscula, como as outras views.
     path: '/leiloes',
     name: 'Leiloes',
     component: () => import(/* webpackChunkName: "leiloes" */ '../views/leilao/Leiloes.vue')
   },
   {
-    // EXERCICIO 8 - tela de INCLUSAO de empresa.
+    // Exercicio 8 - inclusao de empresa.
     path: '/empresa',
     name: 'EmpresaIncluir',
     component: () => import(/* webpackChunkName: "empresa" */ '../views/empresa/Empresa.vue')
   },
   {
-    // EXERCICIO 8 - tela de EDICAO de empresa.
-    // Esta rota PRECISA vir antes da rota "/empresa" para que o "id" seja
-    // interpretado como parametro e nao como parte de outro caminho.
+    // Exercicio 8 - edicao de empresa.
+    //
+    // Esta rota precisa vir antes da rota "/empresa", senao o "id" e
+    // interpretado como parte de outro caminho em vez de parametro.
     path: '/empresa/:id',
     name: 'EmpresaEditar',
     component: () => import(/* webpackChunkName: "empresa" */ '../views/empresa/Empresa.vue'),
@@ -61,8 +63,8 @@ const routes = [
 ];
 
 const router = new VueRouter({
-  // "hash" = a URL fica http://servidor/#/unidades (exatamente como o
-  // enunciado pede no exercicio 4).
+  // "hash" = a URL fica http://servidor/#/unidades, como o enunciado
+  // pede no exercicio 4.
   mode: 'hash',
   routes
 });

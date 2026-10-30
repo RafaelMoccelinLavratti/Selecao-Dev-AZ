@@ -25,11 +25,11 @@ public class PasswordEncoderConfig {
      * consumo de MEMORIA, e nao apenas de CPU, que impede o ataque
      * paralelo em GPU.
      *
-     * NOTA: o valor inicializado aqui e o mesmo do padrao declarado no
-     * @Value. Isso permite que a classe tambem seja instanciada FORA do
-     * container do Spring (como acontece nos testes unitarios, que
-     * chamam "new PasswordEncoderConfig().passwordEncoder()"), sem que
-     * os parametros cheguem zerados.
+     * O valor inicializado aqui e o mesmo do padrao declarado no @Value.
+     * Isso permite que a classe tambem seja instanciada fora do container
+     * do Spring (como acontece nos testes unitarios, que chamam
+     * "new PasswordEncoderConfig().passwordEncoder()"), sem que os
+     * parametros cheguem zerados.
      */
     @Value("${app.security.password.argon2.memory:65536}")
     private int memoriaArgon2 = 65_536;

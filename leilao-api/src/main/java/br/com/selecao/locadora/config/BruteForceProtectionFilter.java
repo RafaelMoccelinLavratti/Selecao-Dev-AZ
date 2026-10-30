@@ -18,9 +18,9 @@ import java.io.IOException;
 /**
  * Bloqueio por forca bruta.
  *
- * Roda antes do filtro de autenticacao basica, para que um IP ja bloqueado
- * nem chegue a comparar a senha - o BCrypt e lento de proposito, e nao
- * adianta gastar esse tempo.
+ * Roda antes do filtro de autenticacao basica, pra que um IP ja bloqueado
+ * nem chegue a comparar a senha - o hash de senha e lento de proposito, e
+ * nao adianta gastar esse tempo.
  *
  * Um IP bloqueado recebe 429, com o cabecalho Retry-After.
  */
@@ -41,17 +41,16 @@ public class BruteForceProtectionFilter extends OncePerRequestFilter {
     private boolean confiarEmProxy;
 
     /**
-     * Caminhos que NUNCA sao bloqueados pelo controle de forca bruta.
+     * Caminhos que nunca sao bloqueados pelo controle de forca bruta.
      *
-     * O motivo e OPERACIONAL e vale explicar: o endpoint
+     * O motivo e operacional e vale explicar: o endpoint
      * "/actuator/health" e o que o orquestrador (Docker, Kubernetes)
-     * consulta para saber se a aplicacao esta viva. Se ele devolvesse
+     * consulta pra saber se a aplicacao esta viva. Se ele devolvesse
      * HTTP 429 durante um ataque de forca bruta, o orquestrador
-     * interpretaria "a aplicacao esta doente" e REINICIARIA o
-     * container - o ataque de senha viraria um ataque de negacao de
-     * servico.
+     * interpretaria "a aplicacao esta doente" e reiniciaria o container -
+     * o ataque de senha viraria um ataque de negacao de servico.
      *
-     * O mesmo vale para as demais rotas de monitoracao: elas precisam
+     * O mesmo vale pras demais rotas de monitoracao: elas precisam
      * funcionar sempre, mesmo sob ataque.
      */
     private static final String[] CAMINHOS_ISENTOS = {
@@ -61,7 +60,7 @@ public class BruteForceProtectionFilter extends OncePerRequestFilter {
     };
 
     /**
-     * Executa a verificacao de bloqueio ANTES da autenticacao.
+     * Executa a verificacao de bloqueio antes da autenticacao.
      *
      * @param request     requisicao HTTP
      * @param response    resposta HTTP
@@ -104,7 +103,7 @@ public class BruteForceProtectionFilter extends OncePerRequestFilter {
                             + "\"mensagem\":\"Numero excessivo de tentativas de autenticacao. "
                             + "Aguarde alguns minutos antes de tentar novamente.\"}");
 
-            // IMPORTANTE: NAO chama chain.doFilter(...). A requisicao morre
+            // Importante: nao chama chain.doFilter(...). A requisicao morre
             // aqui - o controller nunca e acionado, a senha nunca e validada.
             return;
         }

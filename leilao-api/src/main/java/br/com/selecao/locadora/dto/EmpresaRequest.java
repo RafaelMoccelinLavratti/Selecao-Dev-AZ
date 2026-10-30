@@ -14,7 +14,7 @@ import javax.validation.constraints.Size;
  * DTO de entrada da empresa.
  *
  * A validacao mora aqui e nao so no frontend: qualquer um pode chamar a API
- * sem passar pela tela, e e o backend que nao pode ser contornado.
+ * sem passar pela tela, e o backend que nao pode ser contornado.
  */
 @Data
 @NoArgsConstructor
@@ -22,7 +22,7 @@ import javax.validation.constraints.Size;
 public class EmpresaRequest {
 
     /**
-     * Razao social. OBRIGATORIA (asterisco no diagrama).
+     * Razao social. Obrigatoria (asterisco no diagrama).
      * @NotBlank = nao pode ser vazio nem apenas espacos.
      * @Size    = respeita o tamanho maximo da coluna (84).
      */
@@ -31,7 +31,7 @@ public class EmpresaRequest {
     private String razaoSocial;
 
     /**
-     * CNPJ. OBRIGATORIO e UNIQUE (asterisco + sublinhado no diagrama).
+     * CNPJ. Obrigatorio e unico (asterisco + sublinhado no diagrama).
      * O padrao aceita os dois formatos, com e sem pontuacao.
      */
     @NotBlank(message = "O CNPJ e obrigatorio.")
@@ -84,36 +84,37 @@ public class EmpresaRequest {
     @Size(max = 254, message = "O site deve ter no maximo 254 caracteres.")
     private String site;
 
-    /** Nome de usuario para login. UNIQUE no banco. Tamanho maximo 20. */
+    /** Nome de usuario para login. Unico no banco. Tamanho maximo 20. */
     @Size(max = 20, message = "O usuario deve ter no maximo 20 caracteres.")
     private String usuario;
 
     /**
-     * Senha. NUNCA e devolvida na resposta da API e NUNCA e gravada em
-     * texto puro: a camada de negocio guarda apenas o hash BCrypt.
+     * Senha. Nunca e devolvida na resposta da API e nunca e gravada em
+     * texto puro: a camada de negocio guarda apenas o hash.
      * Tamanho minimo de 8 caracteres - menos que isso e triviao de quebrar.
      */
     @Size(min = 8, max = 128, message = "A senha deve ter entre 8 e 128 caracteres.")
     private String senha;
 
     /**
-     *  AJUSTE FINO (e importante) NA SENHA
-     *  Este setter e escrito a mao (o Lombok nao gera um porque ja
-     *  existe um) e converte uma senha em BRANCO em null.
+     * Ajuste fino na senha.
      *
-     *  Por que isso e necessario?
-     *  Quando o usuario EDITA uma empresa e nao troca a senha, o formulario
-     *  envia o campo vazio. O @Size(min = 8) rejeitaria uma string vazia
-     *  ("") - e so ignoraria null. Resultado: o usuario nao conseguiria
-     *  salvar uma simples alteracao de e-mail sem antes digitar a senha.
+     * Este setter e escrito a mao (o Lombok nao gera um porque ja existe
+     * um) e converte uma senha em branco em null.
      *
-     *  Convertendo "" em null logo na desserializacao, o comportamento
-     *  fica: senha vazia = "nao quero trocar a senha" (e a empresa mantem
-     *  o hash que ja tinha). Uma senha realmente curta (com menos de 8
-     *  caracteres) continua sendo REJEITADA com a mensagem de erro.
+     * Por que isso e necessario?
+     * Quando o usuario edita uma empresa e nao troca a senha, o formulario
+     * envia o campo vazio. O @Size(min = 8) rejeitaria uma string vazia
+     * ("") - e so ignoraria null. Resultado: o usuario nao conseguiria
+     * salvar uma simples alteracao de e-mail sem antes digitar a senha.
      *
-     *  O Java chama o setter durante a leitura do JSON, e a validacao
-     *  acontece DEPOIS - por isso a conversao acontece a tempo.
+     * Convertendo "" em null logo na desserializacao, o comportamento fica:
+     * senha vazia = "nao quero trocar a senha" (e a empresa mantem o hash
+     * que ja tinha). Uma senha realmente curta (com menos de 8 caracteres)
+     * continua sendo rejeitada com a mensagem de erro.
+     *
+     * O Java chama o setter durante a leitura do JSON, e a validacao
+     * acontece depois - por isso a conversao acontece a tempo.
      */
     public void setSenha(String senha) {
         this.senha = (senha == null || senha.trim().isEmpty()) ? null : senha;

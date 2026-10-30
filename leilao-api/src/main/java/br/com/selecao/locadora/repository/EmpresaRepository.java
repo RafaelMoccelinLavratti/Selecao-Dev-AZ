@@ -20,16 +20,16 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Integer> {
     boolean existsByCnpj(String cnpj);
 
     /**
-     * Existe alguma empresa com este CNPJ em um id DIFERENTE do informado?
-     * (o "AndIdNot" existe para o UPDATE: ao editar a empresa 5, o
-     * proprio CNPJ da empresa 5 nao pode contar como duplicado)
+     * Existe alguma empresa com este CNPJ em um id diferente do informado?
+     * (o "AndIdNot" existe pro UPDATE: ao editar a empresa 5, o proprio
+     * CNPJ da empresa 5 nao pode contar como duplicado)
      */
     boolean existsByCnpjAndIdNot(String cnpj, Integer id);
 
     /** Existe algum usuario com este nome? */
     boolean existsByUsuario(String usuario);
 
-    /** Mesmo raciocinio do CNPJ, mas para o UPDATE. */
+    /** Mesmo raciocinio do CNPJ, mas pro UPDATE. */
     boolean existsByUsuarioAndIdNot(String usuario, Integer id);
 
     /** Busca a empresa pelo CNPJ (util no login). */

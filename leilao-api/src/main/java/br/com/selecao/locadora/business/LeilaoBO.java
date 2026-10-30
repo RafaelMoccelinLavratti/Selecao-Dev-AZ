@@ -23,9 +23,9 @@ import java.util.stream.Collectors;
  * Regras de negocio do leilao.
  *
  * Alem do CRUD, e aqui que mora a listagem resumida (exercicio 7), que traz
- * vendedor e total de cada leilao, e a regra de que o vendedor precisa
- * existir - validada aqui para devolver mensagem em portugues em vez de
- * erro de banco.
+ * vendedor e total de cada leilao. E aqui tambem que se confere se o
+ * vendedor existe, pra devolver mensagem em portugues em vez de erro de
+ * banco.
  */
 @Service
 public class LeilaoBO {
@@ -72,7 +72,7 @@ public class LeilaoBO {
     @Transactional
     public LeilaoResponse salvar(LeilaoRequest request, Integer id) {
 
-        // REGRA: o vendedor precisa existir.
+        // O vendedor precisa existir.
         Empresa vendedor = empresaRepository.findById(request.getVendedor())
                 .orElseThrow(() -> new RegraNegocioException(
                         "A empresa vendedora de id " + request.getVendedor() + " nao existe."));

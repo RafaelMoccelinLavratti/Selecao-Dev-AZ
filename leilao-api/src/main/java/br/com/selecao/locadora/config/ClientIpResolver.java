@@ -42,7 +42,7 @@ public final class ClientIpResolver {
 
         if (confiarEmProxy) {
 
-            // ---- CAMINHO 1: cabecalho X-Forwarded-For (cadeia de proxies) ----
+            // Primeiro: cabecalho X-Forwarded-For (cadeia de proxies).
             String cadeia = request.getHeader(CABECALHO_X_FORWARDED_FOR);
 
             if (cadeia != null && !cadeia.trim().isEmpty()) {
@@ -54,7 +54,7 @@ public final class ClientIpResolver {
                 }
             }
 
-            // ---- CAMINHO 2: cabecalho X-Real-IP (proxies mais simples) ----
+            // Depois: cabecalho X-Real-IP (proxies mais simples).
             String ipReal = request.getHeader(CABECALHO_X_REAL_IP);
 
             if (ipReal != null && !ipReal.trim().isEmpty()) {
@@ -62,9 +62,9 @@ public final class ClientIpResolver {
             }
         }
 
-        // ---- CAMINHO 3 (padrao): IP do socket ----
-        // Nao pode ser falsificado pelo cliente. E o que usamos quando
-        // NAO existe proxy confiavel na frente da aplicacao.
+        // Por ultimo: o IP do socket. Nao pode ser falsificado pelo
+        // cliente, e e o que usamos quando nao existe proxy confiavel na
+        // frente da aplicacao.
         String remoto = request.getRemoteAddr();
 
         return (remoto == null || remoto.trim().isEmpty()) ? "desconhecido" : remoto;

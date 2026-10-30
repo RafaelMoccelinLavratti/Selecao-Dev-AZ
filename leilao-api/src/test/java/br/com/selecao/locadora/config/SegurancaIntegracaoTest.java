@@ -49,8 +49,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         AuditTrailFilter.class
 })
 @TestPropertySource(properties = {
-        // Liga a autenticacao (o padrao do projeto e desligada, para o
-        // avaliador testar as rotas sem login).
+        // Liga a autenticacao (o padrao do projeto tem ela desligada, pra
+        // o avaliador testar as rotas sem login).
         "app.security.enabled=true",
         "app.security.username=admin",
         "app.security.password=SenhaForteDeTeste123",
@@ -90,11 +90,11 @@ class SegurancaIntegracaoTest {
     /**
      * Duble do servico de tokens JWT.
      *
-     * O JwtAuthenticationFilter e' um filtro (@Component), e o @WebMvcTest
+     * O JwtAuthenticationFilter e um filtro (@Component), e o @WebMvcTest
      * carrega filtros automaticamente - por isso o servico de tokens
      * tambem precisa existir no contexto. Como este teste valida o modo
-     * HTTP BASIC, o JWT nao e' exercitado aqui: o duble existe apenas
-     * para satisfazer a injecao.
+     * HTTP Basic, o JWT nao e exercitado aqui: o duble existe so pra
+     * satisfazer a injecao.
      */
     @MockBean
     private br.com.selecao.locadora.business.TokenJwtBO tokenJwtBO;
@@ -103,10 +103,10 @@ class SegurancaIntegracaoTest {
      * Controle de tentativas de login.
      *
      * Precisa ser reiniciado a cada teste. O contexto do Spring e
-     * COMPARTILHADO entre os metodos de teste de uma mesma classe, e o
+     * compartilhado entre os metodos de teste de uma mesma classe, e o
      * servico guarda os contadores em memoria - sem esta limpeza, as
      * falhas de um teste contaminariam o seguinte (por exemplo, o
-     * usuario "admin" continuaria bloqueado de um teste para o outro).
+     * usuario "admin" continuaria bloqueado de um teste pro outro).
      */
     @Autowired
     private LoginAttemptService loginAttemptService;
@@ -161,7 +161,7 @@ class SegurancaIntegracaoTest {
     }
 
     /**
-     * Teste 3: a resposta de 401 NAO revela se o usuario existe.
+     * Teste 3: a resposta de 401 nao revela se o usuario existe.
      *
      * A mensagem e sempre a mesma, para impedir a enumeracao de usuarios
      * (item A07:2021 da OWASP).
@@ -186,7 +186,7 @@ class SegurancaIntegracaoTest {
     }
 
     /**
-     * Teste 4: credencial CORRETA devolve 200 e o DADO DO CONTROLLER.
+     * Teste 4: credencial correta devolve 200 e o dado do controller.
      *
      * Este e o teste mais importante do arquivo. Se a resposta de
      * autenticacao "vazasse" para a resposta do controller, o corpo
@@ -230,9 +230,9 @@ class SegurancaIntegracaoTest {
                 .andExpect(header().string("Retry-After",
                         org.hamcrest.Matchers.matchesPattern("\\d+")));
 
-        // O tempo de espera precisa ser REAL, e nao zero: um "Retry-After: 0"
-        // mandaria o cliente tentar de novo imediatamente, o que nao
-        // pouparia ninguem e ainda overloadaria o servidor.
+        // O tempo de espera precisa ser real, e nao zero: um "Retry-After: 0"
+        // mandaria o cliente tentar de novo na hora, o que nao pouparia
+        // ninguem e ainda sobrecarregaria o servidor.
         String retryAfter = mockMvc.perform(get("/unidades").with(httpBasic("admin", "senha-errada")))
                 .andExpect(status().isTooManyRequests())
                 .andReturn().getResponse().getHeader("Retry-After");
@@ -261,21 +261,21 @@ class SegurancaIntegracaoTest {
     }
 
     /**
-     * Teste 7: o endpoint de saude (actuator) NAO e barrado pela seguranca.
+     * Teste 7: o endpoint de saude (actuator) nao e barrado pela seguranca.
      *
      * O orquestrador (Docker/Kubernetes) consulta esse endpoint para
      * saber se a aplicacao esta viva. Se exigisse autenticacao, o
      * container seria considerado morto e reiniciado.
      *
-     * OBSERVACAO SOBRE O 404 ESPERADO:
-     * Neste recorte de teste (@WebMvcTest) o Actuator NAO e carregado - ele
+     * Sobre o 404 esperado:
+     * Neste recorte de teste (@WebMvcTest) o Actuator nao e carregado - ele
      * nao faz parte da camada web. Por isso a resposta e 404 (rota
      * inexistente) e nao 200.
      *
-     * E exatamente isso que o teste verifica: a requisicao CHEGOU ate a
-     * camada de roteamento, ou seja, NAO foi barrada pela seguranca com
-     * 401 ou 403. Um 401 aqui indicaria que o health check exigiria
-     * credencial - e o orquestrador reiniciaria a aplicacao sem parar.
+     * E isso que o teste verifica: a requisicao chegou ate a camada de
+     * roteamento, ou seja, nao foi barrada pela seguranca com 401 ou 403.
+     * Um 401 aqui indicaria que o health check exigiria credencial - e o
+     * orquestrador reiniciaria a aplicacao sem parar.
      */
     @Test
     @DisplayName("O endpoint de saude nao e barrado pela camada de seguranca")

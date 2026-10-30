@@ -9,15 +9,12 @@
     <!--
       Identidade da marca.
 
-      A instituicao usa DUAS fontes: Barlow no corpo do texto e Tomorrow
-      nos titulos. As duas entram pelo Google Fonts, com os mesmos pesos que
-      o site institucional carrega. O "display=swap" garante que a tela
-      apareca com a fonte de reserva antes de a Barlow baixar - a aplicacao
-      nunca fica em branco esperando a fonte.
+      Duas fontes: Barlow no corpo do texto, Tomorrow nos titulos. As duas
+      vem do Google Fonts, com os mesmos pesos do site institucional.
+      O display=swap evita a tela ficar branca enquanto a Barlow nao baixa.
 
-      A cor "theme-color" e a cor de estrutura da marca (#002436), a mesma
-      da barra do site institucional. E ela que tinge a barra de endereco do
-      navegador no celular, fazendo o sistema parecer com um aplicativo
+      A theme-color (#002436) e a cor de estrutura da marca. Ela tinge a
+      barra de endereco no celular, o que faz o sistema parecer um app
       nativo.
     -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,7 +27,7 @@
   </head>
   <body>
     <noscript>
-      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+      <strong>Este sistema precisa de JavaScript. Ative o JavaScript no navegador e recarregue a pagina.</strong>
     </noscript>
     <div id="app"></div>
     <!-- built files will be auto injected -->

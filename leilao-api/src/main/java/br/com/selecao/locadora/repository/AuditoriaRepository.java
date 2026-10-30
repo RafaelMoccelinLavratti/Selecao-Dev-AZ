@@ -22,7 +22,7 @@ public interface AuditoriaRepository extends JpaRepository<Auditoria, Long> {
     /**
      * Ultimo registro da cadeia, para encadear o proximo.
      *
-     * A ordenacao e pela SEQUENCIA (e nao pelo id), porque a sequencia e
+     * A ordenacao e pela sequencia (e nao pelo id), porque a sequencia e
      * o numero inquebravel da trilha.
      */
     Optional<Auditoria> findTopByOrderBySequenciaDesc();

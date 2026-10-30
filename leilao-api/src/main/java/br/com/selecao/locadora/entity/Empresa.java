@@ -34,7 +34,7 @@ public class Empresa extends Auditable {
 
     /**
      * Chave primaria. O valor NAO e enviado pelo cliente: sai da sequencia
-     * do banco (nextval). Isso evita duplicidade e torna o INSERT seguro
+     * do banco (nextval). Isso evita duplicidade e torna o insert seguro
      * quando varias pessoas cadastram ao mesmo tempo.
      */
     @Id
@@ -47,7 +47,7 @@ public class Empresa extends Auditable {
     @Column(name = "razao_social", nullable = false, length = 84)
     private String razaoSocial;
 
-    /** CNPJ com 14 digitos. Obrigatorio e UNIQUE (sublinhado no diagrama). */
+    /** CNPJ com 14 digitos. Obrigatorio e unico (sublinhado no diagrama). */
     @Column(name = "cnpj", nullable = false, length = 32, unique = true)
     private String cnpj;
 
@@ -87,13 +87,13 @@ public class Empresa extends Auditable {
     @Column(name = "site", length = 254)
     private String site;
 
-    /** Nome de usuario para login. UNIQUE (sublinhado no diagrama). */
+    /** Nome de usuario para login. Unico (sublinhado no diagrama). */
     @Column(name = "usuario", length = 20, unique = true)
     private String usuario;
 
     /**
-     * Hash BCrypt da senha - NUNCA a senha em texto puro.
-     * O tamanho de 128 caracteres comporta o hash do BCrypt (60 caracteres).
+     * Hash da senha - nunca a senha em texto puro.
+     * O tamanho de 128 caracteres comporta o hash do Argon2id.
      */
     @Column(name = "senha", length = 128)
     private String senha;

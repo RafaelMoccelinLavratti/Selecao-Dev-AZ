@@ -50,11 +50,11 @@ export default new Vuetify({
     },
     themes: {
       light: {
-        // LARANJA DE MARCA - cor de acao (botao principal, link).
+        // Laranja de marca - cor de acao (botao principal, link).
         primary: '#EA4F24',
         // Variacao mais escura, usada no estado "pressed".
         primaryDark: '#D4401A',
-        // AZUL-MARINHO DE ESTRUTURA - navbar, rodape, superficies escuras.
+        // Azul-marinho de estrutura - navbar, rodape, superficies escuras.
         secondary: '#002436',
         // Um pouco mais claro, para superficies de apoio.
         accent: '#0D4A68',

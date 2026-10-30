@@ -42,12 +42,12 @@ class UnidadeBOTest {
     /**
      * Prepara o cenario de cada teste.
      *
-     * O "@BeforeEach" e executado ANTES de cada metodo de teste. E o
+     * O "@BeforeEach" roda antes de cada metodo de teste. E o
      * lugar de criar os dubles e definir o comportamento padrao.
      *
      * Repare que o comportamento padrao e "nada existe ainda"
      * (os dois "existsBy..." devolvem false). Assim, cada teste so
-     * precisa configurar o que e RELEVANTE para ele - e nao precisa
+     * precisa configurar o que e relevante pra ele - e nao precisa
      * redefinir tudo.
      */
     @BeforeEach
@@ -63,11 +63,11 @@ class UnidadeBOTest {
         // isso e o Spring, com a anotacao @Autowired).
         ReflectionTestUtils.setField(unidadeBO, "unidadeRepository", unidadeRepository);
 
-        // Comportamento PADRAO: nenhum nome cadastrado ainda.
+        // Comeca sem nenhum nome cadastrado.
         when(unidadeRepository.existsByNome(anyString())).thenReturn(false);
         when(unidadeRepository.existsByNomeAndIdNot(anyString(), any())).thenReturn(false);
 
-        // Comportamento PADRAO do "saveAndFlush": devolve a entidade
+        // Comportamento padrao do "saveAndFlush": devolve a entidade
         // recebida, atribuindo um id quando for uma inclusao (id nulo).
         // O "thenAnswer" permite que o duble inspecione o argumento
         // recebido - e assim o id so e atribuido na inclusao.
@@ -88,7 +88,7 @@ class UnidadeBOTest {
      * Industrial " (com espaco no fim) sejam gravados como dois
      * registros diferentes - e que a busca por um deles falhe.
      *
-     * E uma normalizacao no BACKEND (e nao so no frontend), porque o
+     * E uma normalizacao no backend (e nao so no frontend), porque o
      * frontend pode ser contornado: qualquer um pode chamar a API
      * direto, sem passar pela tela.
      */
@@ -109,7 +109,7 @@ class UnidadeBOTest {
      * Teste 2: nome repetido e recusado com mensagem clara.
      *
      * Alem de verificar que a excecao correta foi lancada, o teste
-     * verifica que a MENSAGEM contem o nome duplicado. Isso importa
+     * verifica que a mensagem contem o nome duplicado. Isso importa
      * para o usuario: uma mensagem generica ("nome invalido") nao
      * ajuda ninguem a entender o que aconteceu.
      */
@@ -170,7 +170,7 @@ class UnidadeBOTest {
     /**
      * Teste 5: excluir remove o registro do banco.
      *
-     * Aqui o teste verifica a INTERACAO: o "verify" confirma que o
+     * Aqui o teste verifica a interacao: o "verify" confirma que o
      * repositorio recebeu a ordem de exclusao da unidade certa.
      */
     @Test
@@ -186,7 +186,7 @@ class UnidadeBOTest {
         // Executa a exclusao.
         unidadeBO.excluir(7);
 
-        // Confirma que o repositorio foi chamado com a MESMA unidade.
+        // Confirma que o repositorio foi chamado com a mesma unidade.
         verify(unidadeRepository).delete(unidade);
     }
 }

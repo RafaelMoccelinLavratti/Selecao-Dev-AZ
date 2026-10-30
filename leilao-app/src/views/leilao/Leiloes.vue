@@ -1,23 +1,23 @@
 <template>
   <!--
-     View: leiloes (views/leilao/Leiloes.vue).
+     Leiloes (views/leilao/Leiloes.vue).
 
-     Exercicio 7 - consulta dos leiloes em uma grid somente leitura, com a
-     razao social do vendedor, o inicio previsto e o total do leilao.
+     Exercicio 7 - consulta dos leiloes em grid somente leitura, com a
+     razao social do vendedor, o inicio previsto e o total.
 
-     URL da pagina.....: http://server/#/leiloes
-     URL dos servicos..: http://server/leiloes (GET)
+     Pagina:  #/leiloes
+     Servico: GET /leiloes
 
      De onde nasce o "total"?
 
-     O total NAO e um campo da tabela tb_leilao - ele e CALCULADO, no banco,
-     na consulta do repositorio (LeilaoRepository.findResumoLeiloes):
+     O total nao e um campo da tabela tb_leilao: ele e calculado no banco, na
+     consulta do repositorio (LeilaoRepository.findResumoLeiloes):
 
          total = SUM(lote.quantidade * lote.valor_inicial)
 
      agrupado por leilao. Assim o navegador recebe o total pronto, e o
-     calculo nao depende de o frontend saber a regra de negocio (que poderia
-     mudar sem ninguem avisar a tela).
+     calculo nao depende de o frontend saber a regra de negocio (que
+     poderia mudar sem ninguem avisar a tela).
   -->
   <div>
     <h1 class="titulo-tela">Leiloes</h1>
@@ -27,9 +27,7 @@
     </p>
 
     <!--
-      CARDS DE RESUMO (acima da tabela).
-      Sao os numeros que o usuario mais procura: quantos leiloes existem e
-      qual o valor total emvolvedido.
+      Cards de resumo: os numeros que o usuario mais procura.
     -->
     <v-row dense class="mb-4">
       <v-col cols="12" sm="4" md="3">
@@ -82,9 +80,7 @@
         </v-btn>
       </v-card-title>
 
-      <!--
-        TABELA SOMENTE LEITURA (conforme o enunciado).
-      -->
+      <!-- Tabela somente leitura. -->
       <v-data-table
         :headers="headers"
         :items="leiloes"
@@ -94,27 +90,25 @@
         :items-per-page="10"
         class="elevation-0"
       >
-        <!-- CODIGO do leilao -->
         <template v-slot:item.codigo="{ item }">
           <strong>#{{ item.codigo }}</strong>
         </template>
 
-        <!-- descricao -->
         <template v-slot:item.descricao="{ item }">
           {{ item.descricao || '-' }}
         </template>
 
-        <!-- VENDEDOR (razao social) -->
+        <!-- vendedor (razao social) -->
         <template v-slot:item.razaoSocial="{ item }">
           {{ item.razaoSocial || '-' }}
         </template>
 
-        <!-- INICIO PREVISTO (data formatada no padrao brasileiro) -->
+        <!-- inicio previsto (data no padrao brasileiro) -->
         <template v-slot:item.inicioPrevisto="{ item }">
           {{ item.inicioPrevisto ? formatarData(item.inicioPrevisto) : '-' }}
         </template>
 
-        <!-- TOTAL (dinheiro no padrao brasileiro: R$ 80.000,00) -->
+        <!-- total (dinheiro no padrao brasileiro: R$ 80.000,00) -->
         <template v-slot:item.total="{ item }">
           <span class="font-weight-medium">{{ formatarDinheiro(item.total) }}</span>
         </template>
@@ -134,61 +128,32 @@
 /**
  * Script da tela de leiloes.
  *
- * Consulta dos leiloes e seus totais.
- *
  * O total nao e calculado no navegador: vem de uma consulta no banco (veja
- * LeilaoRepository), e por isso que a tela so faz leitura.
+ * o LeilaoRepository), e por isso que a tela so faz leitura.
  */
 
-/**
- * Importacao do servico centralizado de comunicacao com a API.
- */
 import api from '../../services/api';
 
 export default {
-  /**
-   * Nome do componente (tela).
-   */
   name: 'TelaLeiloes',
 
-  /**
-   *  DADOS REATIVOS (data)
-   */
   data() {
     return {
-      /**
-       * Os leiloes vindos da API.
-       */
+      // Os leiloes vindas da API.
       leiloes: [],
 
-      /**
-       * Texto do campo de busca (filtro client side do v-data-table).
-       */
+      // Texto da busca (filtro client side do v-data-table).
       search: '',
 
-      /**
-       * Controla a barra de progresso da tabela.
-       */
+      // Controla a barra de progresso da tabela.
       carregando: false
     };
   },
 
-  /**
-   *  VALORES CALCULADOS (computed)
-   *
-   *  Um computed e recalculado pelo Vue SO quando suas dependencias
-   *  mudam - e o resultado fica em cache ate la. Por isso ele e melhor
-   *  que um metodo para valores usados no template.
-   */
   computed: {
     /**
      * Colunas da tabela: exatamente os campos pedidos no exercicio 7.
-     *
-     * "codigo"         : o numero do leilao (ex.: "#12");
-     * "descricao"      : a descricao do leilao;
-     * "razaoSocial"    : o nome do vendedor (vem junto no DTO de resumo);
-     * "inicioPrevisto" : a data prevista de inicio;
-     * "total"          : a soma dos lotes (vem calculada do banco).
+     * "total" vem calculada do banco.
      */
     headers() {
       return [
@@ -201,17 +166,16 @@ export default {
     },
 
     /**
-     * Soma de todos os totais (para o card de resumo).
+     * Soma de todos os totais, pro card de resumo.
      *
-     * O "reduce" percorre a lista somando os valores, comecando em 0
-     * (o segundo parametro). O "Number(leilao.total) || 0" protege
-     * contra valores nulos ou invalidos - que entrariam na soma como
-     * NaN e corromperiam o resultado inteiro.
+     * O "reduce" percorre a lista somando, comecando em 0 (o segundo
+     * parametro). O "Number(leilao.total) || 0" protege contra valor nulo
+     * ou invalido, que entraria na soma como NaN e corromperia o total
+     * inteiro.
      *
-     * Repare que o resultado NAO e guardado em "data": ele e DERIVADO
-     * da lista. Se guardassemos, teriamos dois valores que precisam
-     * ficar em sincronia - e o dia em que isso falha, o usuario ve um
-     * total errado na tela.
+     * Repare que o resultado nao fica em "data": ele e derivado da lista.
+     * Guardando os dois, teriamos dois valores pra manter em sincronia, e
+     * no dia em que isso falha o usuario ve um total errado na tela.
      */
     valorTotalGeral() {
       return this.leiloes.reduce(
@@ -222,13 +186,8 @@ export default {
 
     /**
      * O proximo leilao a comecar (o de inicio previsto mais proximo).
-     *
-     * Passos:
-     *  1) se a lista esta vazia, nao ha proximo leilao (devolve null);
-     *  2) filtra os leiloes que TEM data de inicio (os demais nao
-     *     podem ser comparados por data);
-     *  3) ordena por data;
-     *  4) devolve o primeiro.
+     * Lista vazia nao tem proximo; leiloes sem data ficam de fora, porque
+     * nao podem ser comparados por data.
      */
     proximoLeilao() {
       if (this.leiloes.length === 0) {
@@ -243,24 +202,14 @@ export default {
     }
   },
 
-  /**
-   *  CICLO DE VIDA: mounted
-   *
-   *  Carrega a lista quando a tela entra no ar.
-   */
   mounted() {
     this.carregar();
   },
 
-  /**
-   *  METODOS (methods)
-   */
   methods: {
     /**
-     * Carrega (ou recarrega) os leiloes.
-     *
-     * O padrao "try / catch / finally" garante que o indicador de
-     * carregamento seja desligado mesmo em caso de erro.
+     * Carrega (ou recarrega) os leiloes. O "finally" garante que o
+     * indicador de carregamento saia da tela mesmo em caso de erro.
      */
     async carregar() {
       this.carregando = true;
@@ -277,10 +226,8 @@ export default {
      * Formata um valor como dinheiro brasileiro.
      * Ex.: 80000 -> "R$ 80.000,00"
      *
-     * Usamos a API nativa "Intl.NumberFormat", que ja conhece o
-     * padrao brasileiro (ponto como separador de milhar, virgula como
-     * separador decimal, prefixo "R$"). Escrever essa formatacao na
-     * mao seria trabalho inutil - e cheio de caso especial.
+     * Usamos a API nativa "Intl.NumberFormat", que ja conhece o padrao
+     * brasileiro. Escrever essa formatacao na mao seria trabalho inutil.
      *
      * @param {number|string} valor valor a formatar
      * @returns {string} o valor no padrao brasileiro
@@ -301,10 +248,7 @@ export default {
     },
 
     /**
-     * Formata a data no padrao brasileiro.
-     *
-     * O "toLocaleString('pt-BR')" usa o padrao de data e hora do
-     * navegador do usuario.
+     * Formata a data no padrao do navegador do usuario.
      *
      * @param {string} valor data em formato ISO
      * @returns {string} a data formatada, ou "-" se nao houver data
@@ -316,9 +260,7 @@ export default {
       return new Date(valor).toLocaleString('pt-BR');
     },
 
-    /**
-     * Atalho para exibir a notificacao global.
-     */
+    // Atalho pra exibir a notificacao global.
     notificar(tipo, mensagem) {
       if (this.$root.$refs.notificacoes) {
         this.$root.$refs.notificacoes.exibir(tipo, mensagem);

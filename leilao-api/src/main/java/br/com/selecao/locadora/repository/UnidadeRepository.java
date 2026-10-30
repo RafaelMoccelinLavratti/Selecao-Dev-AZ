@@ -16,6 +16,6 @@ public interface UnidadeRepository extends JpaRepository<Unidade, Integer> {
     /** Ja existe uma unidade com este nome? */
     boolean existsByNome(String nome);
 
-    /** Existe uma unidade com este nome em OUTRO id (validacao no UPDATE)? */
+    /** Existe uma unidade com este nome em outro id (validacao no UPDATE)? */
     boolean existsByNomeAndIdNot(String nome, Integer id);
 }

@@ -63,9 +63,9 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         try {
             chain.doFilter(request, response);
         } finally {
-            // SEMPRE limpa o MDC. Sem isso, o ID vazaria para a
-            // requisicao seguinte (que rodaria na mesma thread do
-            // container) e o rastreamento seria enganoso.
+            // Limpa o MDC sempre. Sem isso, o ID vazaria pra requisicao
+            // seguinte (que roda na mesma thread do container) e o
+            // rastreamento seria enganoso.
             MDC.remove(CHAVE_MDC);
         }
     }

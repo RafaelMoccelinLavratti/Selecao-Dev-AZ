@@ -10,14 +10,14 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * Registro das tentativas de autenticacao.
+ * Registra as tentativas de autenticacao.
  *
  * A classe nao escreve a resposta HTTP: ela so registra o evento. Quem
- * responde e o filtro de autenticacao - assim nao existem dois lugares
+ * responde e o filtro de autenticacao, assim nao existem dois lugares
  * escrevendo na mesma resposta.
  *
- * Sucesso e falha sao registrados com o mesmo formato, e a falha nunca
- * revela se o usuario existe: "credenciais invalidas" para os dois casos.
+ * Sucesso e falha sao registrados no mesmo formato, e a falha nunca revela
+ * se o usuario existe: "credenciais invalidas" nos dois casos.
  */
 @Component
 public class AuthenticationAuditHandler {
@@ -25,32 +25,31 @@ public class AuthenticationAuditHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationAuditHandler.class);
 
     /**
-     * Nome do atributo da requisicao onde guardamos o resultado da
-     * tentativa de autenticacao.
+     * Atributo da requisicao onde guardamos o resultado da tentativa de
+     * autenticacao.
      *
-     * E um atributo da request porque o resultado precisa viajar do filtro
-     * de autenticacao (que detectou a falha) ate o ponto de entrada de
+     * Fica no request porque o resultado precisa viajar do filtro de
+     * autenticacao (que detectou a falha) ate o ponto de entrada de
      * autenticacao (que escreve a resposta). A requisicao e o unico
-     * objeto que eles tem em comum.
+     * objeto que os dois tem em comum.
      */
     public static final String ATRIBUTO_RESULTADO = "resultadoAutenticacao";
 
     /**
-     * Valor do atributo: as credenciais estavam erradas.
-     * A resposta sera 401.
+     * Resultado: as credenciais estavam erradas. A resposta sera 401.
      */
     public static final String RESULTADO_INVALIDAS = "CREDENCIAIS_INVALIDAS";
 
     /**
-     * Valor do atributo: a conta esta bloqueada por excesso de
-     * tentativas. A resposta sera 429.
+     * Resultado: a conta esta bloqueada por excesso de tentativas.
+     * A resposta sera 429.
      */
     public static final String RESULTADO_BLOQUEADO = "CONTA_BLOQUEADA";
 
     /**
-     * Nome do atributo da requisicao onde guardamos quantos segundos o
-     * cliente precisa esperar antes de tentar de novo (vira o cabecalho
-     * HTTP "Retry-After").
+     * Atributo da requisicao onde guardamos quantos segundos o cliente
+     * precisa esperar antes de tentar de novo (vira o cabecalho HTTP
+     * "Retry-After").
      */
     public static final String ATRIBUTO_SEGUNDOS = "segundosAteLiberar";
 
@@ -65,11 +64,11 @@ public class AuthenticationAuditHandler {
     private boolean confiarEmProxy;
 
     /**
-     * Registra uma tentativa de autenticacao FALHADA e decide o que a
-     * requisicao deve receber.
+     * Registra uma tentativa de autenticacao que deu errado e decide o que
+     * a requisicao deve receber.
      *
-     * Este metodo NAO escreve na resposta - apenas marca a requisicao
-     * e registra o evento no log. Quem escreve a resposta e o
+     * Este metodo nao escreve na resposta, apenas marca a requisicao e
+     * registra o evento no log. Quem escreve a resposta e o
      * JsonAuthenticationEntryPoint.
      *
      * @param request   requisicao HTTP em andamento
@@ -80,20 +79,20 @@ public class AuthenticationAuditHandler {
         String ip = ClientIpResolver.resolver(request, confiarEmProxy);
         String usuario = extrairUsuario(request);
 
-        //  A conta JA estava bloqueada por tentativas ANTERIORES?
-        //  A verificacao vem ANTES de registrar esta nova falha, para que
-        //  o usuario receba exatamente o numero de tentativas que o
-        //  limite permite. Exemplo com limite 5:
+        // A conta ja estava bloqueada por tentativas anteriores?
         //
-        //      tentativa 1 -> 401 (falha 1 registrada)
-        //      tentativa 2 -> 401 (falha 2 registrada)
-        // ...
-        //      tentativa 5 -> 401 (falha 5 registrada)
-        //      tentativa 6 -> 429 (conta bloqueada)
+        // A verificacao vem antes de registrar esta nova falha, pra que o
+        // usuario receba exatamente o numero de tentativas que o limite
+        // permite. Com limite 5:
         //
-        //  Se a verificacao viesse DEPOIS de registrar a falha, a quinta
-        //  tentativa ja responderia 429 - ou seja, o usuario teria
-        //  apenas 4 palpites utilizaveis, e nao 5.
+        //   tentativa 1 -> 401 (falha 1 registrada)
+        //   tentativa 2 -> 401 (falha 2 registrada)
+        //   ...
+        //   tentativa 5 -> 401 (falha 5 registrada)
+        //   tentativa 6 -> 429 (conta bloqueada)
+        //
+        // Se a verificacao viesse depois, a quinta tentativa ja responderia
+        // 429 - o usuario teria so 4 palpites uteis, e nao 5.
         if (loginAttemptService.usuarioBloqueado(ip, usuario)
                 || loginAttemptService.ipBloqueado(ip)) {
 
@@ -124,16 +123,14 @@ public class AuthenticationAuditHandler {
     /**
      * Extrai o nome de usuario da requisicao.
      *
-     * No HTTP Basic, o navegador envia o cabecalho
-     * "Authorization: Basic base64(usuario:senha)". O base64 e apenas uma
-     * codificacao (NAO e criptografia), mas ele impede que a senha
-     * apareca "em claro" no cabecalho - o que faria com que ela aparecesse
-     * em log de proxy, em historico de rede e em ferramentas de captura
-     * de trafego.
+     * No HTTP Basic, o navegador manda o cabecalho
+     * "Authorization: Basic base64(usuario:senha)". O base64 e so uma
+     * codificacao, nao criptografia, mas ele evita que a senha apareca
+     * "em claro" no cabecalho - o que faria ela aparecer em log de proxy,
+     * em historico de rede e em ferramentas de captura de trafego.
      *
      * @param request requisicao HTTP
-     * @return o usuario informado, ou "desconhecido" se nao for possivel
-     *         extrair
+     * @return o usuario informado, ou "desconhecido" se nao der pra extrair
      */
     private String extrairUsuario(HttpServletRequest request) {
 
@@ -144,7 +141,7 @@ public class AuthenticationAuditHandler {
         }
 
         try {
-            // Decodifica o base64 e separa usuario de senha na PRIMEIRA
+            // Decodifica o base64 e separa usuario de senha na primeira
             // ":". A senha em si e descartada: nao precisamos dela, e
             // guarda-la em variavel seria o contrario da boa pratica.
             String credencial = new String(java.util.Base64.getDecoder()
