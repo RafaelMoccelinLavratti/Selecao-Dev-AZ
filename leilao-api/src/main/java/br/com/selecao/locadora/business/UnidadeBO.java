@@ -54,11 +54,11 @@ public class UnidadeBO {
     /**
      * Cria ou altera uma unidade.
      *
-     * O mesmo metodo serve para o POST e para o PUT. Por que?
-     * Porque a OPERACAO e a mesma (gravar uma unidade valida); so muda
-     * de onde vem o id. Se o id vier nulo, e inclusao; se vier preenchido,
-     * e alteracao. Isso evita duplicar codigo (e dois lugares para
-     * corrigir um bug depois).
+     * O mesmo metodo serve pro POST e pro PUT. Por que?
+     * Porque a operacao e a mesma (gravar uma unidade valida); so muda de
+     * onde vem o id. Se o id vier nulo, e inclusao; se vier preenchido, e
+     * alteracao. Isso evita duplicar codigo (e dois lugares pra corrigir
+     * um bug depois).
      *
      * @param request dados validados que chegaram da internet
      * @param id      null para inclusao, o id para alteracao
@@ -66,9 +66,9 @@ public class UnidadeBO {
     @Transactional
     public UnidadeResponse salvar(UnidadeRequest request, Integer id) {
 
-        // REGRA DE NEGOCIO 1: o nome da unidade e unico.
-        // Verificamos ANTES de gravar para devolver uma mensagem clara,
-        // em vez de deixar o banco recusar com uma excecao tecnica.
+        // O nome da unidade precisa ser unico. A verificacao vem antes da
+        // gravação pra devolver uma mensagem clara, em vez de deixar o
+        // banco recusar com uma excecao tecnica.
         if (id == null && unidadeRepository.existsByNome(request.getNome())) {
             throw new RegraNegocioException("Ja existe uma unidade cadastrada com o nome '" + request.getNome() + "'.");
         }
@@ -81,14 +81,14 @@ public class UnidadeBO {
         // Normalizacao: remove espacos nas pontas. Espaco no inicio/fim de
         // um texto e sempre entrada suja (copia e cola de planilha,
         // digitacao acidental). Gravar limpo evita "Unidade A" e
-        // "Unidade A " serem consideredas diferentes.
+        // "Unidade A " serem consideradas diferentes.
         unidade.setNome(request.getNome().trim());
 
-        // "saveAndFlush" em vez de "save": o flush (a execucao do SQL) e
+        // saveAndFlush em vez de save: o flush (a execucao do SQL) e
         // imediato. Isso importa porque o @PreUpdate - que preenche o
         // campo updated_at - so e disparado no flush. Com "save" puro, o
         // SQL rodaria no fim da transacao e a resposta devolveria o
-        // updated_at ANTIGO, enquanto o banco ja teria o novo.
+        // updated_at antigo, enquanto o banco ja teria o novo.
         Unidade salva = unidadeRepository.saveAndFlush(unidade);
         LOG.info("Unidade {} gravada (id={}).", salva.getNome(), salva.getId());
         return paraResponse(salva);

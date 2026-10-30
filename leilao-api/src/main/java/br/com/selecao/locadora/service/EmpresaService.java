@@ -55,7 +55,7 @@ public class EmpresaService {
     /**
      * POST /empresas - inclui uma nova empresa.
      *
-     * O "@Valid" valida o corpo ANTES do negocio rodar. A senha, por
+     * O "@Valid" valida o corpo antes do negocio rodar. A senha, por
      * exemplo, tem @Size(min = 8) - se vier menor, o pedido e
      * recusado com HTTP 400.
      *

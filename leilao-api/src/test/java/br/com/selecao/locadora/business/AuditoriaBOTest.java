@@ -142,11 +142,11 @@ class AuditoriaBOTest {
     }
 
     /**
-     * Teste 3: ALTERAR o conteudo de um registro e detectado.
+     * Teste 3: alterar o conteudo de um registro e detectado.
      *
      * Este e' o cenario central: um atacante com acesso ao banco muda o
      * registro para esconder o que fez. A verificacao tem de acusar, e
-     * dizer ONDE.
+     * dizer onde.
      */
     @Test
     @DisplayName("Adulterar o conteudo de um registro e detectado")
@@ -172,7 +172,7 @@ class AuditoriaBOTest {
     }
 
     /**
-     * Teste 4: QUEBRAR o encadeamento e detectado.
+     * Teste 4: quebrar o encadeamento e detectado.
      *
      * Aqui o atacante nem muda o conteudo: ele troca o "hash_anterior" para
      * tentar criar um registro novo, colado na cadeia, com conteudo
@@ -196,7 +196,7 @@ class AuditoriaBOTest {
     }
 
     /**
-     * Teste 5: REMOVER um registro do meio e detectado.
+     * Teste 5: remover um registro do meio e detectado.
      *
      * O atacante apaga o registro 2 do meio da cadeia. O encadeamento
      * quebra (o registro 3 aponta para um hash que nao existe mais na
@@ -219,11 +219,11 @@ class AuditoriaBOTest {
     }
 
     /**
-     * Teste 6: a chave e OBRIGATORIA.
+     * Teste 6: a chave e obrigatoria.
      *
      * Sem chave, qualquer um que tenha acesso ao banco poderia forjar um
      * registro valido. Por isso a chave tem tamanho minimo e a aplicacao
-     * RECUSA subir sem ela valida.
+     * recusa subir sem ela valida.
      */
     @Test
     @DisplayName("A chave HMAC curta demais e recusada")

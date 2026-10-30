@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -29,7 +30,8 @@ import java.util.UUID;
  * e revogada.
  *
  * Usuario inexistente e senha errada devolvem a mesma mensagem e levam o
- * mesmo tempo de resposta, para nao permitir enumeracao de usuarios.
+ * mesmo tempo de resposta, pra nao dar pra adivinhar quais usuarios
+ * existem.
  */
 @Component
 public class AutenticacaoBO {
@@ -43,7 +45,7 @@ public class AutenticacaoBO {
     private UserDetailsService userDetailsService;
 
     /**
-     * Codificador de senha (BCrypt ou Argon2id, conforme configurado).
+     * Codificador de senha (Argon2id, ou BCrypt nos hashes antigos).
      */
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -61,15 +63,25 @@ public class AutenticacaoBO {
     private RefreshTokenRepository refreshTokenRepository;
 
     /**
-     * Hash de uma senha que NAO EXISTE, usado para igualar o tempo de
+     * Hash de uma senha que nao existe, usado pra igualar o tempo de
      * resposta quando o usuario informado nao esta cadastrado.
      *
-     * O valor e o hash BCrypt de uma senha aleatoria. E um segredo sem
-     * importance: o objetivo nao e que ninguem o descubra, e sim que o
-     * servidor gaste o mesmo tempo de CPU comparando contra ele.
+     * Gerado aqui, na subida da aplicacao, e nao fixo no codigo: assim ele
+     * sai com o mesmo algoritmo e o mesmo custo do encoder configurado. Um
+     * hash BCrypt fixo gastaria bem menos CPU que um Argon2id, e a
+     * diferenca de tempo entregaria exatamente o que a defesa esconde.
+     *
+     * O segredo em si nao importa. Ninguem precisa descobrir.
      */
-    private static final String HASH_SENHA_INESQUISTIVEL =
-            "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+    private String hashSenhaInexistente;
+
+    /**
+     * Prepara o hash de referencia logo na subida.
+     */
+    @PostConstruct
+    public void prepararHashInexistente() {
+        this.hashSenhaInexistente = passwordEncoder.encode(UUID.randomUUID().toString());
+    }
 
     /**
      * Autentica um usuario e devolve o par de tokens.
@@ -106,8 +118,8 @@ public class AutenticacaoBO {
         try {
             return userDetailsService.loadUserByUsername(nomeUsuario);
         } catch (UsernameNotFoundException e) {
-            // Compara contra o hash falso para igualar o tempo de resposta.
-            passwordEncoder.matches("senha-que-nunca-existe", HASH_SENHA_INESQUISTIVEL);
+            // Compara contra o hash falso pra igualar o tempo de resposta.
+            passwordEncoder.matches("senha-que-nunca-existe", hashSenhaInexistente);
             throw new TokenInvalidoException("Credenciais invalidas");
         }
     }
@@ -122,21 +134,21 @@ public class AutenticacaoBO {
     @Transactional
     public LoginResponse renovar(String tokenRenovacao, String ip) {
 
-        // 1) A assinatura e verificada cryptographicamente. Um token
-        //    forjado nem chega a procurar no banco.
+        // A assinatura e verificada cryptographicamente. Um token forjado
+        // nem chega a procurar no banco.
         Claims claims = tokenJwtBO.validarTokenRenovacao(tokenRenovacao);
 
         String usuario = claims.getSubject();
         String hash = TokenJwtBO.calcularHash(tokenRenovacao);
 
-        // 2) Procura o registro do token.
+        // Procura o registro do token.
         RefreshToken registro = refreshTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new TokenInvalidoException("Token de renovacao desconhecido"));
 
-        // 3) deteccao de reuso.
-        //    Um token que JA foi usado esta sendo apresentado de novo: e
-        //    a assinatura de um token copiado. A resposta e revogar toda
-        //    a familia.
+        // Deteccao de reuso.
+        // Um token que JA foi usado esta sendo apresentado de novo: e a
+        // assinatura de um token copiado. A resposta e revogar toda a
+        // familia.
         if (Boolean.TRUE.equals(registro.getUtilizado())) {
 
             int revogados = refreshTokenRepository.revogarFamilia(
@@ -150,24 +162,24 @@ public class AutenticacaoBO {
                     "Token de renovacao invalido. Todos os tokens desta sessao foram revogados.");
         }
 
-        // 4) Token ja revogado (logout anterior ou revogacao em lote).
+        // Token ja revogado (logout anterior ou revogacao em lote).
         if (registro.getDataRevogacao() != null) {
             throw new TokenInvalidoException("Token de renovacao revogado");
         }
 
-        // 5) Token expirado.
+        // Token expirado.
         if (registro.getDataExpiracao().isBefore(LocalDateTime.now())) {
             throw new TokenInvalidoException("Token de renovacao expirado");
         }
 
-        // 6) O token antigo e consumido. A partir daqui ele nunca mais
-        //    serve - se aparecer de novo, o passo 3 dispara.
+        // O token antigo e consumido. A partir daqui ele nunca mais serve -
+        // se aparecer de novo, o passo de reuso acima dispara.
         registro.setUtilizado(Boolean.TRUE);
         registro.setDataRevogacao(LocalDateTime.now());
         refreshTokenRepository.save(registro);
 
-        // 7) O par novo nasce na MESMA familia: e a continuacao da
-        //    mesma sessao, nao uma nova.
+        // O par novo nasce na mesma familia: e a continuacao da mesma
+        // sessao, nao uma nova.
         return emitirParDeTokens(usuario, registro.getFamilia(), ip);
     }
 

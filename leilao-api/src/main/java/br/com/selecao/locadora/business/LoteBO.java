@@ -38,7 +38,7 @@ public class LoteBO {
     @Autowired
     private LoteRepository loteRepository;
 
-    /** Repositorio dos leiloes (para validar o leilao do lote). */
+    /** Repositorio dos leiloes (pra validar o leilao do lote). */
     @Autowired
     private LeilaoRepository leilaoRepository;
 
@@ -58,8 +58,8 @@ public class LoteBO {
      * Lista os lotes de um leilao especifico.
      *
      * Este e o metodo derivado do nome do metodo no Spring Data: o
-     * metodo "findByLeilaoId" na interface do repositorio gera
-     * automaticamente o SQL equivalente. Nao ha SQL escrito a mao.
+     * "findByLeilaoId" na interface do repositorio gera automaticamente
+     * o SQL equivalente. Nao ha SQL escrito a mao.
      *
      * @param leilaoId id do leilao
      * @return os lotes que pertencem a esse leilao
@@ -84,10 +84,10 @@ public class LoteBO {
     /**
      * Cria ou altera um lote.
      *
-     * O mesmo metodo serve para os dois casos: se o "id" vier nulo, e
-     * uma inclusao; se vier preenchido, e uma alteracao. Esse padrao
-     * (um metodo para criar e alterar) e comum em projetos pequeno e
-     * evita duplicar a logica de validacao.
+     * O mesmo metodo serve pros dois casos: se o "id" vier nulo, e uma
+     * inclusao; se vier preenchido, e uma alteracao. Esse padrao (um
+     * metodo pra criar e alterar) e comum em projeto pequeno e evita
+     * duplicar a logica de validacao.
      *
      * @param request dados do lote
      * @param id      id do lote a alterar (null = inclusao)
@@ -96,10 +96,10 @@ public class LoteBO {
     @Transactional
     public LoteResponse salvar(LoteRequest request, Integer id) {
 
-        // REGRA: o leilao do lote precisa existir.
-        // Sem esta validacao, o usuario poderia cadastrar um lote
-        // apontando para um leilao inexistente (o banco recusaria com
-        // uma foreign key, mas com uma mensagem tecnica e feia).
+        // O leilao do lote precisa existir. Sem esta validacao, o usuario
+        // poderia cadastrar um lote apontando pra um leilao inexistente
+        // (o banco recusaria com uma foreign key, mas com uma mensagem
+        // tecnica e feia).
         Leilao leilao = leilaoRepository.findById(request.getLeilao())
                 .orElseThrow(() -> new RegraNegocioException(
                         "O leilao de id " + request.getLeilao() + " nao existe."));
@@ -116,11 +116,11 @@ public class LoteBO {
         lote.setUnidade(request.getUnidade());
         lote.setLeilao(leilao);
 
-        // "saveAndFlush": o "save" normal pode apenas agendar a gravacao
-        // para o fim da transacao. O "flush" forca a execucao do SQL
-        // AGORA - e assim garantimos que o @PreUpdate (que preenche o
-        // campo "updated_at") ja tenha rodado antes de montarmos a
-        // resposta, para ela nao vir com a data de alteracao vazia.
+        // saveAndFlush: o "save" normal pode apenas agendar a gravacao
+        // pro fim da transacao. O "flush" forca a execucao do SQL agora -
+        // e assim o @PreUpdate (que preenche o campo "updated_at") ja
+        // rodou antes de montarmos a resposta, pra ela nao voltar com a
+        // data de alteracao vazia.
         Lote salvo = loteRepository.saveAndFlush(lote);
         LOG.info("Lote {} gravado (id={}).", salvo.getNumeroLote(), salvo.getId());
         return paraResponse(salvo);
@@ -155,11 +155,10 @@ public class LoteBO {
     /**
      * Converte a entidade no DTO de resposta, ja com o total do lote.
      *
-     * O metodo "paraResponse" e a fronteira da camada: e aqui que a
-     * ENTIDADE (formato do banco) vira DTO (formato da API). Ele
-     * garante que nada sensivel da entidade vaze para a resposta -
-     * no caso da empresa, por exemplo, o campo "senha" simplesmente nao
-     * existe no DTO de saida.
+     * O "paraResponse" e a fronteira da camada: e aqui que a entidade
+     * (formato do banco) vira DTO (formato da API). Ele garante que nada
+     * sensivel da entidade vaze pra resposta - no caso da empresa, por
+     * exemplo, o campo "senha" simplesmente nao existe no DTO de saida.
      *
      * @param lote entidade do lote
      * @return o DTO correspondente
@@ -194,7 +193,7 @@ public class LoteBO {
             return BigDecimal.ZERO;
         }
         // multiply com BigDecimal: 5 * 12500.00 = 62500.00 exato.
-        // O "BigDecimal.valueOf(quantidade)" converte o Integer para
+        // O "BigDecimal.valueOf(quantidade)" converte o Integer pra
         // BigDecimal - e o que permite usar o metodo "multiply".
         return valorInicial.multiply(BigDecimal.valueOf(quantidade));
     }

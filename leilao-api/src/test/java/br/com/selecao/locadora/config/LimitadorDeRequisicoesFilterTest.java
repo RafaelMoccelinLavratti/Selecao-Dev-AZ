@@ -42,7 +42,7 @@ class LimitadorDeRequisicoesFilterTest {
     }
 
     /**
-     * Teste 1: requisicoes DENTRO do limite passam normalmente.
+     * Teste 1: requisicoes dentro do limite passam normalmente.
      */
     @Test
     @DisplayName("Requisicoes dentro do limite passam normalmente")
@@ -66,7 +66,7 @@ class LimitadorDeRequisicoesFilterTest {
     }
 
     /**
-     * Teste 2: a requisicao ACIMA do limite e barrada com 429.
+     * Teste 2: a requisicao acima do limite e barrada com 429.
      */
     @Test
     @DisplayName("A requisicao acima do limite e barrada com 429")
@@ -84,7 +84,7 @@ class LimitadorDeRequisicoesFilterTest {
     }
 
     /**
-     * Teste 3: a resposta traz "Retry-After" com um tempo REAL.
+     * Teste 3: a resposta traz "Retry-After" com um tempo real.
      *
      * Um "Retry-After: 0" mandaria o cliente repetir imediatamente - o
      * que nao pouparia ninguem e ainda sobrecarregaria o servidor.

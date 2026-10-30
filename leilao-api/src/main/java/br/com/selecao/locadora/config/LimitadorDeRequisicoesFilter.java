@@ -71,7 +71,7 @@ public class LimitadorDeRequisicoesFilter extends OncePerRequestFilter {
     private int maximoRequisicoes;
 
     /**
-     * Duracao da janela deslizante, em SEGUNDOS.
+     * Duracao da janela deslizante, em segundos.
      */
     @Value("${app.security.rate-limit.api.window-seconds:60}")
     private long janelaSegundos;
@@ -110,7 +110,7 @@ public class LimitadorDeRequisicoesFilter extends OncePerRequestFilter {
             return existente;
         });
 
-        // Quantas requisicoes ainda restam na janela, APOS esta.
+        // Quantas requisicoes ainda restam na janela, depois desta.
         // Com limite 3: apos a 1a -> 2 restam; apos a 3a -> 0 restam.
         int restantes = Math.max(maximoRequisicoes - contador.quantidade.get(), 0);
         long segundosRestantes = Math.max((contador.expiraEm - System.currentTimeMillis()) / 1000L, 0);
@@ -121,7 +121,7 @@ public class LimitadorDeRequisicoesFilter extends OncePerRequestFilter {
         response.setHeader(CABECALHO_LIMITE, String.valueOf(maximoRequisicoes));
         response.setHeader(CABECALHO_RESTANTES, String.valueOf(restantes));
 
-        // A REQUISICAO que estoura o limite e barrada - ou seja, a que
+        // A requisicao que estoura o limite e barrada - ou seja, a que
         // ja passa do limite. Com limite 3, as tres primeiras passam e a
         // quarta e barrada.
         if (contador.quantidade.get() > maximoRequisicoes) {

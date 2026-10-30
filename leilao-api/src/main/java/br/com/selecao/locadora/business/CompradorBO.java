@@ -34,10 +34,8 @@ public class CompradorBO {
      * Logger da camada de negocio.
      *
      * O SLF4J e a fachada de logging usada no Java. O padrao e
-     * "private static final", porque:
-     *   - "static": o logger pertence a CLASSE, e nao a cada objeto
-     *     (evita criar um por instancia);
-     *   - "final": a referencia nao muda depois de criada.
+     * "private static final" porque o logger pertence a classe (e nao a
+     * cada objeto) e a referencia nao muda depois de criada.
      */
     private static final Logger LOG = LoggerFactory.getLogger(CompradorBO.class);
 
@@ -45,7 +43,7 @@ public class CompradorBO {
     @Autowired
     private CompradorRepository compradorRepository;
 
-    /** Repositorio das empresas (para validar e para enriquecer a resposta). */
+    /** Repositorio das empresas (pra validar e pra enriquecer a resposta). */
     @Autowired
     private EmpresaRepository empresaRepository;
 
@@ -56,11 +54,8 @@ public class CompradorBO {
     /**
      * Lista todos os vinculos empresa-leilao.
      *
-     * O padrao "stream" traduz o SQL:
-     *      findAll()   -> busca todos
-     *      .stream()   -> percorrer
-     *      .map(...)   -> transformar cada um
-     *      .collect()  -> juntar numa lista
+     * O padrao "stream" traduz o SQL: findAll() busca todos, .stream()
+     * percorre, .map() transforma cada um e .collect() junta numa lista.
      *
      * @return lista de todos os vinculos
      */
@@ -78,8 +73,8 @@ public class CompradorBO {
      * devolve um Optional vazio (nao encontrou), lancamos a excecao de
      * negocio em vez de devolver null. Devolver null espalharia a
      * verificacao de "existe?" por toda a aplicacao - e o
-     * GlobalExceptionHandler ja sabe transformar essa excecao em um
-     * HTTP 404 padronizado.
+     * GlobalExceptionHandler ja sabe transformar essa excecao num HTTP 404
+     * padronizado.
      *
      * @param empresaId id da empresa compradora
      * @param leilaoId  id do leilao
@@ -95,9 +90,9 @@ public class CompradorBO {
     /**
      * Registra a participacao de uma empresa em um leilao como compradora.
      *
-     * @Transactional garante que a gravacao seja ATOMICA: ou o vinculo e
+     * @Transactional garante que a gravacao seja atomica: ou o vinculo e
      * criado inteiro, ou nada e criado. Tambem garante que a regra de
-     * negocio (validar empresa, validar leilao, checar duplicidade) e
+     * negocio (validar empresa, validar leilao, checar duplicidade) seja
      * avaliada com o banco consistente.
      *
      * @param request empresa e leilao do vinculo
@@ -111,9 +106,9 @@ public class CompradorBO {
     /**
      * Altera o vinculo existente (troca o par empresa/leilao).
      *
-     * @param empresaId id da empresa do vinculo ATUAL
-     * @param leilaoId  id do leilao do vinculo ATUAL
-     * @param request   empresa e leilao do vinculo NOVO
+     * @param empresaId id da empresa do vinculo atual
+     * @param leilaoId  id do leilao do vinculo atual
+     * @param request   empresa e leilao do vinculo novo
      * @return o vinculo novo
      */
     @Transactional
@@ -130,9 +125,9 @@ public class CompradorBO {
             return buscarPorId(empresaId, leilaoId);
         }
 
-        // Trocar a chave primaria = apagar o vinculo antigo e criar o novo.
-        // A anotacao @Transactional garante que os dois passos sejam um so:
-        // se o segundo falhar, o primeiro e desfeito (rollback).
+        // Trocar a chave primaria e apagar o vinculo antigo e criar o novo.
+        // O @Transactional garante que os dois passos sejam um so: se o
+        // segundo falhar, o primeiro e desfeito (rollback).
         compradorRepository.deleteById(new CompradorId(empresaId, leilaoId));
         return criar(novoId);
     }
@@ -155,28 +150,28 @@ public class CompradorBO {
     /**
      * Metodo auxiliar que grava um vinculo novo, validando as regras.
      *
-     * E "privado" porque nao faz sentido chamar de fora: ele sempre
-     * cria, e a criacao e publica por "salvar" (e usada internamente
-     * por "atualizar"). Manter o metodo privado impede que alguem
-     * insira um vinculo sem passar pela validacao.
+     * E privado porque nao faz sentido chamar de fora: ele sempre cria, e
+     * a criacao e publica por "salvar" (e usada internamente por
+     * "atualizar"). Manter o metodo privado impede que alguem insira um
+     * vinculo sem passar pela validacao.
      *
      * @param id chave composta (empresa + leilao)
      * @return o vinculo criado
      */
     private CompradorResponse criar(CompradorId id) {
 
-        // REGRA 1: a empresa precisa existir.
+        // A empresa precisa existir.
         Empresa empresa = empresaRepository.findById(id.getEmpresa())
                 .orElseThrow(() -> new RegraNegocioException(
                         "A empresa de id " + id.getEmpresa() + " nao existe."));
 
-        // REGRA 2: o leilao precisa existir.
+        // O leilao precisa existir.
         Leilao leilao = leilaoRepository.findById(id.getLeilao())
                 .orElseThrow(() -> new RegraNegocioException(
                         "O leilao de id " + id.getLeilao() + " nao existe."));
 
-        // REGRA 3: o mesmo par nao pode se repetir (e o que a PK composta
-        // garantiria no banco, mas validamos aqui para dar boa mensagem).
+        // O mesmo par nao pode se repetir. E o que a PK composta garantiria
+        // no banco, mas validamos aqui pra dar uma boa mensagem.
         if (compradorRepository.existsByIdEmpresaAndIdLeilao(id.getEmpresa(), id.getLeilao())) {
             throw new RegraNegocioException(
                     "A empresa " + id.getEmpresa() + " ja consta como compradora do leilao " + id.getLeilao() + ".");
@@ -206,8 +201,8 @@ public class CompradorBO {
                 .updatedAt(comprador.getUpdatedAt())
                 .build();
 
-        // Busca os nomes para a tela. Se o registro apontar para algo que
-        // foi apagado (nao deveria acontecer por causa das FKs), devolvemos
+        // Busca os nomes pra tela. Se o registro apontar pra algo que foi
+        // apagado (nao deveria acontecer por causa das FKs), devolvemos
         // null em vez de estourar uma excecao.
         empresaRepository.findById(id.getEmpresa())
                 .ifPresent(e -> response.setRazaoSocial(e.getRazaoSocial()));

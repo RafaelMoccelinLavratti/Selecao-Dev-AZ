@@ -1,15 +1,15 @@
 <template>
   <!--
-     Componente: confirmacao de exclusao
-     Toda exclusao passa por uma confirmacao. Dois motivos:
-       1) UX: exclusao nao tem "Ctrl+Z". Um clique acidental em um icone
-          pequeno (o botao "lixeira" ao lado de cada linha) apagaria um
-          cadastro sem chance de recuperar.
-       2) Seguranca: a acao destrutiva fica explicita e registrada. O
-          usuario precisa olhar para o que esta fazendo.
+     Confirmacao de exclusao.
 
-     O componente e "generico": recebe o texto e emite os eventos
-     'confirmar' e 'cancelar'. Quem chama decide o que fazer.
+     Toda exclusao passa por aqui por dois motivos:
+       1) UX: exclusao nao tem Ctrl+Z. Um clique acidental na lixeira
+          (que fica do lado do lapis) apagaria um cadastro sem volta;
+       2) Seguranca: a acao destrutiva fica explicita. O usuario precisa
+          olhar pra o que esta fazendo.
+
+     O componente e generico: recebe o texto e emite 'confirmar' e
+     'cancelar'. Quem chama decide o que fazer.
   -->
   <v-dialog v-model="visivel" max-width="420">
     <v-card>
@@ -35,95 +35,61 @@
 /**
  * Script do componente de confirmacao de exclusao.
  *
- * Segue o padrao "props + eventos": o componente e generico e nao sabe o
- * que esta sendo excluido - recebe o texto e emite o evento de confirmacao.
+ * Padrao "props + eventos": o componente nao sabe o que esta sendo
+ * excluido, recebe o texto e emite a confirmacao.
  *
- * Exclusao nao tem Ctrl+Z, e o botao de lixeira fica a poucos pixels do de
- * editar: por isso toda exclusao passa por aqui.
+ * Exclusao nao tem Ctrl+Z e a lixeira fica a poucos pixels do lapis de
+ * editar, por isso toda exclusao passa por aqui.
  */
 export default {
-  /**
-   * Nome do componente.
-   */
   name: 'ConfirmDialog',
 
   /**
-   *  PROPS: os dados que o componente PAI envia para este.
+   * Dados que o componente pai envia.
    *
-   *  Cada prop pode declarar o "type" (tipo esperado) e o "default"
-   *  (valor usado quando o pai nao informa). Declarar o tipo evita erros
-   *  silenciosos: se a tela passar um numero onde se espera um texto, o
-   *  Vue avisa no console durante o desenvolvimento.
+   * Declarar o type evita erro silencioso: se a tela passar um numero onde
+   * se espera texto, o Vue avisa no console em desenvolvimento.
    */
   props: {
-    /**
-     * Titulo do dialogo (aparece em cima, ao lado do icone de alerta).
-     */
+    // Titulo do dialogo (em cima, ao lado do icone de alerta).
     titulo: {
       type: String,
       default: 'Confirmar exclusao'
     },
 
-    /**
-     * Texto que explica o que vai acontecer.
-     *
-     * A tela monta esse texto com o nome do registro, para que o usuario
-     * veja EXATAMENTE o que esta prestes a apagar - e nao apenas um
-     * "tem certeza?" generico.
-     */
+    // Texto do que vai acontecer. A tela monta com o nome do registro, pra
+    // o usuario ver exatamente o que esta prestes a apagar, e nao um
+    // "tem certeza?" generico.
     mensagem: {
       type: String,
       default: 'Deseja realmente excluir este registro?'
     }
   },
 
-  /**
-   *  DADOS REATIVOS (data)
-   *
-   *  "visivel" controla a abertura do <v-dialog>. Comeca em false
-   *  (dialogo fechado) porque o dialogo so aparece quando o usuario
-   *  clica no botao de excluir.
-   */
   data() {
     return {
+      // Comeca fechado: o dialogo so abre quando clica no botao de excluir.
       visivel: false
     };
   },
 
-  /**
-   *  METODOS (methods)
-   */
   methods: {
-    /**
-     * Abre o dialogo. Chamado pela tela que quer excluir.
-     *
-     * E um metodo PUBLICO do componente: quem chama usa
-     * "this.$refs.dialogoExclusao.abrir()".
-     */
+    // Abre o dialogo. Quem chama usa
+    // "this.$refs.dialogoExclusao.abrir()".
     abrir() {
       this.visivel = true;
     },
 
-    /**
-     * Usuario confirmou: fecha o dialogo e avisa quem chamou.
-     *
-     * O "$emit" dispara o evento "confirmar", que no template da tela
-     * esta ligado a "@confirmar". A tela e quem decide o que fazer
-     * (chamar o DELETE na API, mostrar a notificacao, recarregar a
-     * lista).
-     */
+    // Confirmou: fecha e avisa quem chamou com o evento "confirmar".
+    // A tela e quem decide o que fazer (chamar o DELETE, mostrar a
+    // notificacao, recarregar a lista).
     confirmar() {
       this.visivel = false;
       this.$emit('confirmar');
     },
 
-    /**
-     * Usuario cancelou: fecha sem fazer nada.
-     *
-     * Emite o evento "cancelar" para quem chamou saber que o usuario
-     * desistiu (a tela normalmente nao precisa fazer nada nesse caso -
-     * mas o evento existe para deixar o fluxo explicito).
-     */
+    // Cancelou: fecha sem fazer nada. O evento "cancelar" existe so pra
+    // deixar o fluxo explicito.
     cancelar() {
       this.visivel = false;
       this.$emit('cancelar');

@@ -20,7 +20,7 @@ export function somenteDigitos(valor) {
 }
 
 /**
- * MASCARA DE CNPJ: 00.000.000/0000-00
+ * Mascara de CNPJ: 00.000.000/0000-00
  *
  * @param {string} valor texto digitado pelo usuario
  * @returns {string} texto formatado
@@ -45,7 +45,7 @@ export function mascaraCnpj(valor) {
 }
 
 /**
- * MASCARA DE CEP: 00000-000
+ * Mascara de CEP: 00000-000
  */
 export function mascaraCep(valor) {
   const digitos = somenteDigitos(valor).slice(0, 8);
@@ -57,7 +57,7 @@ export function mascaraCep(valor) {
 }
 
 /**
- * MASCARA DE TELEFONE: (00) 0000-0000 ou (00) 00000-0000
+ * Mascara de telefone: (00) 0000-0000 ou (00) 00000-0000
  */
 export function mascaraTelefone(valor) {
   const digitos = somenteDigitos(valor).slice(0, 11);
@@ -75,10 +75,10 @@ export function mascaraTelefone(valor) {
 }
 
 /**
- * MASCARA DE DINHEIRO: 1.234,56
+ * Mascara de dinheiro: 1.234,56
  *
- * Repare que usamos VIRGULA como separador decimal, que e o padrao
- * brasileiro (o codigo do banco e o mesmo).
+ * A virgula e o separador decimal, como no padrao brasileiro (e no
+ * codigo do banco).
  */
 export function mascaraDinheiro(valor) {
   const digitos = somenteDigitos(valor);
@@ -95,9 +95,10 @@ export function mascaraDinheiro(valor) {
 }
 
 /**
- *  Validadores
- *  Sao as mesmas regras aplicadas no backend (arquivo
- *  EmpresaRequest.java). Cada um devolve true (valido) ou false.
+ * Validadores.
+ *
+ * Sao as mesmas regras aplicadas no backend (EmpresaRequest.java). Cada
+ * um devolve true (valido) ou false.
  */
 
 /** Campo obrigatorio: nao pode ser vazio nem apenas espacos. */

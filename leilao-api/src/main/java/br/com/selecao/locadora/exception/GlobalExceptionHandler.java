@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  *
  * Sem isso, uma excecao inesperada devolveria uma pagina HTML com a pilha
  * de execucao. Cada tipo de excecao tem o seu metodo, e a resposta segue
- * sempre o mesmo formato.
+ * sempre no mesmo formato.
  *
  * O cliente recebe o que houve (qual campo falhou e por que) e nunca o como
  * (stack trace, SQL, nomes de classes).
@@ -60,12 +60,12 @@ public class GlobalExceptionHandler {
      * Credencial invalida (senha errada, token vencido, token forjado)
      * -> HTTP 401.
      *
-     *  A mensagem devolvida e SEMPRE a mesma, qualquer que seja o motivo
-     *  real (usuario inexistente, senha errada, token expirado, token
-     *  adulterado). Isso e proposital: se o servidor respondesse "usuario
-     *  nao encontrado" em um caso e "senha incorreta" em outro, um
-     *  atacante conseguiria descobrir quais usuarios existem - basta
-     *  tentar logins e observar o texto da resposta.
+     * A mensagem devolvida e sempre a mesma, qualquer que seja o motivo
+     * real (usuario inexistente, senha errada, token expirado, token
+     * adulterado). Isso e de proposito: se o servidor respondesse "usuario
+     * nao encontrado" num caso e "senha incorreta" em outro, um atacante
+     * descobriria quais usuarios existem - basta tentar logins e olhar o
+     * texto da resposta.
      */
     @ExceptionHandler(TokenInvalidoException.class)
     public ResponseEntity<Map<String, Object>> tratarTokenInvalido(TokenInvalidoException ex) {
@@ -93,8 +93,8 @@ public class GlobalExceptionHandler {
     /**
      * URL inexistente -> HTTP 404.
      *
-     * Para este tratamento entrar em acao, o Spring precisa estar
-     * configurado para LANCAR a excecao quando nao encontra nenhum
+     * Pra este tratamento entrar em acao, o Spring precisa estar
+     * configurado pra lancar a excecao quando nao encontra nenhum
      * controller (em vez de tentar servir um arquivo estatico). Isso e
      * feito em application.properties:
      *     spring.mvc.throw-exception-if-no-handler-found=true
@@ -106,13 +106,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Erro inesperado -> HTTP 500 com mensagem GENERICA.
+     * Erro inesperado -> HTTP 500 com mensagem generica.
      *
-     *  IMPORTANTE: o detalhe real da excecao NAO vai para a resposta.
-     *  Ela vai para o log do servidor (via SLF4J), onde fica disponivel
-     * para a equipe de TI. O cliente recebe apenas "erro interno".
-     *  Essa e a diferenca entre um sistema seguro e um que entrega a
-     *  "mapa do sistema" para qualquer pessoa na internet.
+     * O detalhe real da excecao nao vai pra resposta: ele vai pro log do
+     * servidor (via SLF4J), onde fica disponivel pra equipe de TI. O
+     * cliente recebe apenas "erro interno". E a diferenca entre um
+     * sistema seguro e um que entrega um "mapa do sistema" pra qualquer
+     * pessoa na internet.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> tratarErroInesperado(Exception ex) {
@@ -124,8 +124,8 @@ public class GlobalExceptionHandler {
 
     /**
      * Monta o corpo padrao das respostas de erro, sempre no mesmo formato.
-     * Formato unico facilita o consumo pelo frontend (uma unica regra de
-     * leitura do campo "mensagem").
+     * Um formato unico facilita o consumo pelo frontend (uma unica regra
+     * de leitura do campo "mensagem").
      */
     private ResponseEntity<Map<String, Object>> montarErro(HttpStatus status, String erro, String mensagem) {
         Map<String, Object> corpo = new LinkedHashMap<>();

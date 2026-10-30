@@ -8,15 +8,11 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- *  DTO DE SAIDA: EMPRESA  (o que a API devolve)
+ * Empresa na forma de saida da API.
  *
- *  OBSERVACAO DE SEGURANCA (a mais importante deste arquivo):
- *  NAO existe campo "senha" aqui. A senha - nem em texto puro, nem o
- *  hash - nunca sai da API. Isso se chama "nao expor credenciais na
- *  saida" e e regra basica de seguranca da informacao.
- *
- *  O "usuario" aparece, porque a tela precisa mostrar quem e a empresa,
- *  mas sem qualquer segredo associado.
+ * Repare que nao existe campo "senha" aqui. A senha - nem em texto puro,
+ * nem o hash - nunca sai da API. O "usuario" aparece, porque a tela
+ * precisa mostrar quem e a empresa, mas sem nenhum segredo associado.
  */
 @Data
 @Builder

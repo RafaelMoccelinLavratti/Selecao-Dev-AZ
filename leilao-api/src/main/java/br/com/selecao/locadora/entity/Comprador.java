@@ -28,7 +28,7 @@ public class Comprador extends Auditable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Chave primaria COMPOSTA (empresa + leilao).
+     * Chave primaria composta (empresa + leilao).
      * Gravar nela e o mesmo que gravar as duas colunas na tabela.
      */
     @EmbeddedId

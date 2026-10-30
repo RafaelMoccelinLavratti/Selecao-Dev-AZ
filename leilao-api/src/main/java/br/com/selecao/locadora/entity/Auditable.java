@@ -34,7 +34,7 @@ public abstract class Auditable implements Serializable {
     private LocalDateTime createdAt;
 
     /**
-     * Momento da ultima alteracao. Atualizado automaticamente a cada UPDATE.
+     * Momento da ultima alteracao. Atualizado a cada UPDATE.
      */
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
@@ -52,7 +52,7 @@ public abstract class Auditable implements Serializable {
 
     /**
      * Chamado pelo Hibernate automaticamente antes de um UPDATE.
-     * Atualiza SOMENTE a updated_at - a created_at e a prova original de
+     * Atualiza somente a updated_at - a created_at e a prova original de
      * quando o dado nasceu e por isso nao pode ser reescrita.
      */
     @PreUpdate

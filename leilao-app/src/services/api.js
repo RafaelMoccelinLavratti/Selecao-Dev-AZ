@@ -1,25 +1,20 @@
 /**
  * Comunicacao com a API.
  *
- * Se cada tela chamasse o axios direto, a URL da API, o tempo limite e o
- * tratamento de erro estariam espalhados por N arquivos. Aqui ficam em um
- * lugar so.
+ * Se cada tela chamasse o axios direto, a URL da API, o timeout e o
+ * tratamento de erro ficariam espalhados por N arquivos. Aqui ficam
+ * todos em um lugar so.
  *
- * Nao ha segredo neste arquivo: o frontend roda no navegador do usuario, e
- * qualquer coisa escrita nele e publica.
+ * Nada de segredo neste arquivo: o frontend roda no navegador do usuario,
+ * e qualquer coisa escrita nele e publica.
  */
 import axios from 'axios';
 
-/**
- * URL base da API.
- * Vem da variavel de ambiente VUE_APP_API_BASE_URL (definida no arquivo
- * .env). O fallback e o endereco local padrao.
- */
+// URL base da API. Vem do .env (VUE_APP_API_BASE_URL); o fallback e o
+// endereco local padrao.
 const baseURL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081';
 
-/**
- * Instancia do axios (o "carro" que faz as requisicoes HTTP).
- */
+// Instancia do axios.
 const api = axios.create({
   baseURL: baseURL,
   timeout: 15000, // 15 segundos: tempo maximo de espera por resposta
@@ -29,8 +24,8 @@ const api = axios.create({
 });
 
 /**
- * Interceptor de RESPOSTA: roda quando a API respondeu (com sucesso ou
- * com erro). Aqui "desempacotamos" o formato de erro do backend.
+ * Interceptor de RESPOSTA: roda quando a API respondeu (com sucesso ou com
+ * erro). Aqui a gente desempacota o formato de erro do backend.
  */
 api.interceptors.response.use(
   // Sucesso: devolve os dados direto (response.data).
@@ -40,8 +35,8 @@ api.interceptors.response.use(
   error => {
     const resposta = error.response;
 
-    // Se NAO houve resposta (API fora do ar, DNS, CORS bloqueado),
-    // o erro nao tem "response". Nesse caso montamos uma mensagem util.
+    // Sem resposta (API fora do ar, DNS, CORS bloqueado) o erro nao tem
+    // "response". Nesse caso montamos uma mensagem util.
     if (!resposta) {
       return Promise.reject({
         status: 0,

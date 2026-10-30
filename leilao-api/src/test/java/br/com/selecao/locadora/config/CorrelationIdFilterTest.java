@@ -93,7 +93,7 @@ class CorrelationIdFilterTest {
     }
 
     /**
-     * Teste 3: o identificador recebido do cliente e REAPROVEITADO.
+     * Teste 3: o identificador recebido do cliente e reaproveitado.
      *
      * E o que permite ligar o log de varios servicos: o "servico A" gera
      * o ID e o passa para o "servico B", e os dois logs ficam ligados.
@@ -114,10 +114,10 @@ class CorrelationIdFilterTest {
     }
 
     /**
-     * Teste 4: um identificador MALICIOSO e descartado.
+     * Teste 4: um identificador malicioso e descartado.
      *
      * O valor "injection\\nLOG FALSO | nivel=ERROR" contem quebra de linha.
-     * Se fosse aceito, o atacante conseguiria escrever LINHAS FALSAS no
+     * Se fosse aceito, o atacante conseguiria escrever linhas falsas no
      * arquivo de log - e ainda poderia forjar o formato das linhas reais,
      * para o log parecer legitimo.
      */
@@ -142,7 +142,7 @@ class CorrelationIdFilterTest {
     }
 
     /**
-     * Teste 5: um identificador LONGO demais e descartado.
+     * Teste 5: um identificador longo demais e descartado.
      */
     @Test
     @DisplayName("Um identificador longo demais e descartado")

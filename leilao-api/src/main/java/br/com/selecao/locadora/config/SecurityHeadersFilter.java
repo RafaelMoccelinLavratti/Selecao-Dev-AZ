@@ -24,7 +24,7 @@ public class SecurityHeadersFilter implements Filter {
     /**
      * Content-Security-Policy da API.
      *
-     * "default-src 'none'" significa: nao carregue NADA de nenhuma
+     * "default-src 'none'" significa: nao carregue nada de nenhuma
      * origem, a menos que esteja explicitamente liberado. Como a API
      * devolve apenas JSON, isso nao afeta o frontend, que roda em outra
      * porta (e portanto outra origem) e tem sua propria politica.

@@ -31,8 +31,8 @@ public class Auditoria {
     /**
      * Numero monotonico e inquebravel da trilha.
      *
-     * E o que permite detectar a REMOCAO de um registro: os ids podem
-     * ser reatribuidos, mas a sequencia nunca retrocede.
+     * E o que permite detectar a remocao de um registro: os ids podem ser
+     * reatribuidos, mas a sequencia nunca retrocede.
      */
     @Column(name = "sequencia", nullable = false)
     private Long sequencia;
@@ -88,15 +88,15 @@ public class Auditoria {
     /**
      * Detalhe textual da operacao.
      *
-     * ATENCAO: NUNCA guarda o corpo da requisicao. O cadastro de empresa
-     * recebe a senha no corpo - registrar o corpo colocaria a senha em
-     * texto puro na trilha de auditoria.
+     * Nunca guarda o corpo da requisicao. O cadastro de empresa recebe a
+     * senha no corpo - registrar o corpo colocaria a senha em texto puro
+     * na trilha de auditoria.
      */
     @Column(name = "detalhe", columnDefinition = "TEXT")
     private String detalhe;
 
     /**
-     * Hash do registro ANTERIOR da cadeia (null no primeiro registro).
+     * Hash do registro anterior da cadeia (null no primeiro registro).
      */
     @Column(name = "hash_anterior", length = 64)
     private String hashAnterior;

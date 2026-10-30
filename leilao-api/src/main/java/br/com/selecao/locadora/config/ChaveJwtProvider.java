@@ -64,7 +64,7 @@ public class ChaveJwtProvider {
     private String pastaChaves;
 
     /**
-     * Identificador da chave usada para ASSINAR os tokens novos.
+     * Identificador da chave usada pra assinar os tokens novos.
      */
     @Value("${app.security.jwt.active-key-id:az-leilao-dev-01}")
     private String idChaveAtiva;
@@ -72,13 +72,13 @@ public class ChaveJwtProvider {
     /**
      * Todas as chaves conhecidas, indexadas pelo "kid".
      *
-     * A chave ativa assina; todas validam. E assim que a rotacao
-     * funciona sem derrubar token nenhum.
+     * A chave ativa assina, todas validam. E assim que a rotacao funciona
+     * sem derrubar token nenhum.
      */
     private final Map<String, Chave> chaves = new LinkedHashMap<>();
 
     /**
-     * Chave usada para assinar (e que assina) no momento.
+     * Chave que assina no momento.
      */
     private Chave chaveAtiva;
 
@@ -95,8 +95,8 @@ public class ChaveJwtProvider {
          * Cria um par de chaves.
          *
          * Publico porque e' um objeto de valor legitimo: quem tem um par
-         * de chaves RSA pode registra-lo aqui para que a aplicacao o
-         * use. E' o que os testes fazem, montando o par em memoria.
+         * de chaves RSA pode registra-lo aqui pra aplicacao usar. E' o que
+         * os testes fazem, montando o par em memoria.
          *
          * @param id      identificador da chave (o "kid" gravado no token)
          * @param privada a chave privada (que assina)
@@ -198,8 +198,8 @@ public class ChaveJwtProvider {
     }
 
     /**
-     * Gera um par de chaves efemero, valido apenas enquanto o processo
-     * estiver de pe.
+     * Gera um par de chaves efemero, valido so enquanto o processo estiver
+     * de pe.
      */
     private void gerarEfemera() {
 

@@ -1,14 +1,12 @@
 <template>
   <!--
-     COMPONENTE: NOTIFICACOES (mensagens de sucesso/erro)
-     O Vuetify tem o "v-snackbar", que e aquela barrinha que aparece no
-     rodape da tela. Este componente centraliza o uso dele para que
-     todas as telas mostrem as mensagens do mesmo jeito.
+     Notificacoes (mensagens de sucesso/erro).
 
-     Tipos:
-       success -> gravacao OK
-       error   -> falha na operacao
-       info    -> aviso neutro
+     O Vuetify tem o "v-snackbar", que e a barrinha que aparece no rodape da
+     tela. Este componente centraliza o uso dele pra todas as telas
+     mostrarem as mensagens do mesmo jeito.
+
+     Tipos: success (gravou), error (falhou), info (aviso).
   -->
   <v-snackbar
     v-model="visivel"
@@ -30,57 +28,41 @@
 /**
  * Script do componente de notificacoes.
  *
- * As telas nao importam este componente: elas chamam o metodo que o
- * componente expoe na raiz da aplicacao. Um unico componente garante que
- * toda mensagem do sistema tenha o mesmo formato.
+ * As telas nao importam este componente: elas chamam o metodo que ele expoe
+ * na raiz da aplicacao. Assim toda mensagem do sistema tem o mesmo formato.
  */
 export default {
-  /**
-   * Nome do componente.
-   */
   name: 'AppNotificacoes',
 
-  /**
-   *  DADOS REATIVOS (data)
-   *
-   *  - "visivel"  : controla se a barrinha aparece. E ligado ao
-   *                 <v-snackbar> pelo "v-model" - quando o Vuetify
-   *                 fecha a barrinha (por timeout ou pelo botao
-   *                 "Fechar"), ele altera esta variavel.
-   *  - "tipo"     : a cor da barrinha. O Vuetify reconhece os nomes
-   *                 "success", "error", "info" e "warning".
-   *  - "mensagem" : o texto exibido.
-   *  - "duracao"  : quantos milissegundos a barrinha fica na tela
-   *                 antes de sumir sozinha. 4000 = 4 segundos.
-   */
   data() {
     return {
+      // Se a barrinha esta aparecendo. Ligada ao <v-snackbar> pelo v-model:
+      // quando o Vuetify fecha (por timeout ou no botao "Fechar"), ele
+      // altera esta variavel.
       visivel: false,
+
+      // Cor da barrinha. O Vuetify reconhece "success", "error", "info" e
+      // "warning".
       tipo: 'success',
+
+      // Texto exibido.
       mensagem: '',
+
+      // Quantos ms a barrinha fica na tela antes de sumir sozinha.
       duracao: 4000
     };
   },
 
   /**
-   *  VALORES CALCULADOS (computed)
-   *
-   *  Um "computed" e um valor que o Vue RECALCULA SOZINHO quando as
-   *  dependencias mudam - e sempre devolve o resultado em cache ate
-   *  que algo mude. E diferente de um metodo, que recalcularia a cada
-   *  renderizacao.
-   *
-   *  Aqui, o icone do tipo da mensagem. Em vez de repetir a logica de
-   *  "se for erro, desenha o alerta; se for info, desenha o i; senao,
-   *  desenha o visto" dentro do template, a regra fica em um unico
-   *  lugar, testavel e legivel.
+   * Valores calculados: o Vue recalcula sozinho quando as dependencias
+   * mudam, e guarda em cache ate la.
    */
   computed: {
     /**
-     * Icone conforme o tipo da mensagem.
+     * Icone conforme o tipo da mensagem. Em vez de repetir a regra dentro
+     * do template, ela fica aqui num lugar so.
      *
-     * Os nomes dos icones sao do Material Design Icons (biblioteca
-     * instalada como "@mdi/font").
+     * Os nomes sao do Material Design Icons ("@mdi/font").
      *
      * @returns {string} o nome do icone
      */
@@ -95,19 +77,13 @@ export default {
     }
   },
 
-  /**
-   *  METODOS (methods)
-   *
-   *  Sao as acoes que o componente expoe para fora. As telas chamam
-   *  estes metodos; o componente nunca chama os delas.
-   */
   methods: {
     /**
      * Exibe a notificacao. E este metodo que as telas chamam.
      *
-     * A ordem das atribuicoes importa: o "tipo" e a "mensagem" precisam
-     * estar definidos ANTES de "visivel" virar true. Se invertessemos,
-     * a barrinha apareceria por um instante com o conteudo anterior.
+     * A ordem importa: tipo e mensagem precisam estar definidos antes de
+     * "visivel" virar true, senao a barrinha aparece por um instante com o
+     * conteudo anterior.
      *
      * @param {string} tipo     'success', 'error' ou 'info'
      * @param {string} mensagem texto a exibir

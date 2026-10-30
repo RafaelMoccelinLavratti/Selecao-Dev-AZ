@@ -97,7 +97,7 @@ class TokenJwtBOTest {
     }
 
     /**
-     * Teste 2: um token ADULTERADO nao passa.
+     * Teste 2: um token adulterado nao passa.
      *
      * O atacante pega um token valido e troca o usuario no corpo. Como a
      * assinatura cobre o corpo inteiro, a assinatura deixa de bater - e o
@@ -123,7 +123,7 @@ class TokenJwtBOTest {
     }
 
     /**
-     * Teste 3: um token VENCIDO nao passa.
+     * Teste 3: um token vencido nao passa.
      */
     @Test
     @DisplayName("Um token expirado nao passa na validacao")
@@ -138,9 +138,9 @@ class TokenJwtBOTest {
     }
 
     /**
-     * Teste 4: um token de RENOVACAO nao vale como token de acesso.
+     * Teste 4: um token de renovacao nao vale como token de acesso.
      *
-     * Este teste prova a SEPARACAO DOS DOIS TIPOS DE TOKEN. Se um token de
+     * Este teste prova a separacao dos dois tipos de token. Se um token de
      * renovacao (valido por 7 dias) fosse aceito como token de acesso, o
      * atacante que tivesse acesso a um token de renovacao - que trafega
      * muito menos e vive mais tempo - teria acesso completo e duradouro
@@ -163,7 +163,7 @@ class TokenJwtBOTest {
     }
 
     /**
-     * Teste 5: um token com a CHAVE ERRADA nao passa.
+     * Teste 5: um token com a chave errada nao passa.
      */
     @Test
     @DisplayName("Um token assinado com outra chave nao passa")
@@ -191,7 +191,7 @@ class TokenJwtBOTest {
     /**
      * Teste 6: o token carrega o "kid" (identificador da chave).
      *
-     * E o que permite ROTACIONAR CHAVES sem derrubar ninguem: a aplicacao
+     * E o que permite rotacionar chaves sem derrubar ninguem: a aplicacao
      * mantem a chave antiga (ainda valida) e a nova (ja assina), e cada
      * token e conferido com a chave que o assinou.
      */
@@ -209,7 +209,7 @@ class TokenJwtBOTest {
     }
 
     /**
-     * Teste 7: os dois tokens de um mesmo usuario sao DIFERENTES.
+     * Teste 7: os dois tokens de um mesmo usuario sao diferentes.
      *
      * Porque cada emissao sorteia um "jti" (identificador unico) e um
      * instante de emissao proprio. Sem isso, o mesmo usuario teria sempre

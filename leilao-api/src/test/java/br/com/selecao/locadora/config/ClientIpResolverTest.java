@@ -17,7 +17,7 @@ class ClientIpResolverTest {
 
     /**
      * Teste 1: sem proxy confiavel, o IP do socket tem prioridade e o
-     * cabecalho X-Forwarded-For e IGNORADO.
+     * cabecalho X-Forwarded-For e ignorado.
      */
     @Test
     @DisplayName("Sem proxy confiavel, ignora o X-Forwarded-For e usa o IP do socket")

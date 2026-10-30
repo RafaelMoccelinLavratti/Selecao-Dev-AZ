@@ -56,7 +56,7 @@ public class Leilao extends Auditable {
     private String descricao;
 
     /**
-     * Empresa que VENDE este leilao.
+     * Empresa que vende este leilao.
      * "optional = false" diz que a FK e obrigatoria (bate com o asterisco
      * do diagrama). "fetch = LAZY" carrega sob demanda.
      */

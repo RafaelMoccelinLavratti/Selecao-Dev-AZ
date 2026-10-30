@@ -55,7 +55,7 @@ public class Lote extends Auditable {
     @Column(name = "quantidade")
     private Integer quantidade;
 
-    /** Valor inicial de CADA item do lote (em reais). */
+    /** Valor inicial de cada item do lote (em reais). */
     @Column(name = "valor_inicial", precision = 14, scale = 2)
     private BigDecimal valorInicial;
 
