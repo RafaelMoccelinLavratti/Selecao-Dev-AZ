@@ -7,14 +7,11 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * ============================================================================
  *  DTO DE SAIDA: UNIDADE  (o que a API devolve)
- * ============================================================================
  *
  *  Repare que o campo "createdAt"/"updatedAt" aparece aqui. Isso e
  *  proposital: a trilha de auditoria faz parte do que o usuario pode
  *  consultar. E repare que NAO existe nenhum campo sensivel aqui.
- * ============================================================================
  */
 @Data
 @NoArgsConstructor

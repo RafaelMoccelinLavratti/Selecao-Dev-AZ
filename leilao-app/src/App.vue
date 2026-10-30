@@ -1,38 +1,30 @@
 <template>
   <!--
-    ==========================================================================
-     APP.VUE  |  TELA PRINCIPAL DO SISTEMA   (exercicio 4)
-    ==========================================================================
-     Esta e a "casca" da aplicacao. Ela NAO tem regra de negocio nem
-     tabela: e o esqueleto que fica sempre visivel em volta de cada tela.
+     App.vue - tela principal do sistema (exercicio 4).
 
-     O que o enunciado pede aqui:
-       - um MENU para navegar de uma pagina para outra;
-       - as opcoes: unidades, empresas e leiloes;
-       - ao clicar, a URL vira #/nomedatela e o conteudo interno troca.
+     Esta e a "casca" da aplicacao: nao tem regra de negocio nem tabela, e
+     o esqueleto que fica sempre visivel em volta de cada tela.
 
-     Como isso funciona:
-       - <v-app-bar> e <v-navigation-drawer> = a barra e o menu de
-         navegacao. No Vue 2 o template precisa ter UM unico elemento raiz,
-         e o <v-app> cumpre esse papel: os dois ficam dentro dele.
-       - <router-view/> = o "buraco" onde o vue-router encaixa a tela da
-         rota atual. E ele que faz a troca de conteudo acontecer sozinha.
+     O enunciado pede aqui um MENU para navegar entre unidades, empresas e
+     leiloes; ao clicar, a URL vira #/nomedatela e o conteudo interno troca.
 
-     NOTA SOBRE O COMPONENTE AppMenu:
-     O menu (a lista de links) esta em components/AppMenu.vue, como pede o
-     enunciado ("separe bem o codigo em componentes"). A barra superior
-     (v-app-bar) e o container (v-navigation-drawer) ficam aqui, porque o
-     Vue 2 exige um unico elemento raiz por componente.
-    ==========================================================================
+     O <v-app-bar> e o <v-navigation-drawer> sao a barra e o menu de
+     navegacao. No Vue 2 o template precisa ter UM unico elemento raiz, e o
+     <v-app> cumpre esse papel: os dois ficam dentro dele. O <router-view/>
+     e o "buraco" onde o vue-router encaixa a tela da rota atual - e ele que
+     faz a troca de conteudo acontecer sozinha.
+
+     A lista de links do menu esta em components/AppMenu.vue, como pede o
+     enunciado ("separe bem o codigo em componentes").
   -->
   <v-app>
-    <!-- ============ BARRA SUPERIOR ============ -->
+    <!-- ============ barra superior ============ -->
     <!--
       A barra usa a cor de estrutura da AZ (#002436, azul-marinho) - a
       mesma da navbar do site institucional. O logo ao lado e o arquivo
       oficial da empresa (src/assets/brand/logo-az.svg), extraido do site.
 
-      DETALHE SOBRE O LOGO:
+      Detalhe sobre o logo:
       O arquivo oficial ja e BRANCO - o site o usa exatamente assim, sobre
       a navbar escura. Aqui a barra tambem e escura, entao o logo aparece
       na cor certa sem nenhum filtro. O arquivo original nao e alterado.
@@ -57,7 +49,7 @@
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
     </v-app-bar>
 
-    <!-- ============ MENU LATERAL ============ -->
+    <!-- ============ menu lateral ============ -->
     <!--
       "app" faz o menu acompanhar o conteudo na rolagem.
       "v-model" liga o estado "drawer" (aberto/fechado) ao componente.
@@ -66,7 +58,7 @@
       <app-menu />
     </v-navigation-drawer>
 
-    <!-- ============ CONTEUDO PRINCIPAL ============ -->
+    <!-- ============ conteudo principal ============ -->
     <v-main>
       <v-container fluid class="pa-4">
         <!--
@@ -87,32 +79,10 @@
 
 <script>
 /**
- * ============================================================================
- *  SCRIPT DO APP (a casca da aplicacao)
- * ============================================================================
+ * Script do App.vue (a casca da aplicacao).
  *
- *  Este componente nao tem regra de negocio. Ele e responsavel apenas
- *  pela ESTRUTURA: barra superior, menu lateral, area de conteudo e o
- *  aviso global de mensagens.
- *
- *  ------------------------------------------------------
- *  O CICLO DE VIDA DE UM COMPONENTE VUE
- *  ------------------------------------------------------
- *  O Vue tem ganchos (hooks) que sao chamados em momentos especificos da
- *  vida de um componente. Os principais:
- *
- *    created()  : chamado assim que o componente e criado (antes de
- *                 aparecer na tela). Boa hora para preparar dados.
- *    mounted()  : chamado DEPOIS que o componente ja entrou na tela.
- *                 Boa hora para chamar a API (a tela ja existe).
- *    updated()  : chamado depois de uma mudanca reativa.
- *    beforeDestroy() : chamado antes do componente ser removido. Boa
- *                 hora para limpar timers e listeners.
- *
- *  O App.vue nao precisa de nenhum deles: ele nao carrega dados.
- *  Quem precisa e cada tela - por isso cada view chama "this.carregar()"
- *  dentro do "mounted()".
- * ============================================================================
+ * Este componente nao tem regra de negocio: ele monta o menu, a area de
+ * notificacoes e o roteador de telas.
  */
 
 /**
@@ -185,9 +155,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  PROVIDE: distributes dados para os componentes filhos.
-   * ------------------------------------------------------------------
    *
    * O "provide" e o par do "inject". O pai "fornece" um valor e o filho
    * "injeta" (recebe) ele - sem precisar passar por props atravessando
@@ -199,9 +167,7 @@ export default {
    *      // em qualquer view:
    *      this.notificar('success', 'Salvo com sucesso.');
    *
-   * ------------------------------------------------------
    *  POR QUE EXISTE TAMBEM O "$root.$refs"?
-   * ------------------------------------------------------
    *  Porque este projeto usa as duas formas, de proposito:
    *
    *  - O "provide/inject" e a forma NOVA, mais limpa e a que eu usaria
@@ -241,18 +207,10 @@ export default {
 
 <style>
 /**
- * ============================================================================
- *  ESTILOS GLOBAIS DA APLICACAO
- * ============================================================================
+ * Estilos globais da aplicacao.
  *
- *  A tipografia e as cores vem dos tokens de marca
- *  (src/assets/brand/tokens.css), extraidos do tema institucional da
- *  AZ Tecnologia em Gestao. Aqui so aplicamos esses tokens.
- *
- *  A instituicao usa DUAS fontes: **Barlow** no corpo do texto e
- *  **Tomorrow** nos titulos. As duas entram pelo Google Fonts em
- *  public/index.html. Antes a aplicacao usava Roboto - que e a fonte
- *  padrao do Material Design, nao a da empresa.
+ * A tipografia e as cores vem dos tokens de marca, definidos em
+ * src/assets/brand/tokens.css.
  */
 
 /**

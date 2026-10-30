@@ -11,42 +11,14 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * ============================================================================
- *  TESTE: CODIFICADOR DE SENHA (Argon2id com fallback para BCrypt)
- * ============================================================================
+ * Testes do codificador de senha.
  *
- *  ------------------------------------------------------
- *  POR QUE ESTES TESTES EXISTEM?
- *  ------------------------------------------------------
- *  Porque a protecao da senha depende de uma unica coisa: o codificador.
- *  Se ele tiver um defeito - se devolver a senha em claro, se aceitar
- *  qualquer senha, ou se produzir o mesmo hash sempre -, **toda** a
- *  protecao do projeto cai junto. E o defeito nao apareceria em nenhum
- *  outro teste: a API responderia 200 e a senha estaria exposta.
+ * A protecao da senha depende de uma unica coisa: o codificador. Se ele
+ * devolver a senha em claro, ou aceitar a senha errada, todo o resto cai
+ * junto.
  *
- *  Por isso o codificador tem teste proprio.
- *
- *  ------------------------------------------------------
- *  POR QUE NAO PRECISAM DE BANCO DE DADOS?
- *  ------------------------------------------------------
- *  Porque sao rapidos e rodam em qualquer maquina - o que e essencial
- *  para o avaliador poder executar "mvn test" sem ter o PostgreSQL no
- *  ar. Um teste que falha por falta de infraestrutura mascara o
- *  problema real.
- *
- *  ------------------------------------------------------
- *  O QUE ESTES TESTES PROVAM
- *  ------------------------------------------------------
- *  1) A senha gravada NAO e a senha digitada (nem comparavel a ela).
- *  2) A senha digitada consegue ser conferida depois.
- *  3) A senha errada e rejeitada.
- *  4) Duas senhas IGUAIS geram hashes DIFERENTES (prova do "salt").
- *  5) O hash tem o formato esperado do Argon2id, COM o prefixo "{argon2}".
- *  6) O codificador nao guarda estado entre chamadas (o mesmo objeto
- *     pode ser reusado com seguranca).
- *  7) O hash legado em BCrypt (sem prefixo) continua sendo conferido -
- *     e e assim que a base existente migra sozinha para o Argon2id.
- * ============================================================================
+ * Nao precisam de banco: sao rapidos e rodam em qualquer maquina, o que
+ * permite executar "mvn test" sem o PostgreSQL no ar.
  */
 class PasswordEncoderTest {
 

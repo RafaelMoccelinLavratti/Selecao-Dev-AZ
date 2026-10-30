@@ -19,47 +19,17 @@ import javax.validation.Valid;
 import java.util.List;
 
 /**
- * ============================================================================
- *  CONTROLADOR REST: UNIDADE
- * ============================================================================
+ * Controller REST da unidade.
  *
- *  ONDE ESTA CAMADA SE ENCAIXA?
- *  O enunciado define: "Controladores REST: pacote service - endpoints dos
- *  servicos rest (POST, PUT, UPDATE e DELETE)". E esta a camada mais
- *  EXTERNA: ela traduz o mundo HTTP (URL, metodo, JSON) para o mundo Java.
+ * GET    /unidades          lista todas
+ * GET    /unidades/{id}     busca uma pelo id
+ * POST   /unidades          insere uma nova
+ * PUT    /unidades/{id}     altera a do id informado
+ * DELETE /unidades/{id}     remove a do id informado
  *
- *  TRABALHO DESTA CAMADA (e SO dela):
- *  - dizer qual URL e qual metodo HTTP corresponds a cada acao;
- *  - receber o JSON do corpo da requisicao ("body");
- *  - acionar a camada de negocio;
- *  - devolver a resposta HTTP com o codigo correto.
- *
- *  O QUE NAO DEVE EXISTIR AQUI:
- *  - regra de negocio (fica em "business");
- *  - acesso ao banco (fica em "repository");
- *  - SQL, HTML ou JavaScript.
- *
- *  ------------------------------------------------------
- *  OS ENDPOINTS
- *  ------------------------------------------------------
- *  GET    /unidades          lista todas
- *  GET    /unidades/{id}     busca uma pelo id
- *  POST   /unidades          insere uma nova
- *  PUT    /unidades/{id}     altera a do id informado
- *  DELETE /unidades/{id}     remove a do id informado
- *
- *  ------------------------------------------------------
- *  POR QUE A URL ACEITA SINGULAR E PLURAL?
- *  ------------------------------------------------------
- *  O enunciado e inconsistente: no exercicio 3 os exemplos usam o
- *  SINGULAR ("GET /unidade/1", "POST /leiao", "PUT /comprador/2"), mas
- *  nos exercicios 5, 6 e 7 as URLs sao no PLURAL ("/unidades",
- *  "/empresas", "/leiloes"). Como nao dá para saber qual o avaliador vai
- *  testar, a API responde as DUAS formas. Isso e uma decisao de
- *  robustez: em vez de escolher e torcer, a API aceita as duas.
- *  O codigo de cada tabela e o mesmo nas duas URLs - nao ha duplicacao
- *  de codigo, apenas dois "apelidos" apontando para o mesmo metodo.
- * ============================================================================
+ * A URL responde no singular e no plural porque o enunciado e inconsistente
+ * entre os exercicios 3 e 5-7. Sao os mesmos metodos, com dois apelidos -
+ * nao ha codigo duplicado.
  */
 @RestController
 @RequestMapping(value = {"/unidades", "/unidade"})

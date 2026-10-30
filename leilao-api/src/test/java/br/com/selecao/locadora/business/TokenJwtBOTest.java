@@ -25,36 +25,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * ============================================================================
- *  TESTE: EMISSAO E VALIDACAO DE TOKENS JWT
- * ============================================================================
+ * Testes de emissao e validacao dos tokens JWT.
  *
- *  ------------------------------------------------------
- *  POR QUE UM TOKEN PRECISA DE TESTE PROPRIO?
- *  ------------------------------------------------------
- *  Um token JWT e a CREDENCIAL do usuario. Se a validacao aceitar um token
- *  invalido, o invasor ganha acesso. Se ela recusar um token valido, o
- *  usuario legitimo fica de fora do sistema. Os dois erros sao graves, e
- *  nenhum deles apareceria em um teste de controller - o controller so
- *  veria "200" ou "401" e nao saberia o porque.
+ * A assinatura e uma operacao puramente criptografica: o teste gera um par
+ * de chaves RSA em memoria e valida os tokens contra ele, sem tocar no
+ * banco.
  *
- *  Por isso o token tem teste proprio, que verifica as PROPRIEDADES que
- *  importam:
- *
- *  1) Assinatura: um token adulterado nao passa;
- *  2) Expiracao: um token vencido nao passa;
- *  3) Tipo: um token de renovacao nao vale como token de acesso;
- *  4) Assinatura assimetrica: a chave publica sozinha nao forja token;
- *  5) "kid": o token carrega o identificador da chave, o que permite
- *     rotacionar chaves sem derrubar ninguem.
- *
- *  ------------------------------------------------------
- *  POR QUE NAO PRECISA DE BANCO DE DADOS?
- *  ------------------------------------------------------
- *  Porque a assinatura e uma operacao PURAMENTE CRIPTOGRAFICA. O teste
- *  gera um par de chaves RSA em memoria e valida os tokens contra ele -
- *  sem banco, sem rede, em milissegundos.
- * ============================================================================
+ * Os testes cobrem token adulterado, expirado, de tipo errado e assinado com
+ * outra chave.
  */
 class TokenJwtBOTest {
 

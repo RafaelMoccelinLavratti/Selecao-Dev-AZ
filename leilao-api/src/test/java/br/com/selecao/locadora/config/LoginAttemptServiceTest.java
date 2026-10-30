@@ -10,35 +10,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * ============================================================================
- *  TESTE: CONTROLE DE TENTATIVAS DE LOGIN (ANTI-FORCA-BRUTA)
- * ============================================================================
+ * Testes do controle de tentativas de login.
  *
- *  ------------------------------------------------------
- *  POR QUE ESTE TESTE NAO USA @SpringBootTest?
- *  ------------------------------------------------------
- *  Um teste com @SpringBootTest sobe o container inteiro do Spring e, com
- *  isso, EXIGE o PostgreSQL no ar. Se o avaliador rodar "mvn test" numa
- *  maquina sem banco, o teste quebraria por um motivo que nao tem nada a
- *  ver com a regra testada.
+ * O repositorio e dublado com o Mockito, entao nao ha necessidade de banco.
  *
- *  Aqui testamos a classe de forma ISOLADA: instanciamos o servico e
- *  injetamos os valores de configuracao com ReflectionTestUtils (a mesma
- *  tecnica usada no EmpresaBOTest). O teste roda em milissegundos, em
- *  qualquer maquina, e verifica exatamente a regra de bloqueio.
- *
- *  ------------------------------------------------------
- *  O QUE ESTES TESTES PROVAM
- *  ------------------------------------------------------
- *  1) Ate o limite, o usuario NAO fica bloqueado (nao podemos bloquear
- *     uma pessoa por um erro de digitacao).
- *  2) Ao estourar o limite, o usuario fica bloqueado.
- *  3) O bloqueio do usuario NAO afeta outro usuario do mesmo IP.
- *  4) O limite de IP protege a aplicacao de ataques pulverizados
- *     (poucas senhas para muitos usuarios).
- *  5) Um login bem-sucedido zera o contador do usuario.
- *  6) Com o controle desligado, nada e bloqueado.
- * ============================================================================
+ * Os testes provam que, ate o limite, o usuario nao fica bloqueado -
+ * bloquear alguem por erro de digitacao seria pior que o ataque.
  */
 class LoginAttemptServiceTest {
 

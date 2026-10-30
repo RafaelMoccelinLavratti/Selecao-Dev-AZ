@@ -16,58 +16,15 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * ============================================================================
- *  FILTRO: AUTENTICACAO BASICA COM AUDITORIA
- * ============================================================================
+ * Autenticacao basica com auditoria.
  *
- *  ------------------------------------------------------
- *  POR QUE EXISTE UMA SUBCLASSE?
- *  ------------------------------------------------------
- *  No Spring Security 5.7, o BasicAuthenticationFilter NAO possui
- *  "setFailureHandler()" nem "setAuthenticationEntryPoint()". O handler de
- *  falha e definido no construtor e nao pode ser trocado pela configuracao
- *  (o HttpBasicConfigurer expoe apenas realmName, authenticationEntryPoint
- *  e authenticationDetailsSource).
+ * O BasicAuthenticationFilter do Spring Security 5.7 nao permite trocar o
+ * handler de falha, que por padrao devolve uma pagina HTML. Esta subclasse
+ * devolve o mesmo JSON das demais respostas de erro e registra a tentativa
+ * no log.
  *
- *  Isso e um problema para nos, porque o handler padrao do Spring devolve
- *  uma PAGINA HTML de erro - e o nosso frontend espera JSON no mesmo
- *  formato do GlobalExceptionHandler. Sem isso, o axios do frontend receberia
- *  um HTML onde esperava JSON e a tela mostraria um erro generico.
- *
- *  A solucao e ESTENDER a classe e sobrescrever dois metodos protegidos:
- *
- *    - onUnsuccessfulAuthentication: e chamado quando as credenciais sao
- *      recusadas. A gente delega ao AuthenticationAuditHandler, que
- *      registra a tentativa, conta a falha e devolve 401 ou 429 em JSON.
- *
- *    - onSuccessfulAuthentication: e chamado quando as credenciais sao
- *      aceitas. A gente chama o comportamento original (super) e registra
- *      o acesso bem-sucedido na trilha de auditoria.
- *
- *  ------------------------------------------------------
- *  UMA REGRA DE OURO QUE ESTA CLASSE RESPEITA
- *  ------------------------------------------------------
- *  Este filtro NUNCA escreve no corpo da resposta em caso de SUCESSO.
- *
- *  No HTTP Basic, o navegador reenvia o cabecalho "Authorization: Basic ..."
- *  em TODAS as requisicoes, entao o metodo de sucesso e chamado a cada
- *  requisicao. Se ele escrevesse algo na resposta, a resposta seria
- *  combinada (commit) antes do controller rodar - e o controller nunca
- *  seria chamado. O resultado seria: TODO endpoint devolvendo a resposta de
- *  autenticacao em vez do dado pedido. Um bug que so apareceria em
- *  producao (em desenvolvimento a autenticacao esta desligada).
- *
- *  No caso de FALHA, escrever na resposta e seguro e desejavel: a
- *  requisicao ja foi barrada, nao ha controller para responder.
- *
- *  ------------------------------------------------------
- *  POR QUE O CONTEXTO DE SEGURANCA E LIMPO APOS A FALHA?
- *  ------------------------------------------------------
- *  Se uma requisicao falhar na autenticacao depois de outra ter dado
- *  certo, o contexto de seguranca poderia guardar uma autenticacao
- *  "solta" na thread. Limpando o contexto, garantimos que a proxima
- *  requisicao que usar essa thread comece do zero.
- * ============================================================================
+ * Em caso de falha, o contexto de seguranca e limpo: do contrario, uma
+ * requisicao seguinte poderia reaproveitar a autenticacao de outra.
  */
 public class AuditedBasicAuthenticationFilter extends BasicAuthenticationFilter {
 

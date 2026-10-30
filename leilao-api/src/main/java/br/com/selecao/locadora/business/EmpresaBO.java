@@ -17,30 +17,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * ============================================================================
- *  CAMADA DE NEGOCIO (business): EMPRESA
- * ============================================================================
+ * Regras de negocio da empresa.
  *
- *  ESTA E A CLASSE COM MAIS REGRAS DO PROJETO. Ela concentra:
- *
- *  1) NORMALIZACAO DE ENTRADA
- *     O usuario pode digitar o CNPJ como "11.422.377/0001-55" ou como
- *     "11422377000155". Se gravassemos as duas formas, a busca por CNPJ
- *     deixaria de funcionar (comparacao de texto). Por isso removemos a
- *     pontuacao ANTES de gravar e ANTES de comparar. Isso se chama
- *     "canonicalizar a entrada" e e pratica padrao de seguranca de
- *     dados: os dados sao gravados sempre na MESMA forma, garantindo
- *     comparacoes confiaveis.
- *
- *  2) UNICIDADE COM MENSAGEM AMIGAVEL
- *     cnpj e usuario sao UNIQUE no banco (sublinhados no diagrama).
- *     Verificamos antes de gravar e devolvemos uma mensagem em portugues,
- *     em vez de deixar o banco estourar com "duplicate key value".
- *
- *  3) PROTECAO DA SENHA
- *     A senha NUNCA e gravada em texto puro: guardamos apenas o hash BCrypt.
- *     E a senha NUNCA sai na resposta da API.
- * ============================================================================
+ * Tres responsabilidades: normalizar a entrada (CNPJ, CEP e telefone ficam
+ * gravados so com digitos), recusar CNPJ e usuario repetidos com mensagem
+ * clara, e guardar a senha como hash em vez de texto puro.
  */
 @Service
 public class EmpresaBO {
@@ -86,7 +67,7 @@ public class EmpresaBO {
         String telefone = request.getTelefone() == null ? null : somenteDigitos(request.getTelefone());
         String usuario = request.getUsuario() == null ? null : request.getUsuario().trim();
 
-        // --- PASSO 2: VERIFICAR UNICIDADE ---
+        // Passo 2: verificar unicidade
         // "id == null" -> we're incluindo (checa se ja existe algum).
         // "id != null" -> estamos alterando (o proprio registro nao conta).
         if (id == null) {
@@ -111,7 +92,7 @@ public class EmpresaBO {
             }
         }
 
-        // --- PASSO 3: MONTAR A ENTIDADE ---
+        // Passo 3: montar a entidade
         Empresa empresa = (id == null) ? new Empresa() : buscarEntidade(id);
 
         empresa.setRazaoSocial(request.getRazaoSocial().trim());
@@ -127,7 +108,7 @@ public class EmpresaBO {
         empresa.setSite(request.getSite());
         empresa.setUsuario(usuario);
 
-        // --- PASSO 4: TRATAR A SENHA ---
+        // Passo 4: tratar a senha
         // Se o cliente mandou senha, codificamos com BCrypt.
         // Se NAO mandou (alteracao sem mexer na senha), mantemos o hash
         // que ja estava gravado - assim uma edicao de e-mail nao apaga
@@ -139,7 +120,7 @@ public class EmpresaBO {
             empresa.setSenha(null);
         }
 
-        // --- PASSO 5: GRAVAR ---
+        // Passo 5: gravar
         // "saveAndFlush": o flush e imediato, entao o @PreUpdate ja
         // preencheu o updated_at e a resposta traz o valor correto.
         // (Com "save" puro, o SQL rodaria no fim da transacao e a
@@ -154,7 +135,7 @@ public class EmpresaBO {
      *
      * REGRA: o banco tem ON DELETE RESTRICT em tb_leilao.vendedor, ou
      * seja, uma empresa que vendeu leiloes nao pode ser apagada. O
-     * banco protege a integridade; nosinterceptamos essa recusa para
+     * banco protege a integridade; nos interceptamos essa recusa para
      * devolver uma mensagem clara em vez de um erro tecnico.
      */
     @Transactional

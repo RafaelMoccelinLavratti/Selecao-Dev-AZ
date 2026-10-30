@@ -15,46 +15,10 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * ============================================================================
- *  ENTIDADE: EMPRESA
- * ============================================================================
+ * Empresa que participa dos leiloes.
  *
- *  REPRESENTA O QUE?
- *  Uma empresa que participa de leiloes. Ela pode ser VENDEDORA (vende
- *  lotes nos leiloes) e/ou COMPRADORA (participa como compradora na tabela
- *  tb_comprador). E a RAIZ do modelo de dados: as outras tabelas se
- *  ligam a ela.
- *
- *  MAPEAMENTO DIAGRAMA -> BANCO
- *  ------------------------------------------------------------------
- *  | Diagrama (logico) | Coluna no banco | Tipo    | Obrigatorio? |
- *  ------------------------------------------------------------------
- *  | id                 | id              | INTEGER | SIM (PK)     |
- *  | razaoSocial       | razao_social    | VARCHAR | SIM (*)      |
- *  | cnpj               | cnpj            | VARCHAR | SIM (*)      |
- *  | logadouro         | logadouro       | VARCHAR | nao          |
- *  | municipio         | municipio       | VARCHAR | nao          |
- *  | numero            | numero          | VARCHAR | nao          |
- *  | complemento       | complemento     | VARCHAR | nao          |
- *  | quantidade        | quantidade      | INTEGER | nao          |
- *  | cep               | cep             | VARCHAR | nao          |
- *  | telefone          | telefone        | VARCHAR | nao          |
- *  | email             | email           | VARCHAR | nao          |
- *  | site              | site            | VARCHAR | nao          |
- *  | usuario           | usuario         | VARCHAR | nao          |
- *  | senha             | senha           | VARCHAR | nao          |
- *  ------------------------------------------------------------------
- *  (*)  = tem asterisco no diagrama, portanto NOT NULL
- *  (sublinhado no diagrama) = unico: cnpj e usuario
- *
- *  SEGURANCA - ONDE A SENHA FICA?
- *  A coluna "senha" guarda um HASH BCrypt, nunca a senha digitada.
- *  BCrypt e um algoritmo de hash com "sal" (uma serragem aleatoria) e
- *  e lento de proposito: um ataque de forca bruta contra um hash lento
- *  custa caro, e o sal garante que dois usuarios com a MESMA senha
- *  tenham hashes DIFERENTES (impossivel montar uma tabela de senhas
- *  iguais). Ver config/PasswordEncoderConfig.java.
- * ============================================================================
+ * Pode ser vendedora (nos leiloes) e compradora (na tabela de vinculo). A
+ * coluna "senha" guarda um hash, nunca a senha digitada.
  */
 @Data
 @Builder

@@ -1,16 +1,9 @@
 /**
- * ============================================================================
- *  ARQUIVO DE ENTRADA DO FRONTEND (src/main.js)
- * ============================================================================
+ * Arquivo de entrada do frontend.
  *
- *  Este e o arquivo que roda primeiro quando o navegador abre a aplicacao.
- *  Ele:
- *    1. importa o Vue e registra os plugins (Vuetify, rotas, store);
- *    2. monta o componente raiz (App.vue);
- *    3. "pendura" a aplicacao no elemento HTML com id="app".
- *
- *  O elemento <div id="app"></div> esta no arquivo public/index.html.
- * ============================================================================
+ * E o primeiro arquivo a rodar quando o navegador abre a aplicacao. Ele cria
+ * a instancia do Vue, registra o Vuetify e o router, e monta o componente
+ * raiz (App.vue).
  */
 import Vue from 'vue';
 

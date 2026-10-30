@@ -15,27 +15,9 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * ============================================================================
- *  ENTIDADE: UNIDADE
- * ============================================================================
+ * Unidade: o local fisico onde o leilao acontece (galpao, filial).
  *
- *  REPRESENTA O QUE?
- *  O local fisico onde o leilao acontece: galpao, filial, centro de
- *  distribuicao. E a tabela mais simples do modelo - serve de exemplo
- *  canonico do padrao de camadas do enunciado:
- *      service (controller) -> business (regra) -> repository (acesso) -> entity
- *
- *  MAPEAMENTO DIAGRAMA -> BANCO
- *  ------------------------------------------------------------------
- *  | Diagrama (logico) | Coluna no banco | Tipo     | Obrigatorio? |
- *  ------------------------------------------------------------------
- *  | id                | id               | INTEGER  | SIM (PK)     |
- *  | nome              | nome             | VARCHAR  | SIM (*)      |
- *  ------------------------------------------------------------------
- *
- *  OBSERVACAO: o enunciado pede "nome" com asterisco, ou seja, obrigatorio.
- *  Alem disso, o banco garante que o nome nao seja apenas espacos (CHECK).
- * ============================================================================
+ * E a tabela mais simples do modelo - uma unica coluna alem do id.
  */
 @Data
 @Builder

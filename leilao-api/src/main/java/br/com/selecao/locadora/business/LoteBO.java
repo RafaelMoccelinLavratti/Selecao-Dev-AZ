@@ -19,72 +19,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * ============================================================================
- *  CAMADA DE NEGOCIO (business): LOTE
- * ============================================================================
+ * Regras de negocio do lote.
  *
- *  ------------------------------------------------------
- *  O QUE E UM LOTE?
- *  ------------------------------------------------------
- *  O lote e o item que esta sendo leiloado - e ele que carrega o
- *  QUANTIDADE e o VALOR. Um leilao tem varios lotes; o valor total do
- *  leilao e a soma dos valores dos lotes.
- *
- *  ------------------------------------------------------
- *  A REGRA PRINCIPAL DESTA CLASSE: O TOTAL DO LOTE
- *  ------------------------------------------------------
- *      total do lote = quantidade * valorInicial
- *
- *  E COMO O TOTAL DO LEILAO E MONTADO (exercicio 7)?
- *  Somando o total de todos os lotes daquele leilao:
- *      total do leilao = SUM(lote.quantidade * lote.valorInicial)
- *
- *  Repare que o total do LEILAO e calculado NO BANCO (veja a JPQL em
- *  LeilaoRepository), enquanto o total do LOTE e calculado AQUI, em
- *  Java. Nao e inconsistencia: sao granularidades diferentes. O total
- *  do lote e o valor de UM item (para a tela mostrar na tabela de
- *  lotes); o total do leilao agrega VARIOS lotes, e fazer essa soma
- *  direto no banco e mais eficiente (um unico SELECT em vez de N
- *  consultas).
- *
- *  ------------------------------------------------------
- *  POR QUE BIGDECIMAL E NUNCA DOUBLE?
- *  ------------------------------------------------------
- *  Este e o ponto mais importante desta classe do ponto de vista de
- *  CORRECAO FINANCEIRA.
- *
- *  O tipo "double" (e o "float") armazena numeros em base 2 (binario).
- *  Como 0,1 nao tem representacao exata em binario, o computador
- *  guarda um valor MUITO PROXIMO - e o famoso:
- *
- *      System.out.println(0.1 + 0.2);   // 0.30000000000000004
- *
- *  Isso parece irrelevante, mas em dinheiro nao e. Compare:
- *
- *      double:      0.1 + 0.2 = 0.30000000000000004  (erro)
- *      BigDecimal:  0.1 + 0.2 = 0.30                (exato)
- *
- *  Ao somar hundreds de lotes com valores fracionarios, o erro se
- *  acumula - e o total exibido na tela deixa de bater com o total
- *  real. Em um sistema de leilao, isso nao e "imprecisao aceitavel":
- *  e dinheiro a mais ou a menos.
- *
- *  O BigDecimal resolve isso porque representa numeros DECIMAIS de
- *  forma exata (como um numero escrito a mao). E ele traz um detalhe
- *  importante: NAO se usa o operador "*" com ele. Para multiplicar,
- *  usa-se o metodo ".multiply()", que exige que os dois lados
- *  tambem sejam BigDecimal. Isso e proposital - se um dos lados for
- *  um double, o Java impede a operacao, forcando a conversao
- *  explicita e impedindo que o erro entre sorrateiramente.
- *
- *  ------------------------------------------------------
- *  E O "BigDecimal.valueOf"?  (e nao "new BigDecimal")
- *  ------------------------------------------------------
- *  BigDecimal.valueOf(5) cria o numero 5 exato.
- *  new BigDecimal(0.1) cria o valor mais proximo de 0.1 em double -
- *  ou seja, o MESMO erro do double, so que escondido dentro de um
- *  BigDecimal. Por isso a regra e: SEMPRE use valueOf.
- * ============================================================================
+ * O total do lote e quantidade x valor inicial, e o total do leilao e a soma
+ * dos totais dos lotes. Valores monetarios usam BigDecimal: em double,
+ * 0,1 + 0,2 nao da 0,3, e a soma de centavos errada no fim do leilao e um
+ * problema real.
  */
 @Service
 public class LoteBO {

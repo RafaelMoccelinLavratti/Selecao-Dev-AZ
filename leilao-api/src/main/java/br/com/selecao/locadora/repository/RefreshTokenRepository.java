@@ -12,30 +12,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * ============================================================================
- *  REPOSITORIO: TOKEN DE RENOVACAO
- * ============================================================================
+ * Repositorio do token de renovacao.
  *
- *  ------------------------------------------------------
- *  O QUE UM REPOSITORIO FAZ?
- *  ------------------------------------------------------
- *  E a camada de ACESSO AOS DADOS. O enunciado define exatamente este
- *  pacote ("Camada de acesso a dados (Repository)"), e a regra e simples:
- *  aqui mora a conversa com o banco, e NADA mais.
- *
- *  Repositorio nao tem regra de negocio e nao conhece HTTP. Ele sabe
- *  guardar, buscar e apagar - e mais nada. Quem decide QUANDO buscar e
- *  O QUE fazer com o resultado e a camada de negocio (business).
- *
- *  ------------------------------------------------------
- *  A BUSCA PELO HASH
- *  ------------------------------------------------------
- *  O metodo "buscarPorHash" usa o SHA-256 do token como criterio de
- *  busca. Isso e seguro porque:
- *    - o indice sobre a coluna garante performance (sem varredura);
- *    - o valor procurado e um hash, nao um token - quem estiver
- *      olhando o log de consulta ve um valor sem utilidade.
- * ============================================================================
+ * A busca e pelo SHA-256 do token, e nao pelo token: assim o indice funciona e
+ * o valor sensivel nao fica exposto no banco.
  */
 @Repository
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Integer> {

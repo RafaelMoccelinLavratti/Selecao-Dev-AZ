@@ -8,9 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * ============================================================================
  *  DTO DE ERRO (formato unico de resposta de erro da API)
- * ============================================================================
  *
  *  Por que um padrao unico de erro?
  *  O frontend (e qualquer outro consumidor) passa a ter UMA regra para
@@ -18,7 +16,6 @@ import java.time.LocalDateTime;
  *  importante: o corpo NUNCA contem stack trace, SQL ou nomes de classes.
  *  O campo "mensagem" e a unica informacao sobre o erro que sai da
  *  aplicacao - e ela e escrita para ser lida por uma pessoa.
- * ============================================================================
  */
 @Data
 @Builder

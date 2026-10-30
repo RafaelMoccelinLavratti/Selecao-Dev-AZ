@@ -18,35 +18,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * ============================================================================
- *  CONTROLLER REST: TRILHA DE AUDITORIA
- * ============================================================================
+ * Controller REST da trilha de auditoria.
  *
- *  No pacote "service", como o enunciado determina:
- *      "Controladores REST: pacote service - endpoints dos servicos rest"
+ * GET /auditoria            - lista os registros (mais recentes primeiro)
+ * GET /auditoria/verificar  - verifica a integridade da corrente
  *
- *  Este controller tem UMA responsabilidade: traduzir HTTP em Java.
- *  Quem decide se a cadeia esta integra e o AuditoriaBO.
- *
- *  ------------------------------------------------------
- *  OS ENDPOINTS
- *  ------------------------------------------------------
- *  GET /auditoria              - lista os registros (mais recentes primeiro)
- *  GET /auditoria/verificar    - verifica a integridade da cadeia
- *
- *  ------------------------------------------------------
- *  POR QUE "VERIFICAR" E UM ENDPOINT E NAO UM JOB?
- *  ------------------------------------------------------
- *  Porque a verificacao responde a uma pergunta de INVESTIGACAO:
- *  "alguem mexeu na trilha?". Quem investiga precisa poder RODAR a
- *  verificacao a qualquer momento e ver o resultado na hora.
- *
- *  E ha um segundo motivo, mais importante: a verificacao e PUBLICA.
- *  Um endpoint que devolve "a cadeia esta integra" e a prova, para
- *  qualquer auditor externo, de que a trilha nao foi adulterada. Sem
- *  acesso ao banco e sem acesso a chave, o auditor confia no resultado
- *  da API - e nao precisa de credencial de administrador.
- * ============================================================================
+ * A verificacao e um endpoint e nao um job porque responde a uma pergunta
+ * de investigacao: "alguem mexeu na trilha?".
  */
 @RestController
 @RequestMapping("/auditoria")

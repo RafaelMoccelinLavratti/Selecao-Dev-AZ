@@ -1,18 +1,12 @@
-/* ============================================================================
- *  CONFIGURACAO DO ESLINT (.eslintrc.js)
- * ============================================================================
+/*
+ * Configuracao do ESLint (.eslintrc.js).
  *
- *  Este arquivo fica aqui (e nao dentro do package.json) porque permite
- *  COMENTAR as configuracoes - o que e essencial para explicar as
- *  decisoes.
+ * Este arquivo fica aqui (e nao dentro do package.json) porque permite
+ * COMENTAR as configuracoes - o que e essencial para explicar as decisoes.
  *
- *  ESLINT PARA QUE SERVE?
- *  Ele analiza o codigo automaticamente e aponta problemas ANTES de a
- *  pessoa rodar a aplicacao: variavel nao usada, erro de digitacao em um
- *  nome de metodo, template invalido, etc. E uma das ferramentas de
- *  "qualidade de codigo" mais adotadas do mercado (usada por Vue, React,
- *  Angular e ate por quem escreve JavaScript puro).
- * ============================================================================
+ * O ESLint analisa o codigo automaticamente e aponta problemas ANTES de a
+ * pessoa rodar a aplicacao: variavel nao usada, erro de digitacao em um
+ * nome de metodo, template invalido, etc.
  */
 module.exports = {
   root: true,
@@ -35,30 +29,28 @@ module.exports = {
 
   rules: {
     /**
-     * ------------------------------------------------------
-     *  POR QUE DESLIGAR A REGRA "vue/valid-v-slot"?
-     * ------------------------------------------------------
-     *  O Vuetify 2 (documentacao oficial) usa este padrao para os
-     *  slots da tabela:
+     * Por que desligar a regra "vue/valid-v-slot"?
      *
-     *      <template v-slot:item.nome="{ item }">
+     * O Vuetify 2 (documentacao oficial) usa este padrao para os slots da
+     * tabela:
      *
-     *  Nesse padrao, "item.nome" e o NOME do slot (o Vuetify procura
-     *  exatamente por "item." + nomeDaColuna). E o que funciona em
-     *  runtime com o Vue 2.6.
+     *     <template v-slot:item.nome="{ item }">
      *
-     *  Porem o analisador estatico do ESLint interpreta o ponto como um
-     *  "modificador" de diretiva (semantica do Vue 3) e reclama:
+     * Nesse padrao, "item.nome" e o NOME do slot (o Vuetify procura
+     * exatamente por "item." + nomeDaColuna). E o que funciona em runtime
+     * com o Vue 2.6.
      *
-     *      'v-slot' directive doesn't support any modifier
+     * Porem o analisador estatico do ESLint interpreta o ponto como um
+     * "modificador" de diretiva (semantica do Vue 3) e reclama:
      *
-     *  E um falso positivo: o codigo funciona (e e o exemplo oficial do
-     *  Vuetify). Desligar a regra - em vez de trocar a sintaxe, que
-     *  quebraria a tabela - e a decisao correta. As outras 2 regras da
-     *  familia (vue/no-deprecated-slot-attribute e
-     *  vue/no-deprecated-slot-scope) continuam LIGADAS, o que garante
-     *  que a sintaxe antiga de slots nao seja usada.
-     * ------------------------------------------------------
+     *     'v-slot' directive doesn't support any modifier
+     *
+     * E um falso positivo: o codigo funciona (e e o exemplo oficial do
+     * Vuetify). Desligar a regra - em vez de trocar a sintaxe, que
+     * quebraria a tabela - e a decisao correta. As outras 2 regras da
+     * familia (vue/no-deprecated-slot-attribute e
+     * vue/no-deprecated-slot-scope) continuam LIGADAS, o que garante que a
+     * sintaxe antiga de slots nao seja usada.
      */
     'vue/valid-v-slot': 'off',
 

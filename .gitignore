@@ -59,14 +59,8 @@ leilao-api/.vscode/
 
 
 
-# ---------------------------------------------------------------------------
-#  package-lock.json
-# ---------------------------------------------------------------------------
-#  O starter ignorava o package-lock.json. Aqui ele passou a ser VERSIONADO,
-#  de proposito: e o arquivo que fixa exatamente quais versoes de cada
-#  dependencia serao instaladas. Com ele no Git, qualquer pessoa (ou o
-#  avaliador) que rodar "npm install" recebe exatamente a mesma arvore de
-#  dependencias testada aqui - sem risco de uma versao nova quebrar o
-#  build.
-# ---------------------------------------------------------------------------
+# O package-lock.json e versionado de proposito: e o arquivo que fixa
+# exatamente quais versoes de cada dependencia serao instaladas. Com ele no
+# Git, quem rodar "npm install" recebe a mesma arvore de dependencias
+# testada aqui - sem risco de uma versao nova quebrar o build.
 !leilao-app/package-lock.json

@@ -1,8 +1,6 @@
 <template>
   <!--
-    ==========================================================================
      COMPONENTE: MENU DE NAVEGACAO  (components/AppMenu.vue)
-    ==========================================================================
      Fica em um componente proprio (e nao dentro do App.vue) porque:
        - o App.vue fica enxuto e legivel;
        - o menu pode ser reutilizado em outras telas;
@@ -14,7 +12,6 @@
 
      Este componente tem UM unico elemento raiz (v-list). O Vue 2 exige
      isso: um template precisa ter exatamente um elemento raiz.
-    ==========================================================================
   -->
   <v-list nav dense>
     <!--
@@ -39,7 +36,7 @@
     </v-list-item>
 
     <!--
-      SEPARADOR + INFORMACAO DA CONEXAO.
+      Separador + informacao da conexao.
       Um sistema interno mostra com qual ambiente o usuario esta
       trabalhando - evita o erro clasico de cadastrar no ambiente errado.
     -->
@@ -59,45 +56,10 @@
 
 <script>
 /**
- * ============================================================================
- *  SCRIPT DO COMPONENTE: MENU DE NAVEGACAO
- * ============================================================================
+ * Script do componente de menu.
  *
- *  Um componente Vue 2 tem tres blocos principais:
- *
- *    - "template" : o HTML (marcado com etiquetas do Vue);
- *    - "script"   : a logica (dados, metodos, ciclo de vida);
- *    - "style"    : o CSS (scopo local ou global).
- *
- *  Este bloco "script" e onde ficam os DADOS do menu e nada mais - o
- *  componente nao fala com a API e nao tem regra de negocio. Ele apenas
- *  desenha uma lista de links.
- *
- *  ------------------------------------------------------
- *  O PADRAO "v-for" USADO AQUI
- *  ------------------------------------------------------
- *  Em vez de escrever tres <v-list-item> na mao, escrevemos UM e pedimos
- *  para o Vue repetir ele para cada item da lista "itens".
- *
- *  O ":key" e obrigatorio: o Vue precisa de um identificador unico de
- *  cada item para saber qual elemento da tela e "o mesmo" depois que a
- *  lista muda (reordenacao, remocao). Sem a chave, o Vue pode misturar
- *  os elementos e mostrar dados trocados - um bug classico e muito
- *  confuso de diagnosticar.
- *
- *  O ":to" e a "ponteira" com o vue-router: e o endereco de destino do
- *  link. Como a aplicacao usa "hash routing" (modo 'hash'), o vue-router
- *  acrescenta o "#" sozinho - por isso aqui vai "/unidades" e nao "#/unidades".
- *
- *  ------------------------------------------------------
- *  POR QUE O MENU E UM COMPONENTE SEPARADO?
- *  ------------------------------------------------------
- *  Tres motivos, todos práticos:
- *    1) o App.vue fica enxuto e legivel;
- *    2) o menu pode ser reutilizado em outra tela sem copiar codigo;
- *    3) o enunciado pede explicitamente "separe bem o codigo em
- *       componentes".
- * ============================================================================
+ * O menu lista as telas a partir da lista de rotas do router. Ele existe
+ * separado porque deixa o App.vue enxuto e permite marcar o item ativo.
  */
 export default {
   /**
@@ -110,9 +72,7 @@ export default {
   name: 'AppMenu',
 
   /**
-   * ------------------------------------------------------------------
    *  DADOS REATIVOS DO COMPONENTE (data).
-   * ------------------------------------------------------------------
    *
    *  Tudo que estiver aqui e REATIVO: quando um valor muda, o Vue
    *  redesenha automaticamente os trechos de template que dependem dele.

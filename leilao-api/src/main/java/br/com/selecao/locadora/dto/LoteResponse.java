@@ -9,14 +9,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * ============================================================================
- *  DTO DE SAIDA: LOTE
- * ============================================================================
+ * DTO de saida do lote.
  *
- *  Alem dos dados, devolve "totalLote" = quantidade * valorInicial.
- *  E o total de UM lote. Somando os totais de todos os lotes de um
- *  leilao, chega-se ao total do leilao (exercicio 7).
- * ============================================================================
+ * Alem dos dados, devolve "totalLote" = quantidade x valor inicial. O total
+ * do leilao e a soma dos totais dos lotes.
  */
 @Data
 @Builder

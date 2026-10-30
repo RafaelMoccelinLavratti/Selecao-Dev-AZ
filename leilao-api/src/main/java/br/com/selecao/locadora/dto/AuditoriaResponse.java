@@ -3,15 +3,12 @@ package br.com.selecao.locadora.dto;
 import java.time.LocalDateTime;
 
 /**
- * ============================================================================
  *  DTO: REGISTRO DA TRILHA DE AUDITORIA (forma de saida da API)
- * ============================================================================
  *
  *  E a MESMA informacao da entidade, mas sem os campos internos da cadeia
  *  de hash. Por que? Porque o hash e o mecanismo de prova: expor o
  *  hash_atual permitiria a um cliente tentar forjar registros. A API
  *  mostra o QUE aconteceu; a PROVA fica no servidor.
- * ============================================================================
  */
 public class AuditoriaResponse {
 

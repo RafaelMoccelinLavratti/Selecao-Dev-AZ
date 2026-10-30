@@ -21,68 +21,15 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * ============================================================================
- *  REGRAS DE NEGOCIO DA AUTENTICACAO
- * ============================================================================
+ * Regras de negocio da autenticacao.
  *
- *  E a camada que decide o que pode e o que nao pode numa autenticacao.
- *  Nenhuma regra de negocio mora aqui - o que existe sao as regras de
- *  SEGURANCA, que tambem sao regras de negocio.
+ * O login confere a senha e emite o par de tokens. A renovacao consome o
+ * token apresentado e emite um novo na mesma familia; se um token ja
+ * usado voltar a ser apresentado, e sinal de copia - e a familia inteira
+ * e revogada.
  *
- *  ------------------------------------------------------
- *  O FLUXO COMPLETO
- *  ------------------------------------------------------
- *
- *      POST /auth/login
- *        1. busca o usuario
- *        2. compara a senha (com defense contra enumeracao de usuarios)
- *        3. emite o par de tokens
- *        4. registra o token de renovacao no banco (so o hash)
- *
- *      POST /auth/refresh
- *        1. valida a assinatura do token de renovacao
- *        2. procura o hash no banco
- *        3. se o token JA FOI USADO -> DETAECCAO DE REUSO -> revoga a
- *           familia inteira
- *        4. marca o token antigo como usado
- *        5. emite um par novo, na MESMA familia
- *
- *      POST /auth/logout
- *        1. revoga todos os tokens da familia do token apresentado
- *
- *  ------------------------------------------------------
- *  O DEFESA CONTRA ENUMERACAO DE USUARIOS
- *  ------------------------------------------------------
- *  Um erro comum e autentico: quando o usuario nao existe, o servidor
- *  devolve 401 na hora; quando existe e a senha esta errada, devolve 401
- *  depois de comparar o hash. A diferenca de tempo (milissegundos) e
- *  suficiente para um atacante descobrir quais usuarios existem - basta
- *  medir o tempo de resposta de varias tentativas.
- *
- *  Aqui, quando o usuario nao existe, o codigo MESMO assim compara a
- *  senha contra um hash falso, com o MESMO custo de CPU. O tempo de
- *  resposta fica identico, e o atacante nao consegue distinguir os dois
- *  casos pelo tempo.
- *
- *  A resposta HTTP tambem e identica nos dois casos: "Credenciais
- *  invalidas". O cliente nao precisa - e nao deve - saber a diferença.
- *
- *  ------------------------------------------------------
- *  A ROTACAO COM DETECCAO DE REUSO
- *  ------------------------------------------------------
- *  Um token de renovacao e de USO UNICO. Ao renovar, ele e marcado como
- *  usado e um token novo e emitido.
- *
- *  Se um token USADO for apresentado de novo, isso significa que alguem
- *  copiou o token (o cenario classico de roubo). A resposta correta nao
- *  e recusar apenas o token apresentado: e revogar TODA A FAMILIA.
- *
- *  O motivo e simples: no cenario de roubo, o atacante e o usuario
- *  legitimo estao usando o MESMO token. Revogar so o token apresentado
- *  deixaria o atacante com os tokens ja emitidos; revogar a familia
- *  inteira obriga os dois a se autenticarem de novo, e o usuario
- *  legitimo percebe o problema imediatamente.
- * ============================================================================
+ * Usuario inexistente e senha errada devolvem a mesma mensagem e levam o
+ * mesmo tempo de resposta, para nao permitir enumeracao de usuarios.
  */
 @Component
 public class AutenticacaoBO {
@@ -186,7 +133,7 @@ public class AutenticacaoBO {
         RefreshToken registro = refreshTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new TokenInvalidoException("Token de renovacao desconhecido"));
 
-        // 3) DETECCAO DE REUSO.
+        // 3) deteccao de reuso.
         //    Um token que JA foi usado esta sendo apresentado de novo: e
         //    a assinatura de um token copiado. A resposta e revogar toda
         //    a familia.

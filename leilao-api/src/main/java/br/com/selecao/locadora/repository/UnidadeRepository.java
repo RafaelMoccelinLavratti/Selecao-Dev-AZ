@@ -5,13 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 /**
- * ============================================================================
- *  REPOSITORY: UNIDADE
- * ============================================================================
+ * Repositorio da unidade.
  *
- *  Acesso a tabela de unidades. A unica regra extra e a unicidade do nome,
- *  validada antes de gravar para devolver uma mensagem de erro legivel.
- * ============================================================================
+ * Alem do CRUD, tem a consulta que verifica nome repetido - validada antes
+ * de gravar para devolver uma mensagem legivel.
  */
 @Repository
 public interface UnidadeRepository extends JpaRepository<Unidade, Integer> {

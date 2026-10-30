@@ -22,38 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ============================================================================
- *  ENTIDADE: LEILAO
- * ============================================================================
+ * Leilao: o evento de venda.
  *
- *  REPRESENTA O QUE?
- *  O "evento" de venda. Junta um VENDEDOR (uma empresa), um horario previsto
- *  de inicio, um codigo e varios LOTES.
- *
- *  RELACOES
- *  - vendedor : ManyToOne -> Empresa. A FK "vendedor" aponta para tb_empresa.
- *    ManyToOne quer dizer "muitos leiloes para uma empresa" (N para 1).
- *  - lotes    : OneToMany -> Lote. O lado "inverso" da relacao: e aqui que
- *    fica a lista dos lotes do leilao. O campo "mappedBy = leilao" diz ao
- *    Hibernate que quem manda nesta relacao e o Lote (ele tem a FK).
- *
- *  POR QUE "fetch = LAZY"?
- *  LAZY significa "so busca no banco se alguem realmente precisar". Ao
- *  listar 12 leiloes, o Hibernate executa 1 consulta para os leiloes e so
- *  busca os lotes se a tela pedir. Eager (buscar sempre) faria N+1 consultas
- *  e deixaria a aplicacao lenta. LAZY e o padrao correto.
- *
- *  MAPEAMENTO DIAGRAMA -> BANCO
- *  ------------------------------------------------------------------
- *  | Diagrama (logico) | Coluna no banco | Tipo     | Obrigatorio? |
- *  ------------------------------------------------------------------
- *  | id                | id               | INTEGER  | SIM (PK)     |
- *  | codigo            | codigo           | INTEGER  | SIM (*)      |
- *  | descricao         | descricao        | VARCHAR  | nao          |
- *  | vendedor          | vendedor         | INTEGER  | SIM (*) (FK) |
- *  | inicioPrevisto    | inicio_previsto  | TIMESTAMP| nao          |
- *  ------------------------------------------------------------------
- * ============================================================================
+ * Junta um vendedor (uma empresa), um horario previsto de inicio, um codigo
+ * e varios lotes. O ManyToOne do vendedor significa N leiloes para uma
+ * empresa.
  */
 @Data
 @Builder

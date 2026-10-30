@@ -20,26 +20,10 @@ import javax.validation.Valid;
 import java.util.List;
 
 /**
- * ============================================================================
- *  CONTROLADOR REST: COMPRADOR
- * ============================================================================
+ * Controller REST do vinculo comprador.
  *
- *  A DIFFERENCA DOS OUTROS: a chave primaria aqui e COMPOSTA
- *  (empresa + leilao), entao nao existe um "/{id}" unico.
- *
- *  ------------------------------------------------------
- *  OS ENDPOINTS
- *  ------------------------------------------------------
- *  GET    /compradores                          lista todos
- *  GET    /compradores/{empresaId}/{leilaoId}   busca um vinculo
- *  GET    /compradores?empresa=X&leilao=Y      busca um vinculo (outra forma)
- *  POST   /compradores                          cria um vinculo
- *  PUT    /compradores/{empresaId}/{leilaoId}   altera o vinculo
- *  DELETE /compradores/{empresaId}/{leilaoId}   remove o vinculo
- *
- *  Oferecer as DUAS formas de consulta (caminho e query string) e uma
- *  escolha de robustez: qualquer um dos dois jeitos de chamar funciona.
- * ============================================================================
+ * A chave primaria e composta (empresa + leilao), entao nao existe um
+ * "/{id}" unico: a URL leva os dois ids.
  */
 @RestController
 @RequestMapping(value = {"/compradores", "/comprador"})

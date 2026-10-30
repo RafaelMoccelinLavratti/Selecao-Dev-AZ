@@ -20,69 +20,15 @@ import java.util.Date;
 import java.util.UUID;
 
 /**
- * ============================================================================
- *  EMISSAO E VALIDACAO DE TOKENS JWT
- * ============================================================================
+ * Emissao e validacao dos tokens JWT.
  *
- *  ------------------------------------------------------
- *  O QUE E UM TOKEN JWT?
- *  ------------------------------------------------------
- *  JWT (JSON Web Token, RFC 7519) e um formato de token que carrega
- *  informacoes assinadas criptograficamente. Ele tem tres partes
- *  separadas por ponto:
+ * Ha dois tipos de token: o de acesso (vida curta, enviado em toda
+ * requisicao) e o de renovacao (vida longa, usado para pedir um acesso
+ * novo). Os dois sao assinados com RSA (RS256), o que permite validar a
+ * assinatura sem consultar o banco a cada requisicao.
  *
- *      eyJhbGciOiJSUzI1NiIsImtpZCI6...   <- HEADER  (algoritmo, kid)
- *      eyJzdWIiOiJhZG1pbiIsImV4cCI6...   <- PAYLOAD (claims)
- *      dBjftJeZ4CVP-mB92K27uhbUJU1p...   <- ASSINATURA
- *
- *  A assinatura e calculada sobre o HEADER + "." + PAYLOAD. Qualquer
- *  alteracao no conteudo quebra a verificacao.
- *
- *  ------------------------------------------------------
- *  POR QUE UM TOKEN ASSINADO E MAIS SEGURO QUE UM "TOKEN" QUALQUER?
- *  ------------------------------------------------------
- *  Um token "inventado" (um numero aleatorio guardado no banco) so e
- *  valido se o servidor consultar o banco a cada requisicao - o que
- *  significa uma ida ao banco em CADA chamada da API.
- *
- *  Um JWT assinado e verificado de forma LOCAL, com a chave publica: a
- *  verificacao e uma operacao de criptografia (microsegundos), sem
- *  consultar nada. E por isso que ele escala horizontalmente: varias
- *  instancias do servidor validam o mesmo token sem compartilhar estado.
- *
- *  ------------------------------------------------------
- *  OS DOIS TIPOS DE TOKEN E POR QUE EXISTEM
- *  ------------------------------------------------------
- *  O padrao e a "separacao de privilegios por tempo de vida":
- *
- *    - TOKEN DE ACESSO (access token): vida curta (15 minutos). E o que
- *      o cliente envia em toda requisicao. Se vazar, a janela de dano e
- *      pequena.
- *
- *    - TOKEN DE RENOVACAO (refresh token): vida longa (7 dias). E usado
- *      em UM lugar so - o endpoint de renovacao - para obter um novo
- *      token de acesso. Nunca vai em requisicao comum, entao um
- *      interceptador comum nao tem acesso a ele.
- *
- *  Se usassemos UM token so, com vida longa, um vazamento daria acesso
- *  por semanas. Se usassemos UM token so, com vida curta, o usuario
- *  teria que digitar a senha a cada 15 minutos.
- *
- *  ------------------------------------------------------
- *  O QUE UM TOKEN DE ACESSO CARREGA
- *  ------------------------------------------------------
- *    - "sub" : quem e o usuario (o "subject" do JWT);
- *    - "typ" : o tipo ("access" ou "refresh") - impede que um token de
- *              renovacao seja usado como token de acesso;
- *    - "jti" : identificador unico do token;
- *    - "iat" : instante de emissao;
- *    - "exp" : instante de expiracao;
- *    - "iss" : quem emitiu.
- *
- *  O "typ" parece um detalhe, mas e uma protecao real: sem ele, um token
- *  de renovacao (vida de 7 dias) seria aceito em qualquer endpoint
- *  protegido, multiplicando por 7 o tempo de vida de um vazamento.
- * ============================================================================
+ * A validacao recusa token expirado, de tipo errado, assinado com outra
+ * chave ou com emissor desconhecido.
  */
 @Component
 public class TokenJwtBO {
@@ -303,7 +249,7 @@ public class TokenJwtBO {
      * Calcula o hash SHA-256 de um texto, em hexadecimal.
      *
      * E o que permite guardar o token de renovacao NO BANCO sem guardar o
-     * token em si: o banco recebe apenas o hash. Se alguém obtiver o
+     * token em si: o banco recebe apenas o hash. Se alguem obtiver o
      * conteudo da tabela, nao consegue usar os tokens - porque o valor
      * guardado e o hash, e nao o token. E como uma senha: guardamos o
      * hash, nunca o segredo.

@@ -16,56 +16,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * ============================================================================
- *  FILTRO: BLOQUEIO DE FORCA BRUTA
- * ============================================================================
+ * Bloqueio por forca bruta.
  *
- *  ------------------------------------------------------
- *  ONDE ESTE FILTRO SE POSICIONA?
- *  ------------------------------------------------------
- *  Este filtro roda ANTES do filtro de autenticacao basica do Spring
- *  Security (BasicAuthenticationFilter). A ordem importa muito:
+ * Roda antes do filtro de autenticacao basica, para que um IP ja bloqueado
+ * nem chegue a comparar a senha - o BCrypt e lento de proposito, e nao
+ * adianta gastar esse tempo.
  *
- *      requisicao
- *          |
- *          v
- *      [BruteForceProtectionFilter]   <-- estamos aqui
- *          |  IP bloqueado?  -> 429, para aqui. Nem tenta validar a senha.
- *          v
- *      [BasicAuthenticationFilter]    -- valida usuario e senha (BCrypt)
- *          |  falhou? -> AuthenticationAuditHandler registra a falha
- *          v
- *      [controller]                   -- so executa se autenticou (em producao)
- *
- *  Se o filtro de bloqueio viesse DEPOIS, o atacante continuaria gastando
- *  CPU com o BCrypt (que e lento de proposito) mesmo com a conta
- *  bloqueada - ou seja, a defesa existiria mas nao serviria para nada.
- *
- *  ------------------------------------------------------
- *  POR QUE "OncePerRequestFilter"?
- *  ------------------------------------------------------
- *  Essa classe base do Spring garante que o filtro execute UMA VEZ por
- *  requisicao. Em aplicacoes com filtros encadeados (dispatcher servlet,
- *  filtros de erro do container), o mesmo filtro pode ser chamado mais de
- *  uma vez para a mesma requisicao - e o contador de tentativas seria
- *  inflado sem motivo.
- *
- *  ------------------------------------------------------
- *  O QUE ACONTECE QUANDO O IP ESTA BLOQUEADO?
- *  ------------------------------------------------------
- *  A API responde:
- *      HTTP 429 Too Many Requests
- *      + cabecalho "Retry-After" com o numero de segundos ate liberar
- *      + corpo JSON padronizado
- *
- *  O status 429 e o codigo oficial do HTTP para "excesso de requisicoes".
- *  Diferente do 403 ("proibido"), ele informa que a situacao e TEMPORARIA
- *  e o cliente pode tentar de novo depois - que e exatamente a verdade.
- *
- *  IMPORTANTE: a resposta NAO diz qual era o usuario tentado nem quantas
- *  falhas faltam. Devolver esse detalhe ajudaria o atacante a medir o
- *  proprio ataque.
- * ============================================================================
+ * Um IP bloqueado recebe 429, com o cabecalho Retry-After.
  */
 @Component
 public class BruteForceProtectionFilter extends OncePerRequestFilter {

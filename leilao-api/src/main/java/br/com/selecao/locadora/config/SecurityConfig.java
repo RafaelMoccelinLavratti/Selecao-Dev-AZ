@@ -19,64 +19,18 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 
 /**
- * ============================================================================
- *  CONFIGURACAO DE SEGURANCA DA API
- * ============================================================================
+ * Configuracao de seguranca da API.
  *
- *  ------------------------------------------------------
- *  A IDEIA CENTRAL
- *  ------------------------------------------------------
- *  A autenticacao esta LIGADA/DESLIGADA por CONFIGURACAO, e nao por
- *  codigo. Assim o mesmo sistema serve a dois cenarios:
+ * A autenticacao e ligada ou desligada por configuracao
+ * (app.security.enabled), e nao por codigo: o mesmo build serve o
+ * desenvolvimento aberto e a producao com tudo protegido.
  *
- *   - DESENVOLVIMENTO / AVALIACAO (padrao): os endpoints ficam abertos,
- *     exatamente como o enunciado do teste pede ("GET /unidades" precisa
- *     responder sem login para o avaliador testar rapidinho).
+ * Quando ligada, ha dois modos - HTTP Basic ou token JWT - e os dois
+ * produzem o mesmo objeto de autenticacao, entao as regras de acesso nao
+ * mudam.
  *
- *   - PRODUCAO (perfil "prod" / variavel SECURITY_ENABLED=true): TODA rota
- *     exige usuario e senha. E o mesmo codigo, sem if espalhado pelo
- *     projeto. Isso se chama "seguranca por configuracao" e e muito mais
- *     seguro do que confiar que ninguem esqueceu de proteger um endpoint.
- *
- *  ------------------------------------------------------
- *  OS DOIS MODOS DE AUTENTICACAO
- *  ------------------------------------------------------
- *  Quando a seguranca esta ligada, ha duas formas possiveis de se
- *  autenticar, escolhidas pela propriedade "app.security.mode":
- *
- *   - "basic" (padrao): HTTP Basic, como antes. O navegador ou o
- *     cliente envia o cabecalho "Authorization: Basic <base64>". E o
- *     mecanismo classico do HTTP e nao exige estado no servidor.
- *
- *   - "jwt": o cliente faz POST /auth/login, recebe um par de tokens e
- *     envia o token de acesso no cabecalho "Authorization: Bearer <token>".
- *
- *  Os dois modos produzem o MESMO objeto de autenticacao no contexto de
- *  seguranca, entao as regras de acesso (as "authorizeRequests") sao
- *  identicas nos dois casos. Trocar de modo e mudar UMA propriedade.
- *
- *  ------------------------------------------------------
- *  POR QUE DESLIGAR O CSRF?
- *  ------------------------------------------------------
- *  CSRF (Cross-Site Request Forgery) e um ataque em que o navegador
- *  envia, sem querer, uma requisicao para outro site usando a sessao
- *  ativa da pessoa. A defesa classica (token CSRF) existe porque
- *  navegadores anexam cookies automaticamente a requisicoes de sites.
- *
- *  Nesta API nao ha cookie de sessao: a autenticacao e por cabecalho
- *  (HTTP Basic ou Bearer), que o navegador so envia se o codigo pedir.
- *  Sem cookie automatico, o ataque nao se aplica - e o que a propria
- *  documentacao do Spring Security recomenda para APIs stateless.
- *
- *  ------------------------------------------------------
- *  POR QUE "STATELESS"?
- *  ------------------------------------------------------
- *  SessionCreationPolicy.STATELESS diz que o servidor nao cria sessao
- *  no servidor. Isso deixa a API mais rapida (nada de ir ao banco/redis
- *  para checar a sessao), mais simples de escalar (varias instancias do
- *  servidor working sem compartilhar estado) e mais segura (menos estado
- *  acumulado = menos superficie de ataque).
- * ============================================================================
+ * A API e stateless e nao usa cookie de sessao, e por isso o CSRF nao se
+ * aplica.
  */
 @Configuration
 @EnableWebSecurity
@@ -207,7 +161,7 @@ public class SecurityConfig {
 
             if ("jwt".equalsIgnoreCase(modoSeguranca)) {
 
-                // ---- MODO JWT ----
+                // Modo JWT
                 // O filtro de JWT entra ANTES do filtro de autenticacao
                 // basica: assim, uma requisicao com "Authorization: Bearer"
                 // e autenticada pelo token, e uma com "Authorization: Basic"
@@ -217,10 +171,8 @@ public class SecurityConfig {
 
             } else {
 
-                // ---- MODO HTTP BASIC ----
-                // ------------------------------------------------------------
+                // Modo HTTP basic
                 //  POR QUE NAO USAMOS "http.httpBasic()"?
-                // ------------------------------------------------------------
                 //  Porque o HttpBasicConfigurer do Spring Security 5.7 expoe
                 //  apenas tres metodos: realmName(), authenticationEntryPoint()
                 //  e authenticationDetailsSource(). NAO existe um metodo
@@ -239,7 +191,6 @@ public class SecurityConfig {
                 //  do container de servlet (fora da cadeia do Spring Security)
                 //  e ele rodaria duas vezes - uma delas sem nenhum filtro de
                 //  seguranca ao redor, o que seria um furo.
-                // ------------------------------------------------------------
                 AuditedBasicAuthenticationFilter basicAuthenticationFilter =
                         new AuditedBasicAuthenticationFilter(
                                 authenticationConfiguration.getAuthenticationManager(),
@@ -250,7 +201,7 @@ public class SecurityConfig {
                 http.addFilterAt(basicAuthenticationFilter, BasicAuthenticationFilter.class);
             }
 
-            // CONTROLE ANTI-FORCA-BRUTA.
+            // Controle anti-forca-bruta.
             // O filtro e registrado ANTES do BasicAuthenticationFilter
             // (que e quem valida usuario e senha). Assim, um IP ja
             // bloqueado nem chega a tentar validar a senha: economiza CPU
@@ -265,7 +216,7 @@ public class SecurityConfig {
                 .httpBasic().disable();
         }
 
-        // TRILHA DE AUDITORIA DAS ALTERACOES DE DADOS.
+        // Trilha de auditoria das alteracoes de dados.
         // Registrada em AMBOS os modos (desenvolvimento e producao),
         // porque a trilha de auditoria e tao importante quanto a
         // autenticacao. Ela roda DEPOIS do FilterSecurityInterceptor
@@ -274,7 +225,7 @@ public class SecurityConfig {
         // de seguranca.
         http.addFilterAfter(auditTrailFilter, FilterSecurityInterceptor.class);
 
-        // NOTA SOBRE O LIMITADOR DE REQUISICOES E O IDENTIFICADOR DE
+        // Nota sobre o limitador de requisicoes e o identificador de
         // CORRELACAO: eles NAO sao registrados aqui, e sim no container de
         // servlet (via @Order nas proprias classes). O motivo e' que os dois
         // sao concerns TRANSVERSAIS - precisam valer para TODAS as
@@ -300,9 +251,7 @@ public class SecurityConfig {
      * bean entregue pelo PasswordEncoderConfig, para que a comparacao
      * use exatamente o mesmo algoritmo dos hashes gravados no banco.
      *
-     * ------------------------------------------------------
-     *  POR QUE O USUARIO EXISTE MESMO COM A AUTENTICACAO DESLIGADA?
-     *  ------------------------------------------------------
+     *  Por que o usuario existe mesmo com a autenticacao desligada?
      *  Porque o endpoint POST /auth/login precisa funcionar para que o
      *  avaliador possa TESTAR o fluxo de token. Com a autenticacao
      *  desligada, as rotas estao abertas de qualquer jeito - a presenca

@@ -1,8 +1,8 @@
 name: Contexto do Pull Request
 
-about: Descreva a mudanca de forma que quem revisa consiga entender sem precisar perguntar
+about: Descreva a mudança de forma que quem revisa entenda sem precisar perguntar
 
-title: "[tipo] descricao curta da mudanca"
+title: "[tipo] descrição curta da mudança"
 
 labels: []
 
@@ -10,13 +10,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        Obrigado por contribuir! Este formulario existe para poupar tempo de
-        quem revisa. Preencha o que se aplica.
+        Preencha o que se aplica.
 
   - type: input
     id: tipo
     attributes:
-      label: Qual o tipo desta mudanca?
+      label: Qual o tipo desta mudança?
       placeholder: "feat, fix, docs, refactor, chore, perf, test"
     validations:
       required: true
@@ -24,12 +23,12 @@ body:
   - type: dropdown
     id: modulo
     attributes:
-      label: Qual modulo foi alterado?
+      label: Qual módulo foi alterado?
       options:
         - API - Java / Spring Boot
         - Frontend - Vue
         - Banco de dados / scripts SQL
-        - Documentacao
+        - Documentação
         - Infraestrutura / CI
         - varios (ou outro)
     validations:
@@ -38,26 +37,26 @@ body:
   - type: textarea
     id: descricao
     attributes:
-      label: O que esta mudanca faz?
+      label: O que esta mudança faz?
       description: |
-        Descreva o COMPORTAMENTO, nao o codigo. Diga o que passou a ser
-        possivel fazer (ou deixou de ser possivel) depois desta mudanca.
+        Descreva o COMPORTAMENTO, não o código: o que passou a ser possível
+        fazer (ou deixou de ser) depois desta mudança.
       placeholder: |
-        Antes: o usuario nao conseguia renovar o token sem digitar a senha.
-        Depois: a renovacao e automatica, com deteccao de reuso.
+        Antes: o usuário não conseguia renovar o token sem digitar a senha.
+        Depois: a renovação é automática, com detecção de reuso.
     validations:
       required: true
 
   - type: textarea
     id: seguranca
     attributes:
-      label: Esta mudanca tem impacto em seguranca?
+      label: Esta mudança tem impacto em segurança?
       description: |
-        Marque se a mudanca toca em autenticacao, autorizacao, dados sensiveis,
-        validacao de entrada ou dependencias. Se sim, explique o porque.
+        Marque se toca em autenticação, autorização, dados sensíveis,
+        validação de entrada ou dependências.
       placeholder: |
-        Ex.: a senha agora e gravada com Argon2id; os hashes antigos em BCrypt
-        continuam valendo e sao migrados no proximo login.
+        Ex.: a senha agora é gravada com Argon2id; os hashes antigos em BCrypt
+        continuam valendo e são migrados no próximo login.
     validations:
       required: false
 
@@ -67,7 +66,7 @@ body:
       label: Como testar
       description: |
         Passos objetivos para reproduzir. Se for um bug, inclua como
-        reproduzir o comportamento errado ANTES da mudanca.
+        reproduzir o comportamento errado ANTES da mudança.
       placeholder: |
         mvn test
         curl -H "Authorization: Bearer <token>" http://localhost:8081/unidades
@@ -81,9 +80,9 @@ body:
       options:
         - label: Rodei "mvn test" e "npm run lint" localmente e passaram
           required: true
-        - label: A documentacao foi atualizada (README, MANUAL-OPERACAO ou IDENTIDADE-VISUAL)
+        - label: A documentação foi atualizada (README ou MANUAL-OPERACAO)
           required: false
         - label: Nenhuma senha, chave ou token real foi versionado
           required: true
-        - label: A migracao do banco (se houver) e' idempotente
+        - label: A migração do banco (se houver) é idempotente
           required: false

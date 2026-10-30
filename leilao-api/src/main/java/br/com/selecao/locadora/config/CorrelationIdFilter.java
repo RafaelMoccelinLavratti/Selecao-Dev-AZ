@@ -13,72 +13,15 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * ============================================================================
- *  FILTRO: IDENTIFICADOR DE CORRELACAO (CORRELATION ID)
- * ============================================================================
+ * Filtro que gera o identificador de correlacao da requisicao.
  *
- *  ------------------------------------------------------
- *  O PROBLEMA QUE ESTE FILTRO RESOLVE
- *  ------------------------------------------------------
- *  Imagina o seguinte cenario: o usuario clica em "salvar" na tela de
- *  empresas e a tela fica carregando. O front-end mostra "algo deu erro".
- *  O usuario liga para o suporte e diz "deu erro ao salvar".
+ * E o que liga "o erro que o usuario viu na tela" com "as linhas de log do
+ * servidor". O identificador vai no cabecalho X-Correlation-Id, no MDC (e
+ * da para todas as linhas de log) e na resposta.
  *
- *  O suporte olha o log do servidor. Ha mil requisicoes por segundo, de
- *  varios usuarios, de varios ambientes. Como saber QUAL requisicao foi a
- *  do usuario que ligou?
- *
- *  A resposta classica: cada requisicao recebe um identificador unico, e
- *  esse identificador aparece:
- *      - no log do servidor (em TODAS as linhas da requisicao);
- *      - no cabecalho de resposta "X-Correlation-Id";
- *      - na tela de erro do usuario.
- *
- *  Com isso, o suporte pede: "me manda o codigo que apareceu no canto da
- *  tela" - e o time de TI filtra o log por aquele codigo e acha exatamente
- *  a requisicao, com todo o contexto.
- *
- *  Isso e o padrao "correlation id" (tambem chamado de "request id" ou
- *  "trace id"), e e o mesmo mecanismo que sistemas grandes usam para
- *  rastrear uma operacao entre varios servicos.
- *
- *  ------------------------------------------------------
- *  POR QUE USAR O "MDC"?
- *  ------------------------------------------------------
- *  O MDC (Mapped Diagnostic Context) e um recurso do SLF4J, usado pelo
- *  Logback, que guarda um conjunto de pares chave/valor Associate com a
- *  THREAD que esta executando. Ao escrever no log, o padrao
- *  "%X{correlationId}" imprime automaticamente o valor daquele contexto.
- *
- *  O detalhe importante: como o MDC e cleaned no final (no bloco
- *  finally), o valor NAO vaza para a requisicao seguinte. Sem esse
- *  cleanup, um ID de requisicao poderia aparecer em um log que nao tem
- *  nada a ver - e o rastreamento passaria a ser confuso em vez de util.
- *
- *  ------------------------------------------------------
- *  E O CLIENTE PODE ENVIAR O ID?
- *  ------------------------------------------------------
- *  Sim. Se a requisicao ja vier com o cabecalho "X-Correlation-Id",
- *  reaproveitamos o valor. Isso e essencial quando ha varios servicos:
- *  o "servico A" gera o ID e o passa para o "servico B", e o log dos
- *  dois fica ligado pelo mesmo identificador.
- *
- *  Mas com um cuidado: o valor precisa ser SANITIZADO. Sem isso, um
- *  cliente poderia mandar um cabecalho com quebras de linha e injetar
- *  linhas falsas no log (ataque de log injection / log forging). Por
- *  isso aceitamos apenas caracteres alfanumericos, "-" e "_", ate 64
- *  caracteres. Se o valor nao passar no filtro, geramos um novo.
- *
- *  ------------------------------------------------------
- *  ONDE ESTE FILTRO SE POSICIONA?
- *  ------------------------------------------------------
- *  Ele e o PRIMEIRO filtro do container de servlet (@Order com a maior
- *  prioridade). Isso e' proposital: o identificador precisa estar no
- *  contexto de log (MDC) ANTES de qualquer outro filtro escrever uma
- *  linha - inclusive das linhas de "requisicao barrada pelo limitador de
- *  volume", que sao justamente as mais importantes para investigar um
- *  ataque.
- * ============================================================================
+ * Se o cliente ja mandou o cabecalho, o valor e reaproveitado - e
+ * descartado se nao for um identificador valido, para nao dar entrada para
+ * log forging.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)

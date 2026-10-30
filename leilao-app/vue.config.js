@@ -1,54 +1,36 @@
 /**
- * ============================================================================
- *  CONFIGURACAO DO VUE CLI (vue.config.js)
- * ============================================================================
+ * Configuracao do Vue CLI (vue.config.js).
  *
- *  PARA QUE SERVE ESTE ARQUIVO?
- *  O Vue CLI (ferramenta de build) le este arquivo para saber como
- *  compilar e servir o frontend.
+ * Decisao 1: Vue CLI 5 em vez do 4 (que vinha no starter).
  *
- *  ------------------------------------------------------
- *  DECISAO 1: POR QUE O VUE CLI 5 E NAO O 4 (que vinha no starter)?
- *  ------------------------------------------------------
- *  O starter usava @vue/cli-service 4, que empacota o webpack 4. O webpack 4
- *  calcula o hash dos arquivos usando o algoritmo MD4 do OpenSSL - e o
- *  OpenSSL 3 (padrao em Linux e a partir do Node 17) REMOVEU esse
- *  algoritmo. Resultado: ao rodar "npm run serve" em uma maquina atual,
- *  o build quebra com o erro:
+ * O starter usava @vue/cli-service 4, que empacota o webpack 4. O webpack 4
+ * calcula o hash dos arquivos usando o algoritmo MD4 do OpenSSL - e o
+ * OpenSSL 3 (padrao em Linux e a partir do Node 17) REMOVEU esse algoritmo.
+ * Ao rodar "npm run serve" em uma maquina atual, o build quebra com:
  *
- *      error:0308010C:digital envelope routines::unsupported
- *      (ERR_OSSL_EVP_UNSUPPORTED)
+ *     error:0308010C:digital envelope routines::unsupported
+ *     (ERR_OSSL_EVP_UNSUPPORTED)
  *
- *  A solucao mais comum seria "--openssl-legacy-provider", mas ela so
- *  existe a partir do Node 17 (em versoes anteriores, o Node reclama do
- *  parametro desconhecido) e descontinua no Node 22+.
+ * A solucao mais comum seria "--openssl-legacy-provider", mas ela so existe
+ * a partir do Node 17 e descontinua no Node 22+. Subir para o Vue CLI 5
+ * (webpack 5) resolve de vez: o hash passa a ser SHA-256 e o build roda sem
+ * nenhuma flag especial, do Node 12 ate o Node 24.
  *
- *  A solucao DEFINITIVA e subir para o Vue CLI 5, que usa o webpack 5.
- *  O webpack 5 usa o hash SHA-256 (ainda disponivel) e roda sem nenhuma
- *  flag especial, do Node 12 ate o Node 24. Alem disso, o webpack 5 tem
- *  tree-shaking melhor e build mais rapido.
+ * Decisao 2: o Vuetify e importado "completo".
  *
- *  ------------------------------------------------------
- *  DECISAO 2: POR QUE O VUETIFY E IMPORTADO "COMPLETO"?
- *  ------------------------------------------------------
- *  O Vuetify 2 pode ser usado de duas formas:
- *    - "a la carte" (importar so os componentes usados): exige o
- *      vuetify-loader e o sass, e a configuracao de cores fica em
- *      arquivos .scss;
- *    - "completo" (importar a biblioteca inteira): funciona com o CSS
- *      pronto, sem sass, sem loader.
- *  Escolhi a forma completa: menos dependencias, menos chance de erro de
- *  build e o mesmo resultado visual. O tema continua customizavel pelo
- *  objeto "theme" do plugin Vuetify (src/plugins/vuetify.js).
+ * O Vuetify 2 pode ser usado a la carte (importando so os componentes
+ * usados), o que exige o vuetify-loader e o sass, ou de forma completa, que
+ * funciona com o CSS pronto. A forma completa foi escolhida: menos
+ * dependencias, menos chance de erro de build e o mesmo resultado visual. O
+ * tema continua customizavel pelo objeto "theme" do plugin Vuetify
+ * (src/plugins/vuetify.js).
  *
- *  ------------------------------------------------------
- *  DECISAO 3: POR QUE A PORTA E A 8080 E O "HOST" E A 0.0.0.0?
- *  ------------------------------------------------------
- *  A API roda na 8081 e o frontend na 8080 (as duas em portas diferentes e,
- *  por isso, o CORS configurado no backend e necessario).
- *  "host: 0.0.0.0" permite acessar o servidor por IP da maquina na rede
- *  local - util para testar no celular ou em outro computador.
- * ============================================================================
+ * Decisao 3: porta 8080 e host 0.0.0.0.
+ *
+ * A API roda na 8081 e o frontend na 8080 - duas origens diferentes, e por
+ * isso o CORS do backend precisa estar configurado. O "host: 0.0.0.0"
+ * permite acessar o servidor pelo IP da maquina na rede local, util para
+ * testar no celular ou em outro computador.
  */
 module.exports = {
   /**

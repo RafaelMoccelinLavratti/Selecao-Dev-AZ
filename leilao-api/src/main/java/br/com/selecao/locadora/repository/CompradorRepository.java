@@ -8,17 +8,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * ============================================================================
- *  REPOSITORY: COMPRADOR
- * ============================================================================
+ * Repositorio do vinculo comprador.
  *
- *  Diferenca em relacao aos outros: o identificador aqui e COMPOSTO
- *  (empresa, leilao). Por isso o JpaRepository recebe o tipo CompradorId
- *  em vez de Integer.
- *
- *  Exemplo do que isso significa na pratica:
- *      repository.findById(new CompradorId(3, 1))  -> empresa 3 no leilao 1
- * ============================================================================
+ * O identificador aqui e composto (empresa, leilao), e por isso o
+ * JpaRepository recebe o tipo CompradorId.
  */
 @Repository
 public interface CompradorRepository extends JpaRepository<Comprador, CompradorId> {

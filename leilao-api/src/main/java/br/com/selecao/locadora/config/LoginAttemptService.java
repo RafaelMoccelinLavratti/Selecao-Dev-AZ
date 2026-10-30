@@ -13,77 +13,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * ============================================================================
- *  SERVICO: CONTROLE DE TENTATIVAS DE LOGIN (ANTI-FORCA-BRUTA)
- * ============================================================================
+ * Controle das tentativas de login.
  *
- *  ------------------------------------------------------
- *  O PROBLEMA QUE ESTE SERVICO RESOLVE
- *  ------------------------------------------------------
- *  A autenticacao HTTP Basic compara a senha com o hash BCrypt. O BCrypt e
- *  lento DE PROPOSITO - e o que torna caro um ataque de forca bruta. Mas
- *  "caro" nao e "impossivel": um atacante com um dicionario de senhas
- *  comuns pode disparar milhares de tentativas por minuto. Sem nenhum
- *  controle, o ataque seria detectado apenas quando alguém notasse no log.
+ * O bloqueio existe em dois niveis: por usuario e por IP, porque os dois
+ * ataques sao reais - um contra uma conta especifica e outro contra o
+ * sistema em geral.
  *
- *  Este servico implementa o controle classico de "conta bloqueada
- *  temporariamente": conta as falhas de autenticacao em uma janela de
- *  tempo e bloqueia novas tentativas quando o limite e estourado.
- *
- *  E o item A07:2021 da OWASP Top 10 ("Identification and Authentication
- *  Failures"), que descreve exatamente este cenario.
- *
- *  ------------------------------------------------------
- *  AS DUAS "DIMENSOES" DO CONTROLE
- *  ------------------------------------------------------
- *  O bloqueio e feito em dois niveis, porque os dois Attacks sao reais:
- *
- *  1) POR USUARIO + IP (limite menor, ex.: 5 falhas)
- *     Protege a conta de um usuario especifico. Se alguem esta tentando
- *     adivinhar a senha do "admin", a conta e bloqueada mesmo que o
- *     atacante troque de IP a cada tentativa.
- *
- *  2) POR IP (limite maior, ex.: 20 falhas)
- *     Protege a APLICACAO. Sem esse limite, um atacante poderia tentar
- *     5 senhas para 1000 usuarios diferentes a partir do mesmo IP - o
- *     limite por usuario nunca seria estourado, mas a API receberia um
- *     volume absurdo de tentativas (e o BCrypt, lento, consumiria CPU).
- *
- *  A combinacao dos dois e o que fecha o problema: a conta fica protegida
- *  E o servidor fica protegido.
- *
- *  ------------------------------------------------------
- *  POR QUE OS DADOS FICAM EM MEMORIA?
- *  ------------------------------------------------------
- *  Este servico guarda o contador em um ConcurrentHashMap, ou seja, na RAM
- *  do processo. Isso e uma escolha CONSCIENTE e possui um tradeoff que
- *  vale explicar em entrevista:
- *
- *  - A VANTAGEM: zero infraestrutura extra. Nao precisa de Redis, nem de
- *    tabela no banco. Funciona com um unico comando e escala bem para o
- *    volume de um sistema interno ou de avaliacao.
- *
- *  - A LIMITACAO: o contador vive na memoria do processo. Se a aplicacao
- *    subir com 3 instancias, cada uma tem seu proprio contador (um
- *    atacante ganha 3x o limite). E se a aplicacao reiniciar, os
- *    contadores zeram.
- *
- *  Em producao real, a solucao canonica e guardar esse estado no REDIS
- *  (com TTL, que e o mesmo tempo da janela) ou em uma tabela no banco.
- *  A interface deste servico ja esta pronta para isso: basta trocar o
- *  "Map" por um "RedisTemplate" - o resto do codigo nao muda.
- *
- *  ------------------------------------------------------
- *  UMA REGRA IMPORTANTE: NAO REVELAR QUEM EXISTE
- *  ------------------------------------------------------
- *  O contador e por (IP + usuario). Isso significa que um atacante pode
- *  descobrir se um usuario existe: se ele errar a senha 6 vezes e o
- *  sistema devolver 429 (bloqueado), o usuario provavelmente existe. Por
- *  isso a mensagem de erro devolvida ao cliente e SEMPRE a mesma
- *  ("credenciais invalidas"), independentemente do motivo real - tanto
- *  no caso de "usuario inexistente" quanto de "senha errada" e de
- *  "conta bloqueada". Ver AuthenticationAuditHandler.
- * ============================================================================
+ * Os contadores ficam em memoria (ConcurrentHashMap). E uma escolha
+ * consciente: o estado se perde ao reiniciar a aplicacao, mas nao se paga
+ * o custo de um banco a cada tentativa.
  */
 @Service
 public class LoginAttemptService {
@@ -395,9 +333,7 @@ public class LoginAttemptService {
     }
 
     /**
-     * =========================================================================
      *  REGISTRO DE TENTATIVAS (classe interna)
-     * =========================================================================
      *
      *  Agrupa o CONTADOR (quantas falhas) e o VALIDADE (ate quando vale).
      *  O contador e um AtomicInteger porque varias threads podem falhar ao

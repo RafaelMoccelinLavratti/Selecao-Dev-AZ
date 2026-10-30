@@ -1,8 +1,6 @@
 <template>
   <!--
-    ==========================================================================
-     COMPONENTE: CONFIRMACAO DE EXCLUSAO
-    ==========================================================================
+     Componente: confirmacao de exclusao
      Toda exclusao passa por uma confirmacao. Dois motivos:
        1) UX: exclusao nao tem "Ctrl+Z". Um clique acidental em um icone
           pequeno (o botao "lixeira" ao lado de cada linha) apagaria um
@@ -12,7 +10,6 @@
 
      O componente e "generico": recebe o texto e emite os eventos
      'confirmar' e 'cancelar'. Quem chama decide o que fazer.
-    ==========================================================================
   -->
   <v-dialog v-model="visivel" max-width="420">
     <v-card>
@@ -36,43 +33,13 @@
 
 <script>
 /**
- * ============================================================================
- *  SCRIPT DO COMPONENTE: CONFIRMACAO DE EXCLUSAO
- * ============================================================================
+ * Script do componente de confirmacao de exclusao.
  *
- *  ------------------------------------------------------
- *  O PADRAO "PROPS + EVENTOS" (props down, events up)
- *  ------------------------------------------------------
- *  Este componente e "generico": ele nao sabe O QUE esta sendo excluido.
- *  Ele sabe apenas que precisa perguntar "tem certeza?" e avisar quem
- *  chamou a resposta.
+ * Segue o padrao "props + eventos": o componente e generico e nao sabe o
+ * que esta sendo excluido - recebe o texto e emite o evento de confirmacao.
  *
- *  Isso segue o padrao classico do Vue, chamado de "props down, events up"
- *  (propriedades descem, eventos sobem):
- *
- *      QUEM CHAMA (a tela)                    ESTE COMPONENTE
- *      -------------------------               ------------------
- *      <confirm-dialog                        recebe "titulo" e "mensagem"
- *        titulo="..."                          como "props" (dados que
- *        :mensagem="..."                       DESCEM para o filho)
- *        @confirmar="confirmarExclusao"        emite o evento "confirmar"
- *        @cancelar="..." />                    (evento que SOBE para o pai)
- *
- *  Quem controla a EXECUCAO e a tela, nao o dialogo. O dialogo apenas
- *  pergunta e responde. Isso torna o componente reutilizavel: serve
- *  para excluir unidade, empresa, lote, leilao...
- *
- *  ------------------------------------------------------
- *  POR QUE USAR "$refs"?
- *  ------------------------------------------------------
- *  O dialogo precisa ser ABERTO de fora ("this.$refs.dialogoExclusao.abrir()").
- *  Para isso, a tela registra o componente com "ref" no template:
- *
- *      <confirm-dialog ref="dialogoExclusao" ... />
- *
- *  E o Vue guarda a instancia do componente em "this.$refs.dialogoExclusao",
- *  permitindo chamar os metodos publicos dele.
- * ============================================================================
+ * Exclusao nao tem Ctrl+Z, e o botao de lixeira fica a poucos pixels do de
+ * editar: por isso toda exclusao passa por aqui.
  */
 export default {
   /**
@@ -81,9 +48,7 @@ export default {
   name: 'ConfirmDialog',
 
   /**
-   * ------------------------------------------------------------------
    *  PROPS: os dados que o componente PAI envia para este.
-   * ------------------------------------------------------------------
    *
    *  Cada prop pode declarar o "type" (tipo esperado) e o "default"
    *  (valor usado quando o pai nao informa). Declarar o tipo evita erros
@@ -113,9 +78,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  DADOS REATIVOS (data)
-   * ------------------------------------------------------------------
    *
    *  "visivel" controla a abertura do <v-dialog>. Comeca em false
    *  (dialogo fechado) porque o dialogo so aparece quando o usuario
@@ -128,9 +91,7 @@ export default {
   },
 
   /**
-   * ------------------------------------------------------------------
    *  METODOS (methods)
-   * ------------------------------------------------------------------
    */
   methods: {
     /**

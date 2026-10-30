@@ -20,19 +20,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * ============================================================================
- *  CAMADA DE NEGOCIO (business): LEILAO
- * ============================================================================
+ * Regras de negocio do leilao.
  *
- *  REGRAS DESTA CAMADA:
- *  1) O VENDEDOR tem que existir. O banco tambem garantiria isso (a FK),
- *     mas validando aqui devolvemos mensagem clara em portugues, e ainda
- *     evitamos uma consulta ao banco desnecessaria.
- *
- *  2) Um leilao nao pode ser excluido se ainda tiver lotes: excluir as
- *     linhas do leilao apagaria o historico dos lotes (a FK esta com
- *     ON DELETE CASCADE). Preferimos avisar o usuario.
- * ============================================================================
+ * Alem do CRUD, e aqui que mora a listagem resumida (exercicio 7), que traz
+ * vendedor e total de cada leilao, e a regra de que o vendedor precisa
+ * existir - validada aqui para devolver mensagem em portugues em vez de
+ * erro de banco.
  */
 @Service
 public class LeilaoBO {

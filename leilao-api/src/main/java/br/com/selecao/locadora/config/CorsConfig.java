@@ -6,39 +6,12 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * ============================================================================
- *  CONFIGURACAO: CORS (Cross-Origin Resource Sharing)
- * ============================================================================
+ * Configuracao de CORS.
  *
- *  O PROBLEMA QUE ESTA CONFIGURACAO RESOLVE?
- *  O frontend (Vue) roda na porta 8080 e a API (Spring Boot) na 8081.
- *  Sao ORIGENS DIFERENTES (host:porta diferentes). O navegador, por
- *  seguranca (a "politica de origem mesma" / Same-Origin Policy), bloqueia
- *  por padrao o JavaScript de uma pagina em 8080 de fazer requisicoes a
- *  8081. Sem CORS, a tela funciona no Postman mas nao funciona no navegador
- *  - e o erro aparece no console como "CORS policy: No 'Access-Control-
- *  Allow-Origin' header is present".
- *
- *  CORS e o MECANISMO OFICIAL do navegador para autorizar essa troca.
- *  O servidor responde com cabecalhos dizendo "eu aceito requisicoes
- *  vindas de TAL origem".
- *
- *  -------------------------------------------------------
- *  PONTO DE SEGURANCA (importante!)
- *  -------------------------------------------------------
- *  Existe um padrao perigoso muito comum:
- *
- *      addAllowedOrigin("*")  +  allowCredentials(true)
- *
- *  Isso liberaria QUALQUER site da internet para fazer requisicoes
- *  autenticadas na nossa API - o chamado ataque CSRF cross-origin.
- *
- *  Aqui a lista de origens e EXPLICITA e vem de variavel de ambiente
- *  (app.cors.origins). Em desenvolvimento liberamos o servidor do Vue
- *  (localhost:8080). Em producao, quem implanta define exatamente quais
- *  dominios podem chamar a API - e o padrao seguro (sem nenhuma origem
- *  liberada) continua valendo se a variavel nao for definida.
- * ============================================================================
+ * O frontend roda na 8080 e a API na 8081: sao origens diferentes, e o
+ * navegador so aceita a chamada se a API autorizar explicitamente. A
+ * lista de origens vem de app.cors.origins - nunca "*", porque "*" junto
+ * de credenciais permitiria CSRF entre origens.
  */
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
