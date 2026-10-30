@@ -46,11 +46,31 @@ public final class ClientIpResolver {
             String cadeia = request.getHeader(CABECALHO_X_FORWARDED_FOR);
 
             if (cadeia != null && !cadeia.trim().isEmpty()) {
-                // O primeiro IP da lista e o cliente original.
-                String primeiro = cadeia.split(",")[0].trim();
 
-                if (!primeiro.isEmpty()) {
-                    return primeiro;
+                // O IP confiavel e' o ULTIMO elemento da cadeia.
+                //
+                // Isto e' o ponto que costuma ser feito ao contrario. O
+                // cabecalho X-Forwarded-For e' construido assim: o
+                // cliente escreve o que quiser, e cada proxy que a
+                // requisicao atravessa ACRESCENTA o IP de quem ele viu.
+                //
+                //   cliente envia:   X-Forwarded-For: 10.0.0.1
+                //   proxy acrescenta: X-Forwarded-For: 10.0.0.1, 203.0.113.7
+                //                                                     ^^^^^^^^
+                //                                          este e' o IP real
+                //
+                // O primeiro elemento e' o que o CLIENTE escolheu. Ler o
+                // primeiro e' entregar o controle do IP ao atacante: como
+                // o IP e' a chave do controle anti-forca-bruta e do
+                // limitador de requisicoes, basta trocar esse valor a
+                // cada chamada para nunca acumular contagem.
+                //
+                // O ultimo elemento e' o que o proxy acabou de acrescentar,
+                // e portanto nao pode ter sido forjado pelo cliente.
+                String ipConfiavel = ultimoIpDaCadeia(cadeia);
+
+                if (ipConfiavel != null) {
+                    return ipConfiavel;
                 }
             }
 
@@ -68,5 +88,32 @@ public final class ClientIpResolver {
         String remoto = request.getRemoteAddr();
 
         return (remoto == null || remoto.trim().isEmpty()) ? "desconhecido" : remoto;
+    }
+
+    /**
+     * Pega o ultimo IP valido da cadeia do X-Forwarded-For.
+     *
+     * Percorre a cadeia de tras para frente, ignorando as entradas
+     * vazias. Percorrer de tras para frente (e nao pegar direto o
+     * ultimo) protege contra um proxy mal configurado que mande a
+     * cadeia com espacos ou entradas em branco no fim.
+     *
+     * @param cadeia o valor bruto do cabecalho X-Forwarded-For
+     * @return o IP, ou null se a cadeia nao tiver nenhum valido
+     */
+    private static String ultimoIpDaCadeia(String cadeia) {
+
+        String[] partes = cadeia.split(",");
+
+        for (int i = partes.length - 1; i >= 0; i--) {
+
+            String ip = partes[i].trim();
+
+            if (!ip.isEmpty()) {
+                return ip;
+            }
+        }
+
+        return null;
     }
 }
