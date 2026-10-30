@@ -273,6 +273,33 @@ public class LoginAttemptService {
     }
 
     /**
+     * Diz quantas falhas o usuario acumulou neste IP.
+     *
+     * Existe para o diagnostico e para os testes: e a forma de conferir
+     * que os dois caminhos de login (HTTP Basic e JSON) somam no mesmo
+     * contador. Sem este metodo, nao daria para provar de dentro que o
+     * login por JSON tambem esta sendo limitado.
+     *
+     * @param ip      endereco IP de origem
+     * @param usuario nome de usuario
+     * @return o numero de falhas registradas na janela
+     */
+    public int contarTentativas(String ip, String usuario) {
+        return contar(chaveUsuario(ip, usuario));
+    }
+
+    /**
+     * Diz quantas falhas o IP acumulou, somando todas as tentativas
+     * feitas a partir dele (de qualquer usuario).
+     *
+     * @param ip endereco IP de origem
+     * @return o numero de falhas registradas na janela
+     */
+    public int contarTentativas(String ip) {
+        return contar(chaveIp(ip));
+    }
+
+    /**
      * Devolve os registros que ainda estao dentro da janela de tempo.
      * Joga fora da memoria os que ja venceram (limpeza em tempo de
      * acesso, pra nao precisar de um agendador).

@@ -64,7 +64,7 @@ Os testes não precisam de banco:
 cd leilao-api && mvn test
 ```
 
-São 63 testes, e `mvn test` passa em qualquer máquina, sem PostgreSQL no ar.
+São 90 testes, e `mvn test` passa em qualquer máquina, sem PostgreSQL no ar.
 
 ## Arquitetura
 
@@ -300,7 +300,7 @@ exigir autenticação existe, está testado e liga por variável de ambiente.
 
 ## Testes
 
-63 testes, todos sem banco de dados (dublês do Mockito ou `@WebMvcTest`).
+90 testes, todos sem banco de dados (dublês do Mockito ou `@WebMvcTest`).
 
 | Classe | O que garante |
 |--------|---------------|
@@ -315,6 +315,9 @@ exigir autenticação existe, está testado e liga por variável de ambiente.
 | `SegurancaIntegracaoTest` | A cadeia de filtros de ponta a ponta: 401 em JSON, 429, 200 com o dado do controller, `WWW-Authenticate` e health check não barrado. |
 | `LoginAttemptServiceTest` | Contadores, janela deslizante, bloqueio por usuário e por IP, limpeza no sucesso. |
 | `ClientIpResolverTest` | `X-Forwarded-For` só é confiado quando há proxy confiável. |
+| `ClientIpResolverProxyTest` | O IP forjado pelo cliente não vira o IP usado: o limitador por IP não pode ser burlado. |
+| `AtaqueSegurancaTest` | Ataques de verdade: token sem assinatura, confusão de algoritmo, SQL injection, IDOR, actuator exposto e tempo de resposta que denuncia usuário. |
+| `AutenticacaoBOTest` | O login por JSON conta a falha no mesmo controle de tentativas que o login por HTTP Basic. |
 
 ## Problemas conhecidos
 
@@ -360,7 +363,7 @@ O total do leilão 1001, por exemplo: `5 × 12.500,00 + 2 × 8.750,00 = 80.000,0
 
 | Comando | Para quê |
 |---|---|
-| `mvn test` | 63 testes, sem depender de banco. |
+| `mvn test` | 90 testes, sem depender de banco. |
 | `mvn package -DskipTests` | Gera o SBOM em `target/bom.json`. |
 | `mvn -Psecurity-scan verify` | Varredura de CVEs. Requer `NVD_API_KEY`. |
 | `npm run lint` | Estilo do frontend. |

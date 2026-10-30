@@ -126,11 +126,13 @@ cd leilao-api
 mvn test
 ```
 
-63 testes, todos sem precisar de banco de dados: rodam em qualquer máquina,
+90 testes, todos sem precisar de banco de dados: rodam em qualquer máquina,
 em menos de 30 segundos.
 
 | Arquivo | Testes | O que verifica |
 |---|---|---|
+| `AtaqueSegurancaTest` | 15 | Ataques de verdade: token sem assinatura, confusão de algoritmo, SQL injection, IDOR, actuator exposto, tempo de resposta |
+| `AutenticacaoBOTest` | 5 | O login por JSON conta a falha no mesmo controle de tentativas do login por HTTP Basic |
 | `SegurancaIntegracaoTest` | 7 | A cadeia de segurança inteira (401, 429, bloqueio, dado do controller) |
 | `TokenJwtBOTest` | 8 | Emissão, adulteração, expiração e tipo dos tokens |
 | `LoginAttemptServiceTest` | 7 | As regras do controle de tentativas de login |
@@ -139,6 +141,7 @@ em menos de 30 segundos.
 | `EmpresaBOTest` | 6 | Regras de negócio da empresa (CNPJ único, senha hasheada) |
 | `UnidadeBOTest` | 5 | Regras de negócio da unidade (normalização, duplicidade) |
 | `ClientIpResolverTest` | 5 | A descoberta do IP real e a proteção contra `X-Forwarded-For` forjado |
+| `ClientIpResolverProxyTest` | 7 | O IP forjado pelo cliente não vira o IP usado (o limite por IP não pode ser burlado) |
 | `LimitadorDeRequisicoesFilterTest` | 5 | O limite por IP e o `Retry-After` |
 | `CorrelationIdFilterTest` | 5 | O identificador de correlação e o log forging |
 | `GeradorHashSenhaTest` | 2 | O gerador de hash usado para montar a massa de dados |
@@ -323,7 +326,7 @@ Tudo deve responder: API em 200, suíte com `BUILD SUCCESS` e lint com
 
 | Sintoma | Causa provável | Solução |
 |---|---|---|
-| `Port 5432 ... connection refused` num teste | algum teste exige banco | os 63 testes foram escritos para não exigir banco; se aparecer isso, é regressão |
+| `Port 5432 ... connection refused` num teste | algum teste exige banco | os 90 testes foram escritos para não exigir banco; se aparecer isso, é regressão |
 | `SegurancaIntegracaoTest` falha | contexto do Spring não subiu | rode `mvn test -Dtest=SegurancaIntegracaoTest` e leia a stack trace |
 
 ### A autenticação não está sendo exigida

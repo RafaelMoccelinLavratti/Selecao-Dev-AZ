@@ -2,6 +2,7 @@ package br.com.selecao.locadora.business;
 
 import br.com.selecao.locadora.dto.LoginRequest;
 import br.com.selecao.locadora.dto.LoginResponse;
+import br.com.selecao.locadora.config.LoginAttemptService;
 import br.com.selecao.locadora.entity.RefreshToken;
 import br.com.selecao.locadora.exception.TokenInvalidoException;
 import br.com.selecao.locadora.repository.RefreshTokenRepository;
@@ -63,6 +64,18 @@ public class AutenticacaoBO {
     private RefreshTokenRepository refreshTokenRepository;
 
     /**
+     * Controle de tentativas de login.
+     *
+     * O login por JSON (este metodo) e o login por HTTP Basic sao dois
+     * caminhos para a mesma porta. Se so um dos dois registrasse a falha
+     * no contador, o outro ficaria sem protecao: o atacante escolheria
+     * o caminho sem controle e o bloqueio por IP nao valeria. Por isso os
+     * dois usam este mesmo servico.
+     */
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
+    /**
      * Hash de uma senha que nao existe, usado pra igualar o tempo de
      * resposta quando o usuario informado nao esta cadastrado.
      *
@@ -93,13 +106,22 @@ public class AutenticacaoBO {
     @Transactional
     public LoginResponse autenticar(LoginRequest request, String ip) {
 
-        UserDetails usuario = buscarUsuarioComDefesa(request.getUsuario());
+        UserDetails usuario = buscarUsuarioComDefesa(request.getUsuario(), ip);
 
         if (!passwordEncoder.matches(request.getSenha(), usuario.getPassword())) {
 
             LOG.warn("AUTENTICACAO | FALHA | usuario={} ip={}", request.getUsuario(), ip);
+
+            // Registra a falha no controle de tentativas. Sem esta linha,
+            // o login por JSON nao contaria para o bloqueio por IP nem por
+            // usuario: o contador so cresceria no caminho do HTTP Basic.
+            loginAttemptService.registrarFalha(ip, request.getUsuario());
+
             throw new TokenInvalidoException("Credenciais invalidas");
         }
+
+        // Login valido: zera o contador do usuario.
+        loginAttemptService.registrarSucesso(usuario.getUsername());
 
         LOG.info("AUTENTICACAO | SUCESSO | usuario={} ip={}", request.getUsuario(), ip);
 
@@ -112,14 +134,25 @@ public class AutenticacaoBO {
      * Se o usuario nao existir, devolve um objeto com o hash falso - de
      * modo que a comparacao de senha demore o mesmo tempo e o atacante
      * nao consiga distinguir os casos pelo tempo de resposta.
+     *
+     * @param nomeUsuario o nome informado na tentativa de login
+     * @param ip          origem da requisicao, usada no controle de tentativas
+     * @return os dados do usuario
      */
-    private UserDetails buscarUsuarioComDefesa(String nomeUsuario) {
+    private UserDetails buscarUsuarioComDefesa(String nomeUsuario, String ip) {
 
         try {
             return userDetailsService.loadUserByUsername(nomeUsuario);
         } catch (UsernameNotFoundException e) {
             // Compara contra o hash falso pra igualar o tempo de resposta.
             passwordEncoder.matches("senha-que-nunca-existe", hashSenhaInexistente);
+
+            // Tambem conta como falha. O usuario pode nao existir, mas o
+            // atacante nao pode saber disso: a resposta e a mesma nos dois
+            // casos, entao ele nao consegue distinguir. Do ponto de vista
+            // do controle de tentativas, e uma tentativa a mais.
+            loginAttemptService.registrarFalha(ip, nomeUsuario);
+
             throw new TokenInvalidoException("Credenciais invalidas");
         }
     }

@@ -34,12 +34,20 @@ class ClientIpResolverTest {
     }
 
     /**
-     * Teste 2: com proxy confiavel, usa o PRIMEIRO IP da cadeia do
-     * X-Forwarded-For (que e o cliente original).
+     * Teste 2: com proxy confiavel, usa o ULTIMO IP da cadeia do
+     * X-Forwarded-For (que e' o IP que o proxy acabou de acrescentar).
+     *
+     * O IP confiavel e' o ultimo, e nao o primeiro: quem escreve o
+     * cabecalho e' o cliente, e cada proxy acrescenta o IP real no fim
+     * da cadeia. Ler o primeiro entregaria ao atacante o controle do
+     * IP - e o IP e' a chave do controle anti-forca-bruta e do
+     * limitador de requisicoes.
+     *
+     * O teste completo desse ataque esta em "ClientIpResolverProxyTest".
      */
     @Test
-    @DisplayName("Com proxy confiavel, usa o primeiro IP da cadeia do X-Forwarded-For")
-    void comProxyUsaPrimeiroIpDaCadeia() {
+    @DisplayName("Com proxy confiavel, usa o ultimo IP da cadeia do X-Forwarded-For")
+    void comProxyUsaUltimoIpDaCadeia() {
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("10.0.0.1");
@@ -47,8 +55,8 @@ class ClientIpResolverTest {
 
         String ip = ClientIpResolver.resolver(request, true);
 
-        assertEquals("203.0.113.9", ip,
-                "O primeiro IP da cadeia e o cliente original.");
+        assertEquals("150.172.238.178", ip,
+                "O ultimo IP da cadeia e' o que o proxy acrescentou, e' o confiavel.");
     }
 
     /**
