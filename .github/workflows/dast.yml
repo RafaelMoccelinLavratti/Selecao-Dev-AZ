@@ -133,11 +133,17 @@ jobs:
       # "Connect to http://localhost:8081 failed: Connection refused",
       # com a API no ar e respondendo no runner.
       #
-      # O volume vai em "/home/zap", e nao em "/zap/wrk". O ZAP roda
-      # como usuario sem privilegio, e "/zap/wrk" nao e' gravavel por
-      # ele - o erro era "Unable to copy yaml file to /zap/wrk/zap.yaml
-      # [Errno 13] Permission denied". Ja "/home/zap" e' o diretorio de
-      # trabalho do proprio usuario.
+      # O volume vai em "/zap/wrk", e o "zap-baseline.py" exige esse
+      # caminho - ele diz "A file based option has been specified but the
+      # directory '/zap/wrk' is not mounted" quando o volume esta em
+      # outro lugar. Nao da para trocar o caminho.
+      #
+      # O "--user" resolve a permissao de escrita. O ZAP roda como
+      # usuario sem privilegio, e o "/zap/wrk" do container pertence ao
+      # root - o erro era "Unable to copy yaml file to /zap/wrk/zap.yaml
+      # [Errno 13] Permission denied". Com "--user $(id -u):$(id -g)" o
+      # processo roda com o mesmo usuario do runner, que e' dono da
+      # pasta montada.
       #
       # O alvo e' o IP da interface do host, e nao "localhost". Com o
       # "--network host" os dois funcionam, mas o IP nao depende da
@@ -170,12 +176,13 @@ jobs:
           docker run --rm \
             --pull always \
             --network host \
-            -v "${{ github.workspace }}/zap-wrk:/home/zap/wrk:rw" \
+            --user "$(id -u):$(id -g)" \
+            -v "${{ github.workspace }}/zap-wrk:/zap/wrk:rw" \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
               -t "http://$ALVO:8081" \
-              -r wrk/zap-report.html \
-              -J wrk/zap-report.json \
+              -r zap-report.html \
+              -J zap-report.json \
               -I
 
       # O relatorio vai como artefato mesmo quando o passo falha: e
