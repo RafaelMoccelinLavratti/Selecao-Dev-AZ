@@ -37,6 +37,42 @@ procedência de cada valor está em [`IDENTIDADE-VISUAL.md`](IDENTIDADE-VISUAL.m
 Resumido. O passo a passo completo, com diagnóstico, está em
 [`MANUAL-OPERACAO.md`](MANUAL-OPERACAO.md).
 
+### O jeito mais rápido (Windows)
+
+Dois scripts cuidam de tudo: banco, API e frontend.
+
+```powershell
+# Sobe tudo (e abre o navegador)
+.\iniciar.ps1
+
+# Sobe sem exigir login na tela (como o enunciado do teste pede)
+.\iniciar.ps1 -SemLogin
+
+# Derruba a API e o frontend (o banco continua no ar, com os dados)
+.\parar.ps1
+```
+
+O `iniciar.ps1` resolve dois detalhes que costumam travar a primeira
+execução:
+
+- **Aponta o `JAVA_HOME` para o JDK 11.** O projeto é Spring Boot 2.7 /
+  Java 11, e o Lombok que vem com ele não compila no JDK 21 (erro
+  `NoSuchFieldError: JCImport.qualid`). O ajuste vale só para a sessão do
+  script.
+- **Sobe o PostgreSQL local**, se o Docker não estiver instalado — usando
+  o cluster que está em `_tools/pgsql`. O `docker-database.yml` continua
+  sendo o caminho oficial; o script é o atalho para esta máquina.
+
+Depois:
+
+| Endereço | O que é |
+|---|---|
+| <http://localhost:8080> | A aplicação |
+| <http://localhost:8081/swagger-ui.html> | A documentação da API |
+| <http://localhost:8081/actuator/health> | O health check |
+
+### O caminho oficial (Docker)
+
 ```bash
 # 1) Banco, já criado e populado na primeira subida
 docker compose -f docker-database.yml up -d
@@ -64,7 +100,12 @@ Os testes não precisam de banco:
 cd leilao-api && mvn test
 ```
 
-São 90 testes, e `mvn test` passa em qualquer máquina, sem PostgreSQL no ar.
+São 159 testes. 158 rodam sem PostgreSQL (dublês do Mockito, `@WebMvcTest` ou
+`@DataJpaTest` sem conexão) e **1 exige o banco no ar** — o
+`AuditoriaPrecisaoTimestampTest`, que grava num PostgreSQL de verdade para
+conferir a precisão do timestamp (é o único lugar onde o arredondamento do
+banco aparece). Sem o banco, esse teste é **pulado**, não reprovado: o build
+passa igual.
 
 ## Arquitetura
 
@@ -183,6 +224,7 @@ Todas as respostas de erro saem no mesmo formato:
 | Autenticação | POST `/auth/login`, POST `/auth/refresh`, POST `/auth/logout`, GET `/auth/me` |
 | Auditoria | GET `/auditoria`, GET `/auditoria/verificar` |
 | Monitoramento | GET `/actuator/health` |
+| Documentação | GET `/swagger-ui.html` (interface), GET `/v3/api-docs` (OpenAPI) |
 
 Cada recurso responde no singular e no plural (`/unidade/1` e `/unidades/1`
 são o mesmo código). O enunciado mistura as duas formas, e aceitar as duas
@@ -219,7 +261,132 @@ custa uma linha. O mesmo vale para `/auth/*` e `/autenticacao/*`.
   inteira.
 - **Falha rápida.** No perfil `prod` as credenciais do banco não têm valor
   padrão. Se faltarem, a aplicação não sobe, em vez de subir com uma senha
-  fraca em produção.
+  fraca em produção. O mesmo vale para a pasta de chaves do JWT e para a
+  chave do HMAC da auditoria: sem elas, a aplicação não sobe.
+- **O logout encerra a sessão de verdade.** O token de acesso é um JWT
+  stateless, então valeria até expirar (15 minutos) depois do logout. Para
+  fechar isso, o token carrega o identificador da família de sessão
+  (`fam`): no logout e na detecção de reuso, a família entra numa lista de
+  bloqueio, e o filtro de JWT recusa qualquer token dela. O registro expira
+  sozinho, quando nenhum token da família puder mais valer.
+- **A documentação da API é gerada do código.** O `springdoc` monta a
+  especificação OpenAPI a partir das anotações, e a interface fica em
+  `/swagger-ui.html`. A documentação não pode ficar desatualizada em
+  relação ao código.
+
+### Autorização: cada empresa vê só o que é dela
+
+O modelo de dados já era multi-empresa — o leilão tem uma empresa
+vendedora, e a tabela `tb_comprador` liga empresa e leilão. O que faltava
+era o controle de acesso que usa essa informação: bastava estar
+autenticado para ver a lista de empresas com CNPJ, telefone, e-mail e nome
+de usuário de todos os concorrentes.
+
+Agora há dois papéis:
+
+| Papel | Quem é | O que alcança |
+|-------|--------|---------------|
+| `ROLE_ADMIN` | Administrador da API (da configuração) | Tudo, inclusive a trilha de auditoria. |
+| `ROLE_EMPRESA` | Usuário cadastrado na `tb_empresa` | Só os próprios dados, os leilões que vende e os em que está inscrita como compradora. |
+
+As regras, em uma frase: **o administrador vê tudo; a empresa vê o que tem
+relação com ela.** O filtro das listagens vem do banco (a query já vem
+com a condição), e o filtro dos recursos individuais é uma verificação de
+posse — a mesma mensagem de negação para recurso existente e inexistente,
+para não revelar quais ids são válidos.
+
+Os usuários das empresas entram com o `usuario` e a `senha` da própria
+`tb_empresa` — o mesmo cadastro que já existia no banco, e que até então
+não servia para ninguém entrar.
+
+### A brecha que a verificação de dono não fechava
+
+Vale registrar aqui, porque é o tipo de detalhe que separa um sistema
+"funcionando" de um sistema "pensado".
+
+A verificação de posse responde a uma pergunta: **esta pessoa pode mexer
+neste recurso, agora?** A resposta é "sim, se ela é a dona". E essa
+resposta está certa — para a leitura e para a maior parte da escrita.
+
+Mas a alteração de um leilão também pode trocar **quem é o vendedor**. E
+essa troca não passa pela verificação de dono: ela olha o leilão como ele
+está, e não como ele vai ficar.
+
+O que a brecha permitia, na prática:
+
+```
+PUT /leiloes/1   { "codigo": 1001, "descricao": "...", "vendedor": 5 }
+```
+
+A empresa 1 é a vendedora do leilão 1. A verificação de posse diz "ok,
+ela é a dona". A alteração acontece... e o leilão passa a ter a empresa 5
+como vendedora. A empresa 1 perdeu o controle — mas o mal maior é o
+caminho inverso: a empresa 5 ganhou, e pode repetir a operação com o
+leilão de outra empresa. O controle de acesso virava uma roleta: quem
+gira mais vezes leva.
+
+O mesmo valia para o lote, que podia ser movido para o leilão de outra
+empresa — ou trazido para o próprio, dando à empresa o controle do valor
+inicial de um item que não é dela.
+
+A correção são duas verificações, e as duas importam:
+
+| Verificação | Pergunta que ela responde |
+|-------------|---------------------------|
+| `exigirEscritaLeilao(id)` | Esta pessoa pode mexer neste leilão? |
+| `exigirProprioOuAdministrador(vendedor)` | O novo vendedor é a própria pessoa (ou o administrador)? |
+
+O mesmo para o lote, trocando "vendedor" por "leilão".
+
+O que impede a regressão são dois níveis de teste, porque cada um pega
+uma coisa diferente:
+
+- **`AutorizacaoBOTest`** — a regra de negócio: uma empresa não
+  transfere o próprio leilão para outra;
+- **`AutorizacaoEndpointTest`** — a regra *no endpoint*: o PUT de verdade
+  volta **403** e **não grava nada**. Uma regra testada na unidade pode
+  não estar ligada ao controller; este teste fecha essa porta.
+
+### A autenticação no frontend
+
+O backend já falava JWT, papéis e revogação de sessão — mas o frontend
+ignorava tudo isso. Era uma feature backend-only: com a segurança
+ligada, o frontend simplesmente quebrava com 401.
+
+O que existe agora:
+
+| Peça | Onde | O que faz |
+|------|------|-----------|
+| Tela de login | `src/views/Login.vue` | Modal que pede usuário e senha e chama `POST /auth/login`. |
+| Sessão | `src/store/index.js` | Guarda os tokens e os dados do usuário (papel, empresa), em memória e no `localStorage`. |
+| Token na requisição | `src/services/api.js` | *Interceptor* do axios que anexa o `Authorization: Bearer` em **toda** chamada. |
+| Guarda de rota | `src/router/index.js` | Abre a tela de login quando a API exige credencial e não há sessão. |
+| Fim de sessão | `src/App.vue` | O botão "Sair" revoga a sessão na API e limpa o estado local. |
+
+Duas decisões que valem explicar:
+
+**O token entra por interceptor, e não por tela.** A sessão é uma
+propriedade da aplicação, não de uma tela. Se cada tela lembrasse de
+anexar o token, a esqueceria seria certa — e o resultado seria um 401
+que ninguém entenderia. O interceptor garante que nenhuma requisição sai
+sem o token, sem depender de quem a disparou.
+
+**A tela recarrega quando a sessão muda.** As telas carregam os dados
+quando nascem, e nesse instante ainda não há token: o login acontece
+depois. A primeira carga voltaria 401 e a tela ficaria vazia — mesmo
+depois do login, porque ninguém pediu para recarregar. A store mantém um
+contador de geração da sessão, e as telas o observam para recarregar
+quando o login termina.
+
+Uma observação honesta sobre o tradeoff: o token fica no `localStorage`,
+que sobrevive ao fechamento do navegador e é legível por qualquer script
+da página — um XSS rouba o token. A alternativa mais forte seria o
+cookie `HttpOnly`, que o JavaScript não consegue ler, mas ela exige que
+a API funcione com credencial de origem e com a proteção de CSRF ligada —
+o que não cabe no modelo stateless por cabeçalho que este projeto usa. A
+mitigação que cabe aqui: o token de acesso expira em 15 minutos, e o
+logout revoga a sessão inteira — o token deixa de valer na hora, sem
+esperar expirar.
 
 ### Validação de entrada
 
@@ -250,6 +417,14 @@ custa uma linha. O mesmo vale para `/auth/*` e `/autenticacao/*`.
   cria um usuário de banco separado, com apenas SELECT/INSERT/UPDATE/DELETE e
   sem permissão de DROP/ALTER. Se a aplicação for comprometida, o dano fica
   nos dados, não no banco.
+- **O banco não fica exposto na rede.** O `docker-database.yml` publica a
+  porta 5432 em `127.0.0.1`, e não em `0.0.0.0`. A diferença não é
+  cosmética: um `5432:5432` sem endereço faz o Docker escutar em **todas**
+  as interfaces da máquina — num notebook ligado na rede do escritório, o
+  PostgreSQL fica acessível para qualquer pessoa da mesma rede, com a senha
+  do `.env` (que, em desenvolvimento, é pública). Com o `127.0.0.1`
+  antes dos dois pontos, a porta só escuta na própria máquina, e a API
+  continua conectando em `localhost:5432` sem nenhuma mudança.
 
 ### Aplicação e navegador
 
@@ -289,7 +464,7 @@ exigir autenticação existe, está testado e liga por variável de ambiente.
 | **`spring-boot-starter-validation` adicionado** | Saiu do `spring-starter-web` no Spring Boot 2.3. Sem ele as anotações `@NotBlank`/`@Size`/`@Pattern` dos DTOs não são verificadas, e o exercício 8 depende delas. |
 | **`spring-security-crypto` + `spring-boot-starter-security`** | Hash de senha e cadeia de segurança configurável. Sem o starter, o Spring Boot geraria uma senha aleatória e bloquearia todos os endpoints. |
 | **`spring-boot-starter-actuator`** | Health check, que é o que um orquestrador consulta para saber se a aplicação está viva. |
-| **`POSTGRES_DB=az` no `variables.env`** | Sem isso o container cria só o banco `postgres` e a API falha com `database "az" does not exist`. |
+| **`POSTGRES_DB=az` no `.env`** | Sem isso o container cria só o banco `postgres` e a API falha com `database "az" does not exist`. |
 | **Colunas em `snake_case`** | Padrão do mercado, com a ligação para o `camelCase` do diagrama explícita no `@Column`. |
 | **IDs `Integer`** | Bate com o `integer` do diagrama e evita a incompatibilidade de tipo do PostgreSQL (`integer` × `bigint`). |
 | **URLs em singular e plural** | O enunciado é inconsistente entre os exercícios 3 e 5 a 7. Aceitar as duas formas é mais robusto do que escolher uma. |
@@ -300,7 +475,12 @@ exigir autenticação existe, está testado e liga por variável de ambiente.
 
 ## Testes
 
-90 testes, todos sem banco de dados (dublês do Mockito ou `@WebMvcTest`).
+159 testes. 158 rodam sem banco de dados (dublês do Mockito, `@WebMvcTest` ou
+`@DataJpaTest` sem conexão). O `AuditoriaPrecisaoTimestampTest` é a
+exceção: ele grava num PostgreSQL de verdade e relê, porque é o único lugar
+onde a perda de precisão do timestamp aparece — o `LocalDateTime` do Java
+tem 9 casas (nanossegundos) e a coluna `TIMESTAMP` do PostgreSQL guarda 6
+(microsegundos). Sem o banco, ele é pulado.
 
 | Classe | O que garante |
 |--------|---------------|
@@ -309,6 +489,7 @@ exigir autenticação existe, está testado e liga por variável de ambiente.
 | `UnidadeBOTest` | Nome é normalizado; nome repetido é recusado; id inexistente devolve "não encontrado". |
 | `GeradorHashSenhaTest` | Gera os hashes da massa de dados e confere que cada hash do `02_dml.sql` bate com a senha correspondente. |
 | `AuditoriaBOTest` | A corrente de hashes se forma e alterar, forjar ou remover um registro é detectado. |
+| `AuditoriaPrecisaoTimestampTest` | O instante gravado no banco tem a mesma precisão do selo — o Java tem 9 casas, o PostgreSQL guarda 6. Sem o banco, o teste é pulado. |
 | `TokenJwtBOTest` | Token adulterado, expirado, de tipo errado ou assinado com outra chave é recusado. |
 | `LimitadorDeRequisicoesFilterTest` | 429 no estouro do limite, `Retry-After` com tempo real e isolamento por IP. |
 | `CorrelationIdFilterTest` | ID único por requisição, sem vazar para a seguinte, e valor malicioso do cliente é descartado (log forging). |
@@ -318,13 +499,29 @@ exigir autenticação existe, está testado e liga por variável de ambiente.
 | `ClientIpResolverProxyTest` | O IP forjado pelo cliente não vira o IP usado: o limitador por IP não pode ser burlado. |
 | `AtaqueSegurancaTest` | Ataques de verdade: token sem assinatura, confusão de algoritmo, SQL injection, IDOR, actuator exposto e tempo de resposta que denuncia usuário. |
 | `AutenticacaoBOTest` | O login por JSON conta a falha no mesmo controle de tentativas que o login por HTTP Basic. |
+| `AutorizacaoBOTest` | **O IDOR está fechado:** uma empresa autenticada não alcança o leilão, o lote nem o vínculo de comprador de outra. |
+| `TokenRevogadoBOTest` | O logout encerra a sessão: a família revogada bloqueia o token de acesso, e o bloqueio expira sozinho. |
+| `ContadorBancoTest` | O contador compartilhado entre réplicas renova a janela, reseta quando vence e apaga por prefixo. |
+| `ValidacaoConfiguracaoSegurancaTest` | A aplicação não sobe com a senha padrão do administrador. |
+| `ValidadeDasQueriesTest` | O JPQL das consultas delicatezas é analisado pelo Hibernate **no build**: query errada quebra o build, não a produção. |
+| `AutorizacaoEndpointTest` | A autorização é verificada **no endpoint**, não só na regra: o PUT que tentaria transferir um leilão para outra empresa volta 403 e não grava nada. |
+| `EstrategiaDeGeracaoDeIdTest` | A geração do id da entidade concorda com o DDL. Existe porque o `tb_refresh_token` era `BIGSERIAL` (que cria `tb_refresh_token_id_seq`) enquanto a entidade pedia `seq_refresh_token` — o primeiro login quebrava com HTTP 500. |
+| `EmpresaRequestValidacaoTest` | As regras de entrada: telefone aceito em todas as formas que o usuário digita (inclusive só com dígitos, como a massa de dados usa), CNPJ e CEP com e sem pontuação, senha vazia vira `null`. |
+| `LoginRequestValidacaoTest` | O login **não** aplica a regra de senha mínima: essa é do cadastro. Sem isso, a senha `Senha@1` da massa de dados era recusada com HTTP 400 e 9 das 12 empresas ficavam inacessíveis. |
+
+A qualidade da suite também é **medida**, não só contada: o perfil
+`mutacao` do Maven roda o [PIT](https://pitest.org/), que altera o código
+de propósito (troca um `>=` por `>`, apaga uma validação) e verifica se
+algum teste percebe. Cobertura de linha diz quanto código rodou; a
+*mutation score* diz quanto código está de fato protegido — e é ela que
+vira regra, com um mínimo que faz o build falhar.
 
 ## Problemas conhecidos
 
 | Sintoma | Causa | Solução |
 |---------|-------|---------|
 | `ERR_OSSL_EVP_UNSUPPORTED` no `npm run serve` | Node 17+ removeu o MD4 do OpenSSL, usado pelo webpack 4 | Resolvido no projeto: Vue CLI 5 / webpack 5 |
-| `database "az" does not exist` | Faltou `POSTGRES_DB=az` no `variables.env` | Já corrigido no `variables.env` |
+| `database "az" does not exist` | Faltou `POSTGRES_DB=az` no `.env` | Já corrigido no `.env` |
 | `No mapping for GET /...` no console | URL que não existe na API | Confira a porta: a API é a 8081, o frontend é a 8080 |
 | Erro de CORS no console | Frontend e API em origens diferentes sem permissão | Ajuste `app.cors.origins` se mudar a porta do frontend |
 | `Connection refused` ao iniciar a API | PostgreSQL parado | `docker compose -f docker-database.yml up -d` |
@@ -355,6 +552,7 @@ O total do leilão 1001, por exemplo: `5 × 12.500,00 + 2 × 8.750,00 = 80.000,0
 |---|---|
 | [`README.md`](README.md) | Este arquivo: visão geral, arquitetura, modelo, API e segurança. |
 | [`MANUAL-OPERACAO.md`](MANUAL-OPERACAO.md) | Rodar do zero, diagnosticar, demonstrar. |
+| [`THREAT-MODEL.md`](THREAT-MODEL.md) | Modelo de ameaças: o que a API protege, quem tenta pegar e como cada ataque é bloqueado. |
 | [`IDENTIDADE-VISUAL.md`](IDENTIDADE-VISUAL.md) | De onde saíram as cores, a fonte e o logo, e a checagem de contraste. |
 | [`leilao-app/README.md`](leilao-app/README.md) | Detalhes do frontend. |
 | [`.github/SECURITY.md`](.github/SECURITY.md) | Como reportar uma vulnerabilidade pelo canal privado. |
@@ -363,7 +561,17 @@ O total do leilão 1001, por exemplo: `5 × 12.500,00 + 2 × 8.750,00 = 80.000,0
 
 | Comando | Para quê |
 |---|---|
-| `mvn test` | 90 testes, sem depender de banco. |
+| `mvn test` | 159 testes. 158 sem depender de banco; 1 exige PostgreSQL (é pulado se não houver). |
 | `mvn package -DskipTests` | Gera o SBOM em `target/bom.json`. |
 | `mvn -Psecurity-scan verify` | Varredura de CVEs. Requer `NVD_API_KEY`. |
+| `mvn -Pmutacao test` | Mede a qualidade dos testes por mutação (PIT). |
 | `npm run lint` | Estilo do frontend. |
+
+O CI (`.github/workflows/`) roda quatro camadas de segurança:
+
+| Workflow | O que faz |
+|----------|-----------|
+| `ci.yml` | Compila, roda os 159 testes e gera o SBOM. |
+| `dast.yml` | **Varredura dinâmica** com o OWASP ZAP: sobe a API e a varre como um atacante faria, olhando as respostas. |
+| `security-scan` (perfil Maven) | Varredura de CVEs das dependências (OWASP Dependency-Check). |
+| `dependabot.yml` | Acompanha as atualizações de segurança das dependências. |
