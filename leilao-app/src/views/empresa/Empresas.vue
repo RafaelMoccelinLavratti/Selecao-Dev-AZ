@@ -14,7 +14,7 @@
   <div>
     <h1 class="titulo-tela">Empresas</h1>
     <p class="subtitulo-tela">
-      Empresas participantes dos leiloes - vendedoras e compradoras.
+      Empresas participantes dos leilões - vendedoras e compradoras.
     </p>
 
     <v-card elevation="2">
@@ -22,7 +22,7 @@
         <v-text-field
           v-model="search"
           prepend-inner-icon="mdi-magnify"
-          label="Buscar por razao social, CNPJ, telefone ou e-mail"
+          label="Buscar por razão social, CNPJ, telefone ou e-mail"
           single-line
           hide-details
           clearable
@@ -36,8 +36,13 @@
         <!--
           Botao "Nova empresa". Ele nao faz POST direto: navega pro
           formulario, porque a validacao e as mascaras acontecem la.
+
+          So' o administrador cadastra empresa: e' ele que cria o acesso
+          do usuario da empresa nova. O backend recusa a operacao de
+          qualquer jeito (403) - esconder o botao e' para nao oferecer
+          um botao que so' pode falhar.
         -->
-        <v-btn color="primary" depressed :to="'/empresa'">
+        <v-btn v-if="ehAdministrador" color="primary" depressed :to="'/empresa'">
           <v-icon left>mdi-plus</v-icon>
           Nova empresa
         </v-btn>
@@ -54,7 +59,7 @@
         class="elevation-0"
       >
         <template v-slot:header.actions>
-          <span class="text-right">Acoes</span>
+          <span class="text-right">Ações</span>
         </template>
 
         <!-- CNPJ mascarado: a API devolve so os digitos. -->
@@ -92,7 +97,12 @@
             <span>Editar empresa</span>
           </v-tooltip>
 
-          <v-tooltip bottom>
+          <!--
+            Excluir empresa e' operacao da administracao: a exclusao leva
+            junto os leiloes e os lotes da empresa. O usuario de uma
+            empresa nao ve este botao - e o backend recusaria com 403.
+          -->
+          <v-tooltip v-if="ehAdministrador" bottom>
             <template v-slot:activator="{ on, attrs }">
               <v-btn
                 icon
@@ -121,7 +131,7 @@
     <confirm-dialog
       ref="dialogoExclusao"
       titulo="Excluir empresa"
-      :mensagem="'Deseja realmente excluir a empresa \'' + (paraExcluir ? paraExcluir.razaoSocial : '') + '\'? Esta acao nao pode ser desfeita.'"
+      :mensagem="'Deseja realmente excluir a empresa \'' + (paraExcluir ? paraExcluir.razaoSocial : '') + '\'? Esta ação não pode ser desfeita.'"
       @confirmar="confirmarExclusao"
     />
   </div>
@@ -184,6 +194,17 @@ export default {
 
   computed: {
     /**
+     * O usuario logado e' o administrador da API?
+     *
+     * Cadastrar e excluir empresa sao operacoes da administracao. O
+     * backend recusa as duas para o usuario de uma empresa (403); aqui
+     * os botoes correspondentes simplesmente nao aparecem.
+     */
+    ehAdministrador() {
+      return this.$store.getters.administrador;
+    },
+
+    /**
      * Colunas da tabela. O enunciado do exercicio 6 pede exatamente
      * cnpj, razaoSocial, telefone e email; a coluna de acoes vem do
      * exercicio 8.
@@ -195,10 +216,10 @@ export default {
     headers() {
       return [
         { text: 'CNPJ', value: 'cnpj', width: 170 },
-        { text: 'Razao social', value: 'razaoSocial' },
+        { text: 'Razão social', value: 'razaoSocial' },
         { text: 'Telefone', value: 'telefone', width: 160 },
         { text: 'E-mail', value: 'email' },
-        { text: 'Acoes', value: 'actions', sortable: false, align: 'end', width: 110 }
+        { text: 'Ações', value: 'actions', sortable: false, align: 'end', width: 110 }
       ];
     }
   },
@@ -213,6 +234,19 @@ export default {
     this.carregar();
   },
 
+  /**
+   * Recarrega a lista quando a sessao muda.
+   *
+   * A tela carrega os dados quando nasce, e nesse instante ainda nao ha
+   * token - a primeira carga volta 401. Observando o contador de
+   * geracao da sessao, a tela recarrega assim que o login termina.
+   */
+  watch: {
+    '$store.state.geracaoSessao': function () {
+      this.carregar();
+    }
+  },
+
   methods: {
     /**
      * Carrega (ou recarrega) a lista de empresas.
@@ -221,6 +255,12 @@ export default {
      * tela mesmo quando a chamada falha.
      */
     async carregar() {
+      // A API exige credencial e ainda nao ha sessao? Nao pede os
+      // dados (a tela de login e' quem mostra o que falta fazer).
+      if (!this.$store.getters.podeCarregarDados) {
+        return;
+      }
+
       this.carregando = true;
       try {
         this.empresas = await api.get('/empresas');
@@ -254,7 +294,7 @@ export default {
 
       try {
         await api.delete('/empresas/' + this.paraExcluir.id);
-        this.notificar('success', 'Empresa excluida com sucesso.');
+        this.notificar('success', 'Empresa excluída com sucesso.');
         this.paraExcluir = null;
         // Recarrega a lista pra linha apagada sumir da tabela.
         await this.carregar();

@@ -27,7 +27,7 @@
   <div>
     <h1 class="titulo-tela">Unidades</h1>
     <p class="subtitulo-tela">
-      Cadastro das unidades (locais) onde os leiloes sao realizados.
+      Cadastro das unidades (locais) onde os leilões são realizados.
     </p>
 
     <v-card elevation="2">
@@ -51,8 +51,12 @@
           Botao "Nova unidade". Abre a linha de inclusao no topo em vez de
           chamar a API direto: o cadastro passa pela linha, que tem os
           mesmos campos e as mesmas validacoes da edicao.
+
+          So' o administrador escreve unidades: elas sao dado de referencia
+          (os locais dos leiloes), e todo mundo ve, so o admin escreve.
+          O backend recusa a escrita de outro jeito (403).
         -->
-        <v-btn color="success" depressed @click="comecarInclusao">
+        <v-btn v-if="ehAdministrador" color="success" depressed @click="comecarInclusao">
           <v-icon left>mdi-plus</v-icon>
           Nova unidade
         </v-btn>
@@ -89,7 +93,7 @@
       >
         <!-- Titulo de "Acoes" alinhado a direita. -->
         <template v-slot:header.actions>
-          <span class="text-right">Acoes</span>
+          <span class="text-right">Ações</span>
         </template>
 
         <!--
@@ -150,12 +154,19 @@
           </template>
 
           <template v-else>
-            <v-btn icon color="primary" title="Editar" @click="comecarEdicao(item)">
-              <v-icon>mdi-pencil</v-icon>
-            </v-btn>
-            <v-btn icon color="error" title="Excluir" @click="pedirExclusao(item)">
-              <v-icon>mdi-delete</v-icon>
-            </v-btn>
+            <!--
+              Edicao e exclusao de unidades sao operacoes da
+              administracao. O usuario de uma empresa ve a lista (sao
+              dado de referencia) mas nao escreve nela.
+            -->
+            <template v-if="ehAdministrador">
+              <v-btn icon color="primary" title="Editar" @click="comecarEdicao(item)">
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn icon color="error" title="Excluir" @click="pedirExclusao(item)">
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </template>
           </template>
         </template>
 
@@ -164,7 +175,7 @@
           <div class="pa-6 text-center grey--text">
             <v-icon size="48" color="grey lighten-1">mdi-office-building-outline</v-icon>
             <p class="mt-3 mb-0">Nenhuma unidade cadastrada.</p>
-            <p class="mb-0" style="font-size: 0.85rem;">
+            <p v-if="ehAdministrador" class="mb-0" style="font-size: 0.85rem;">
               Clique em "Nova unidade" para cadastrar a primeira.
             </p>
           </div>
@@ -176,7 +187,7 @@
     <confirm-dialog
       ref="dialogoExclusao"
       titulo="Excluir unidade"
-      :mensagem="'Deseja realmente excluir a unidade \'' + (paraExcluir ? paraExcluir.nome : '') + '\'? Esta acao nao pode ser desfeita.'"
+      :mensagem="'Deseja realmente excluir a unidade \'' + (paraExcluir ? paraExcluir.nome : '') + '\'? Esta ação não pode ser desfeita.'"
       @confirmar="confirmarExclusao"
     />
   </div>
@@ -197,12 +208,14 @@
 import api from '../../services/api';
 
 import ConfirmDialog from '../../components/ConfirmDialog.vue';
+import VEditField from '../../components/VEditField.vue';
 
 export default {
   name: 'TelaUnidades',
 
   components: {
-    ConfirmDialog
+    ConfirmDialog,
+    VEditField
   },
 
   data() {
@@ -236,6 +249,16 @@ export default {
 
   computed: {
     /**
+     * O usuario logado e' o administrador da API?
+     *
+     * Unidades sao dado de referencia: todo mundo ve, so o admin
+     * escreve. O backend recusa a escrita de outro jeito (403).
+     */
+    ehAdministrador() {
+      return this.$store.getters.administrador;
+    },
+
+    /**
      * As linhas que a tabela exibe.
      *
      * Se houver inclusao em andamento (novo.nome !== null), ela aparece
@@ -261,7 +284,7 @@ export default {
       return [
         { text: 'Id', value: 'id', align: 'start', width: 90 },
         { text: 'Nome', value: 'nome' },
-        { text: 'Acoes', value: 'actions', sortable: false, align: 'end', width: 110 }
+        { text: 'Ações', value: 'actions', sortable: false, align: 'end', width: 110 }
       ];
     },
 
@@ -290,6 +313,23 @@ export default {
     this.carregar();
   },
 
+  /**
+   * Recarrega a lista quando a sessao muda.
+   *
+   * Por que e' necessario? Porque a tela carrega os dados quando nasce
+   * (no "mounted"), e nesse instante ainda nao ha token: o login
+   * acontece depois. A primeira carga volta 401, e a tela fica vazia -
+   * mesmo depois do login, porque ninguem pediu para recarregar.
+   *
+   * Observando o contador de geracao da sessao, a tela recarrega assim
+   * que o login termina - e passa a mostrar os dados DELE.
+   */
+  watch: {
+    '$store.state.geracaoSessao': function () {
+      this.carregar();
+    }
+  },
+
   methods: {
     /**
      * Carrega (ou recarrega) a lista de unidades.
@@ -298,6 +338,18 @@ export default {
      * tela mesmo quando a chamada falha.
      */
     async carregar() {
+      // A API exige credencial e ainda nao ha sessao? Nao pede os
+      // dados.
+      //
+      // Sem esta guarda, a tela nasce antes do login e o pedido volta
+      // 401 - a tela ficaria vazia e o console mostraria um erro que
+      // ninguem causou. A tela de login e' quem mostra o que a pessoa
+      // precisa fazer. Depois do login, a mudanca da sessao dispara a
+      // recarga.
+      if (!this.$store.getters.podeCarregarDados) {
+        return;
+      }
+
       this.carregando = true;
       try {
         this.unidades = await api.get('/unidades');
@@ -398,7 +450,7 @@ export default {
 
       try {
         await api.delete('/unidades/' + this.paraExcluir.id);
-        this.notificar('success', 'Unidade excluida com sucesso.');
+        this.notificar('success', 'Unidade excluída com sucesso.');
         this.paraExcluir = null;
         await this.carregar();
       } catch (erro) {

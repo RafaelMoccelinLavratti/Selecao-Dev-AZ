@@ -138,13 +138,24 @@ export function cepValido(valor) {
   return somenteDigitos(valor).length === 8;
 }
 
-/** Telefone com 10 ou 11 digitos. */
+/**
+ * Telefone com 10 ou 11 digitos.
+ *
+ * Aceita as mesmas formas do backend (EmpresaRequest.java): "1130001100",
+ * "11300011000", "(11) 3000-1100" e "113000-1100".
+ *
+ * As duas pontas usam o mesmo criterio - se o frontend recusasse uma
+ * forma que a API aceita, o usuario veria um erro que a API nao daria.
+ */
 export function telefoneValido(valor) {
   if (!valor) {
     return true;
   }
-  const digitos = somenteDigitos(valor).length;
-  return digitos === 10 || digitos === 11;
+  const digitos = somenteDigitos(valor);
+  if (digitos.length !== 10 && digitos.length !== 11) {
+    return false;
+  }
+  return /^(?:\(?\d{2}\)?\s?)?\d{4,5}[- ]?\d{4}$/.test(String(valor).trim());
 }
 
 /**

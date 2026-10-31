@@ -20,9 +20,9 @@
      poderia mudar sem ninguem avisar a tela).
   -->
   <div>
-    <h1 class="titulo-tela">Leiloes</h1>
+    <h1 class="titulo-tela">Leilões</h1>
     <p class="subtitulo-tela">
-      Leiloes cadastrados, com o vendedor, o inicio previsto e o valor total
+      Leilões cadastrados, com o vendedor, o início previsto e o valor total
       dos lotes.
     </p>
 
@@ -32,7 +32,7 @@
     <v-row dense class="mb-4">
       <v-col cols="12" sm="4" md="3">
         <v-card outlined class="pa-4">
-          <div class="text-caption text--secondary">Quantidade de leiloes</div>
+          <div class="text-caption text--secondary">Quantidade de leilões</div>
           <div class="text-h4 font-weight-bold" style="color: var(--az-azul-900);">
             {{ leiloes.length }}
           </div>
@@ -41,7 +41,7 @@
 
       <v-col cols="12" sm="8" md="5">
         <v-card outlined class="pa-4">
-          <div class="text-caption text--secondary">Valor total Involved</div>
+          <div class="text-caption text--secondary">Valor total envolvido</div>
           <div class="text-h4 font-weight-bold" style="color: var(--az-azul-900);">
             {{ formatarDinheiro(valorTotalGeral) }}
           </div>
@@ -50,7 +50,7 @@
 
       <v-col cols="12" md="4">
         <v-card outlined class="pa-4">
-          <div class="text-caption text--secondary">Proximo leilao</div>
+          <div class="text-caption text--secondary">Próximo leilão</div>
           <div class="text-h6 font-weight-medium">
             {{ proximoLeilao ? formatarData(proximoLeilao.inicioPrevisto) : '-' }}
           </div>
@@ -63,7 +63,7 @@
         <v-text-field
           v-model="search"
           prepend-inner-icon="mdi-magnify"
-          label="Buscar por codigo, descricao ou vendedor"
+          label="Buscar por código, descrição ou vendedor"
           single-line
           hide-details
           clearable
@@ -116,7 +116,7 @@
         <template v-slot:no-data>
           <div class="pa-6 text-center grey--text">
             <v-icon size="48" color="grey lighten-1">mdi-gavel</v-icon>
-            <p class="mt-3 mb-0">Nenhum leilao cadastrado.</p>
+            <p class="mt-3 mb-0">Nenhum leilão cadastrado.</p>
           </div>
         </template>
       </v-data-table>
@@ -157,10 +157,10 @@ export default {
      */
     headers() {
       return [
-        { text: 'Codigo', value: 'codigo', width: 110 },
-        { text: 'Descricao', value: 'descricao' },
-        { text: 'Vendedor', value: 'razaoSocial' },
-        { text: 'Inicio previsto', value: 'inicioPrevisto', width: 190 },
+      { text: 'Código', value: 'codigo', width: 110 },
+      { text: 'Descrição', value: 'descricao' },
+      { text: 'Vendedor', value: 'razaoSocial' },
+      { text: 'Início previsto', value: 'inicioPrevisto', width: 190 },
         { text: 'Total', value: 'total', align: 'end', width: 160 }
       ];
     },
@@ -206,12 +206,31 @@ export default {
     this.carregar();
   },
 
+  /**
+   * Recarrega a lista quando a sessao muda.
+   *
+   * A tela carrega os dados quando nasce, e nesse instante ainda nao ha
+   * token - a primeira carga volta 401. Observando o contador de
+   * geracao da sessao, a tela recarrega assim que o login termina.
+   */
+  watch: {
+    '$store.state.geracaoSessao': function () {
+      this.carregar();
+    }
+  },
+
   methods: {
     /**
      * Carrega (ou recarrega) os leiloes. O "finally" garante que o
      * indicador de carregamento saia da tela mesmo em caso de erro.
      */
     async carregar() {
+      // A API exige credencial e ainda nao ha sessao? Nao pede os
+      // dados (a tela de login e' quem mostra o que falta fazer).
+      if (!this.$store.getters.podeCarregarDados) {
+        return;
+      }
+
       this.carregando = true;
       try {
         this.leiloes = await api.get('/leiloes');
