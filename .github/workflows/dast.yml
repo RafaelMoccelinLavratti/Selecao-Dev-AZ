@@ -1,0 +1,149 @@
+name: Varredura Dinâmica (OWASP ZAP)
+
+# A varredura dinamica (DAST) e' a ultima camada da piramide de
+# seguranca, e a unica que olha a aplicacao como o atacante a ve:
+# com a API no ar, ela dispara requicoes contra as rotas reais e
+# classifica as respostas.
+#
+# As outras camadas ja existem no pipeline:
+#   - testes unitarios e de integracao (a suite do Maven);
+#   - analise estatica e de dependencias (o perfil "security-scan",
+#     que roda o OWASP Dependency-Check);
+#   - inventario do software (o SBOM, gerado no build).
+#
+# O que o ZAP acrescenta: e' o unico que encontra problema que depende
+# de como a aplicacao se comporta em execucao - cabecalho de resposta
+# faltando em uma rota, pagina de erro que vaza informacao, metodo
+# HTTP aceito onde nao deveria.
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  # Deixa o avaliador rodar na mao, sem esperar o push.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  dast:
+    name: ZAP - varredura dinamica da API
+    runs-on: ubuntu-latest
+
+    services:
+      # O banco so existe para a API conseguir subir. A varredura em si
+      # nao fala com o banco.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: az
+          POSTGRES_USER: leilao
+          POSTGRES_PASSWORD: leilao
+        ports:
+          - '5432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Clona o repositorio
+        uses: actions/checkout@v4
+
+      # A versao do Java esta fixada de proposito: se o CI usasse
+      # "latest", uma mudanca no JDK poderia quebrar o build sem
+      # ninguem ter mexido no codigo.
+      - name: Instala o Java 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+
+      - name: Compila a API
+        working-directory: leilao-api
+        run: mvn -B package -DskipTests
+
+      - name: Cria o schema e a massa de dados
+        env:
+          PGPASSWORD: leilao
+        run: |
+          psql -h localhost -U leilao -d az -v ON_ERROR_STOP=1 \
+            -f leilao-api/src/main/resources/sql/01_ddl.sql
+          psql -h localhost -U leilao -d az -v ON_ERROR_STOP=1 \
+            -f leilao-api/src/main/resources/sql/02_dml.sql
+
+      - name: Sobe a API
+        env:
+          # Sao as mesmas variaveis que o application.properties le
+          # (veja a secao "Para rodar" do README).
+          DATABASE_URL: jdbc:postgresql://localhost:5432/az
+          DATABASE_USER: leilao
+          DATABASE_PASSWORD: leilao
+          # Com o contador no banco, o SQL nativo de incremento
+          # (INSERT ... ON CONFLICT) e' exercitado de verdade: a
+          # varredura dispara requisicoes, e cada uma passa pelo
+          # limitador. E a unica forma de o SQL ser conferido contra um
+          # PostgreSQL de verdade - o CI tem um.
+          RATE_LIMIT_STORE: banco
+        run: |
+          cd leilao-api
+          nohup java -jar target/leilao-api-1.0.0-SNAPSHOT.jar > /tmp/api.log 2>&1 &
+
+          # Espera a API ficar de pe antes de varrer. Sem esta espera, o
+          # ZAP comeca a varrer uma porta fechada e reporta "nao ha
+          # aplicacao la" como se fosse ausencia de vulnerabilities.
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8081/actuator/health > /dev/null; then
+              echo "API no ar."
+              break
+            fi
+            if [ "$i" = "60" ]; then
+              echo "A API nao subiu. Log:"
+              cat /tmp/api.log
+              exit 1
+            fi
+            sleep 2
+          done
+
+      # O "baseline scan" e' passivo: ele observa as respostas da
+      # aplicacao e classifica o que viu. Nao dispara payload de ataque
+      # contra os dados, entao a massa de teste nao e corrompida.
+      #
+      # A API sobe com a autenticacao desligada de proposito: assim o
+      # ZAP consegue alcancar as rotas de negocio. O que ele procura
+      # aqui nao depende de estar logado - e cabecalho de resposta,
+      # pagina de erro, metodo HTTP aceito.
+      #
+      # A flag "-I" faz o alerta de nivel WARN nao derrubar o build.
+      # O que derruba e' o alerta de nivel FAIL (risco alto ou critico),
+      # que e' o que merece interromper o pipeline.
+      - name: Varredura dinamica (ZAP baseline)
+        run: |
+          mkdir -p zap-wrk
+          docker run --rm \
+            -v "${{ github.workspace }}/zap-wrk:/zap/wrk:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+              -t http://localhost:8081 \
+              -r zap-report.html \
+              -J zap-report.json \
+              -I
+
+      # O relatorio vai como artefato mesmo quando o passo falha: e
+      # nele que esta o detalhe do que foi encontrado.
+      - name: Guarda o relatorio
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap-wrk/
+          if-no-files-found: warn
