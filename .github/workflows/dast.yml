@@ -162,7 +162,13 @@ jobs:
             exit 1
           fi
 
+          # O "--pull always" garante que a imagem esteja na mao. O
+          # runner ja tinha puxado a imagem num passo anterior, mas o
+          # erro "Unable to find image 'ghcr.io/zaproxy/zaproxy:stable'
+          # locally" mostra que ela nao estava na cache - e sem ela o
+          # "docker run" falha antes de comecar a varrer.
           docker run --rm \
+            --pull always \
             --network host \
             -v "${{ github.workspace }}/zap-wrk:/home/zap/wrk:rw" \
             ghcr.io/zaproxy/zaproxy:stable \
