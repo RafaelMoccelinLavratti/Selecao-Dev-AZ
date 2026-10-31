@@ -1,0 +1,43 @@
+# Normalizacao de fim de linha.
+#
+# Sem este arquivo, o git converte LF para CRLF em todo "git add" num
+# Windows, e aventa a cada arquivo. O efeito na pratica e' diff
+# cheio de ruido: um arquivo que foi mexido no Linux aparece
+# alterado por inteiro no Windows, so' por causa do fim de linha.
+#
+# A regra e' por tipo de arquivo, e nao uma regra global: o codigo
+# Java, o JavaScript e o YAML usam LF (e e' o que o GitHub e o
+# Maven esperam), enquanto os scripts de PowerShell usam CRLF (e' o
+# que o PowerShell le melhor).
+
+# Padrao: LF, sem conversao.
+* text=auto eol=lf
+
+# Codigo.
+*.java       text eol=lf
+*.js         text eol=lf
+*.vue        text eol=lf
+*.json       text eol=lf
+*.xml        text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
+*.properties text eol=lf
+*.sql        text eol=lf
+*.md         text eol=lf
+
+# Scripts do Windows.
+*.ps1        text eol=crlf
+*.cmd        text eol=crlf
+*.bat        text eol=crlf
+
+# Arquivos que nao devem ser convertidos (binarios).
+*.png        binary
+*.jpg        binary
+*.jpeg       binary
+*.gif        binary
+*.ico        binary
+*.pdf        binary
+*.zip        binary
+*.jar        binary
+*.class      binary
+*.pem        binary
