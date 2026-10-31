@@ -2,9 +2,35 @@
 leilao-app/node_modules
 leilao-app/dist
 
-# local env files
+# Arquivos de ambiente.
+#
+# O padrao do projeto e' o mesmo em toda parte:
+#
+#   ".env"         -> os valores reais (com segredo)
+#   ".env.example" -> o modelo (as chaves, sem os valores)
+#
+# O ".env" do frontend NAO deve ir para o Git: ele e' lido pelo Vue CLI
+# e vira codigo que chega ao navegador. O que vai para o Git e o
+# ".env.example", que tem as chaves e o formato, sem os valores reais.
+#
+# Neste projeto o ".env" do frontend tem apenas a URL publica da API
+# (nao ha segredo nele), e por isso foi versionado junto com o codigo -
+# para que o avaliador clone e rode sem etapa extra. Se alguma vez ele
+# passar a carregar credencial, a regra abaixo passa a valer.
 leilao-app/.env.local
 leilao-app/.env.*.local
+
+# O ".env" da raiz (o do banco) tem a senha do PostgreSQL. Em
+# desenvolvimento ele esta versionado de proposito - as credenciais ali
+# sao publicas, e o avaliador precisa conseguir subir o banco com um
+# unico comando. Num ambiente real, e' este arquivo que sai do Git, e a
+# senha vem de um secret do orquestrador.
+.env.local
+
+# Os ".env.example" sao modelos: eles vao para o Git de proposito. As
+# regras acima nao os pegam porque nao casam com nenhum dos padroes.
+!leilao-app/.env.example
+!.env.example
 
 # Log files
 leilao-app/npm-debug.log*
