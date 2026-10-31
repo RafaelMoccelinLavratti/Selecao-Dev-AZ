@@ -138,12 +138,12 @@ jobs:
       # directory '/zap/wrk' is not mounted" quando o volume esta em
       # outro lugar. Nao da para trocar o caminho.
       #
-      # O "--user" resolve a permissao de escrita. O ZAP roda como
-      # usuario sem privilegio, e o "/zap/wrk" do container pertence ao
-      # root - o erro era "Unable to copy yaml file to /zap/wrk/zap.yaml
-      # [Errno 13] Permission denied". Com "--user $(id -u):$(id -g)" o
-      # processo roda com o mesmo usuario do runner, que e' dono da
-      # pasta montada.
+      # O "--user root" resolve a permissao de escrita. O ZAP roda como
+      # usuario sem privilegio, e nem o "/zap/wrk" nem o "/home/zap" do
+      # container sao gravaveis por ele - os erros eram "Unable to copy
+      # yaml file to /zap/wrk/zap.yaml [Errno 13] Permission denied" e
+      # "PermissionError: '/home/zap/zap.yaml'". Rodando como root, a
+      # permissao deixa de ser problema.
       #
       # O alvo e' o IP da interface do host, e nao "localhost". Com o
       # "--network host" os dois funcionam, mas o IP nao depende da
@@ -176,7 +176,7 @@ jobs:
           docker run --rm \
             --pull always \
             --network host \
-            --user "$(id -u):$(id -g)" \
+            --user root \
             -v "${{ github.workspace }}/zap-wrk:/zap/wrk:rw" \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
