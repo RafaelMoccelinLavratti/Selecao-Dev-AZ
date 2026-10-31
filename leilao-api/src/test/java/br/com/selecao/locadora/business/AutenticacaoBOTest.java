@@ -1,5 +1,6 @@
 package br.com.selecao.locadora.business;
 
+import br.com.selecao.locadora.config.ContadorMemoria;
 import br.com.selecao.locadora.config.LoginAttemptService;
 import br.com.selecao.locadora.config.PasswordEncoderConfig;
 import br.com.selecao.locadora.dto.LoginRequest;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -64,6 +66,12 @@ class AutenticacaoBOTest {
     void preparar() throws Exception {
 
         loginAttemptService = new LoginAttemptService();
+
+        // O servico delega a contagem para um "ContadorStore". Aqui vai
+        // o de memoria, que e' o que a aplicacao usa por padrao.
+        Field contadorStore = LoginAttemptService.class.getDeclaredField("contadorStore");
+        contadorStore.setAccessible(true);
+        contadorStore.set(loginAttemptService, new ContadorMemoria());
         passwordEncoder = new PasswordEncoderConfig().passwordEncoder();
 
         // Os limites do controle de tentativas vem de @Value, entao
@@ -84,14 +92,19 @@ class AutenticacaoBOTest {
                         .roles("ADMIN")
                         .build();
             }
-            throw new UsernameNotFoundException("nao existe");
+            throw new UsernameNotFoundException("não existe");
         };
 
         // O emissor de tokens e' duble: aqui o que interessa e' o
         // controle de tentativas, nao a assinatura do token.
         TokenJwtBO tokenJwtBO = mock(TokenJwtBO.class);
-        when(tokenJwtBO.emitirTokenAcesso(anyString())).thenReturn("token-de-acesso");
-        when(tokenJwtBO.emitirTokenRenovacao(anyString())).thenReturn("token-de-renovacao");
+        // O BO emite os tokens com a familia, a empresa e o papel - o
+        // que permite revogar a sessao e saber o que o usuario pode
+        // acessar.
+        when(tokenJwtBO.emitirTokenAcesso(anyString(), any(), any(), any()))
+                .thenReturn("token-de-acesso");
+        when(tokenJwtBO.emitirTokenRenovacao(anyString(), any(), any(), any()))
+                .thenReturn("token-de-renovacao");
         when(tokenJwtBO.getValidadeTokenAcesso()).thenReturn(Duration.ofMinutes(15));
         when(tokenJwtBO.getValidadeTokenRenovacao()).thenReturn(Duration.ofDays(7));
 
