@@ -1,7 +1,9 @@
 package br.com.selecao.locadora.service;
 
 import br.com.selecao.locadora.business.AutenticacaoBO;
+import br.com.selecao.locadora.business.UsuarioAutenticado;
 import br.com.selecao.locadora.config.ClientIpResolver;
+import br.com.selecao.locadora.config.UsuarioAtual;
 import br.com.selecao.locadora.dto.LoginRequest;
 import br.com.selecao.locadora.dto.LoginResponse;
 import br.com.selecao.locadora.dto.RefreshRequest;
@@ -10,8 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,6 +51,19 @@ public class AutenticacaoService {
      */
     @Value("${app.security.trust-proxy:false}")
     private boolean confiarEmProxy;
+
+    /**
+     * Indica se a autenticacao esta ligada.
+     *
+     * O frontend precisa saber disso: no perfil de desenvolvimento (a
+     * autenticacao desligada de proposito), nao ha login para fazer, e
+     * pedir um login que nao existe seria um erro de interface.
+     *
+     * Por isso o "/auth/me" responde "autenticacaoAtiva": o frontend
+     * so' exige login quando a API exige credencial.
+     */
+    @Value("${app.security.enabled:false}")
+    private boolean autenticacaoAtiva;
 
     /**
      * POST /auth/login - autentica o usuario e devolve o par de tokens.
@@ -109,16 +122,46 @@ public class AutenticacaoService {
      * Serve ao frontend para mostrar o nome do usuario logado e para
      * decidir o que ele pode ver.
      *
+     * Alem do nome, devolve o papel e o id da empresa. Sao eles que
+     * permitem ao frontend esconder o que o usuario nao pode acessar
+     * (o botao de cadastrar empresa, por exemplo, so aparece para o
+     * administrador) - e esconder e' medida de seguranca, e nao so de
+     * usabilidade: o backend recusa a operacao de qualquer jeito, mas
+     * um botao que da erro e' um botao quebrado.
+     *
      * @return os dados do usuario autenticado
      */
     @GetMapping("/me")
     public ResponseEntity<Map<String, Object>> eu() {
 
-        Authentication autenticacao = SecurityContextHolder.getContext().getAuthentication();
+        // O principal autenticado de verdade. O "UsuarioAtual" so' devolve
+        // algo quando o contexto tem um "UsuarioAutenticado" - o que
+        // exclui tanto o "anonymousUser" quanto o "User" simples.
+        UsuarioAutenticado usuario = UsuarioAtual.usuario().orElse(null);
+
+        // O Spring coloca um "AnonymousAuthenticationToken" no contexto
+        // quando nao ha credencial. Ele responde "true" para
+        // "isAuthenticated()" - mas nao e' uma sessao. Sem este
+        // cuidado, o frontend receberia "autenticado: true" de quem
+        // nao esta logado, e mostraria a tela principal sem sessao.
+        boolean autenticado = usuario != null;
 
         Map<String, Object> corpo = new LinkedHashMap<>();
-        corpo.put("usuario", autenticacao != null ? autenticacao.getName() : "anonimo");
-        corpo.put("autenticado", autenticacao != null && autenticacao.isAuthenticated());
+        corpo.put("usuario", autenticado ? usuario.getUsername() : "anonimo");
+        corpo.put("autenticado", autenticado);
+
+        // Diz se a API esta exigindo credencial. E' o que permite ao
+        // frontend nao cobrar login de quem so' esta explorando o
+        // projeto com a seguranca desligada.
+        corpo.put("autenticacaoAtiva", autenticacaoAtiva);
+
+        // O papel e o vinculo com a empresa vem do principal. Quando a
+        // autenticacao esta desligada (perfil de desenvolvimento), o
+        // principal nao tem essa forma - e a resposta diz "sem vinculo",
+        // que o frontend entende como "sem restricao".
+        corpo.put("papel", autenticado ? usuario.getPapel() : null);
+        corpo.put("empresaId", autenticado ? usuario.getEmpresaId() : null);
+        corpo.put("administrador", autenticado && usuario.ehAdministrador());
 
         return ResponseEntity.ok(corpo);
     }

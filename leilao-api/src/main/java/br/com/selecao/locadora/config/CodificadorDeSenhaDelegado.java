@@ -126,7 +126,7 @@ public class CodificadorDeSenhaDelegado implements PasswordEncoder {
 
         // Formato desconhecido: a senha nao pode ser conferida, e recusar
         // e mais seguro do que aceitar.
-        throw new IllegalArgumentException("Formato de hash de senha nao reconhecido.");
+        throw new IllegalArgumentException("Formato de hash de senha não reconhecido.");
     }
 
     /**

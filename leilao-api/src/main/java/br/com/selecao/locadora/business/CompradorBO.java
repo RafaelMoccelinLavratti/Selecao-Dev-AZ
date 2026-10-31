@@ -67,6 +67,23 @@ public class CompradorBO {
     }
 
     /**
+     * Lista os vinculos de uma empresa.
+     *
+     * O usuario de uma empresa ve apenas as proprias participacoes. A
+     * lista completa, com o cruzamento de todas as empresas compradoras
+     * de todos os leiloes, e' do administrador.
+     *
+     * @param empresaId id da empresa
+     * @return os vinculos da empresa
+     */
+    public List<CompradorResponse> buscarTodosDaEmpresa(Integer empresaId) {
+        return compradorRepository.findByIdEmpresa(empresaId)
+                .stream()
+                .map(this::paraResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Busca um vinculo especifico pela chave composta.
      *
      * O "orElseThrow" e o "optional" do Java 8+: quando o repositorio

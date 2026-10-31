@@ -2,15 +2,13 @@ package br.com.selecao.locadora.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Controla as tentativas de login.
@@ -19,10 +17,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * ataques diferentes - um mira numa conta especifica, o outro mira no
  * sistema inteiro.
  *
- * Os contadores ficam em memoria. Um banco resolveria o problema de perder
- * o estado no restart, mas custaria uma escrita a cada tentativa - e
- * justamente a tentativa de login que o atacante faz em rajada que
- * precisaria aguentar essa carga.
+ * Onde os contadores ficam depende de quantas replicas a API tem. Na
+ * memoria (o padrao), o estado se perde no restart e vale so para a
+ * instancia. No banco, o limite vale para a API inteira - que e o que
+ * importa quando ha varias replicas atras do balanceador, porque senao o
+ * atacante distribuiria as tentativas entre elas.
+ *
+ * A escolha e' feita em app.security.rate-limit.store.
  */
 @Service
 public class LoginAttemptService {
@@ -30,58 +31,62 @@ public class LoginAttemptService {
     private static final Logger LOG = LoggerFactory.getLogger(LoginAttemptService.class);
 
     /**
-     * Separador entre as partes da chave. Precisa ser um caracter que
-     * nunca apareca num nome de usuario nem num IP.
+     * Prefixo das chaves de tentativa de login.
+     *
+     * O prefixo separa o contador de tentativas do contador de
+     * requisicoes: os dois Divide a mesma estrutura, e um nao pode
+     * interferir no outro.
      */
-    private static final String SEPARADOR = "|";
+    private static final String PREFIXO = "tentativa:";
 
     /**
-     * Contadores de falhas.
-     *
-     * As chaves tem dois formatos:
-     *   "ip|usuario" - falhas desse usuario vindo desse IP;
-     *   "ip|ip"      - falhas totais desse IP, somando todos os usuarios.
-     *
-     * E um ConcurrentHashMap porque a API atende varias requisicoes ao
-     * mesmo tempo (o Tomcat usa um pool de threads) e dois acessos
-     * simultaneos a um HashMap comum corromperiam a estrutura.
+     * Prefixo do contador de um usuario (somando todos os IPs).
      */
-    private final Map<String, RegistroTentativa> tentativas = new ConcurrentHashMap<>();
+    private static final String PREFIXO_USUARIO = PREFIXO + "usuario:";
 
     /**
-     * Liga/desliga o controle de tentativas.
-     * Vem de app.security.rate-limit.enabled (padrao: ligado).
+     * Prefixo do contador de um IP (somando todos os usuarios).
+     */
+    private static final String PREFIXO_IP = PREFIXO + "ip:";
+
+    /**
+     * Onde os contadores ficam guardados.
+     */
+    @Autowired
+    private ContadorStore contadorStore;
+
+    /**
+     * Indica se o controle anti-forca-bruta esta ativo.
      */
     @Value("${app.security.rate-limit.enabled:true}")
     private boolean habilitado;
 
     /**
-     * Quantas falhas do mesmo usuario (no mesmo IP) o sistema aceita antes
-     * de bloquear. Padrao: 5.
+     * Maximo de tentativas do mesmo usuario, vindas do mesmo IP, dentro
+     * da janela.
      */
     @Value("${app.security.rate-limit.max-attempts:5}")
     private int maxTentativasPorUsuario;
 
     /**
-     * Quantas falhas vindas do mesmo IP (somando todos os usuarios) o
-     * sistema aceita antes de bloquear o IP inteiro. Padrao: 20.
+     * Maximo de tentativas vindas do mesmo IP, somando todos os
+     * usuarios, dentro da janela.
      */
     @Value("${app.security.rate-limit.max-attempts-per-ip:20}")
     private int maxTentativasPorIp;
 
     /**
-     * Duracao da janela, em minutos.
-     * Depois de 15 minutos sem nova falha, o contador zera sozinho.
-     * Padrao: 15 minutos.
+     * Tamanho da janela, em minutos.
      */
     @Value("${app.security.rate-limit.window-minutes:15}")
     private long janelaMinutos;
 
     /**
-     * Registra uma tentativa de autenticacao que deu errado.
+     * Registra uma tentativa que falhou.
      *
-     * Chamado pelo AuthenticationAuditHandler sempre que o Spring Security
-     * recusa as credenciais.
+     * Sobe dois contadores: o do par (usuario, IP) e o do IP. O primeiro
+     * protege uma conta especifica; o segundo protege o sistema contra
+     * o ataque que varre varias contas de uma vez.
      *
      * @param ip      endereco IP de origem da requisicao
      * @param usuario nome de usuario informado na tentativa
@@ -93,28 +98,26 @@ public class LoginAttemptService {
         }
 
         // Incrementa o contador do par (usuario, IP).
-        incrementar(chaveUsuario(ip, usuario));
+        contadorStore.incrementar(chaveUsuario(ip, usuario), Duration.ofMinutes(janelaMinutos));
 
         // Incrementa o contador do IP (somando todos os usuarios).
-        incrementar(chaveIp(ip));
+        contadorStore.incrementar(chaveIp(ip), Duration.ofMinutes(janelaMinutos));
 
         LOG.warn("Tentativa de autenticacao FALHOU. usuario={} ip={} "
                         + "falhas_usuario={} falhas_ip={}",
                 usuario, ip, contar(chaveUsuario(ip, usuario)), contar(chaveIp(ip)));
     }
+
     /**
      * Registra uma autenticacao que deu certo.
-     *
-     * Chamado pelo AuthenticationSuccessAuditListener sempre que o Spring
-     * Security aceitou as credenciais.
      *
      * Um login bem-sucedido zera o contador de falhas do usuario. O
      * zeraimento vale pro usuario inteiro, de qualquer IP: quem acabou de
      * provar que sabe a senha nao precisa ficar preso por tentativas
      * antigas, nem por tentativas vindas de outro lugar.
      *
-     * O contador do IP nao e zerado, porque ele existe pra medir o volume
-     * total de ataques, e nao o historico de um usuario.
+     * O contador do IP nao e zerado, porque ele existe pra medir o
+     * volume total de ataques, e nao o historico de um usuario.
      *
      * @param usuario nome de usuario autenticado
      */
@@ -124,14 +127,12 @@ public class LoginAttemptService {
             return;
         }
 
-        // Tira todos os registros (de qualquer IP) que pertencem a este
-        // usuario. O removeIf e seguro mesmo com acesso concorrente ao mapa.
-        String sufixo = SEPARADOR + (usuario == null ? "" : usuario);
+        // Tira todos os contadores que pertencem a este usuario, de
+        // qualquer IP.
+        int removidos = contadorStore.removerPorPrefixo(PREFIXO_USUARIO + usuario + ":");
 
-        tentativas.entrySet().removeIf(entry ->
-                entry.getKey().endsWith(sufixo) && !entry.getKey().startsWith("ip" + SEPARADOR));
-
-        LOG.info("Tentativa de autenticacao BEM-SUCEDIDA. usuario={}", usuario);
+        LOG.info("Tentativa de autenticacao BEM-SUCEDIDA. usuario={} contadores_zerados={}",
+                usuario, removidos);
     }
 
     /**
@@ -151,9 +152,7 @@ public class LoginAttemptService {
             return false;
         }
 
-        RegistroTentativa registro = registrosAtivos().get(chaveIp(ip));
-
-        return registro != null && registro.contador.get() >= maxTentativasPorIp;
+        return contar(chaveIp(ip)) >= maxTentativasPorIp;
     }
 
     /**
@@ -169,9 +168,7 @@ public class LoginAttemptService {
             return false;
         }
 
-        RegistroTentativa registro = registrosAtivos().get(chaveUsuario(ip, usuario));
-
-        return registro != null && registro.contador.get() >= maxTentativasPorUsuario;
+        return contar(chaveUsuario(ip, usuario)) >= maxTentativasPorUsuario;
     }
 
     /**
@@ -186,15 +183,7 @@ public class LoginAttemptService {
      */
     public long segundosAteLiberar(String ip) {
 
-        RegistroTentativa registro = registrosAtivos().get(chaveIp(ip));
-
-        if (registro == null) {
-            return 0;
-        }
-
-        long restante = Duration.between(Instant.now(), registro.expiraEm).getSeconds();
-
-        return Math.max(restante, 0);
+        return segundosRestantes(contadorStore.consultar(chaveIp(ip)));
     }
 
     /**
@@ -211,24 +200,13 @@ public class LoginAttemptService {
      */
     public long segundosAteLiberar(String ip, String usuario) {
 
-        Map<String, RegistroTentativa> registros = registrosAtivos();
+        Contagem doUsuario = contadorStore.consultar(chaveUsuario(ip, usuario));
 
-        RegistroTentativa doUsuario = registros.get(chaveUsuario(ip, usuario));
-
-        if (doUsuario != null) {
-            long restante = Duration.between(Instant.now(), doUsuario.expiraEm).getSeconds();
-            return Math.max(restante, 0);
+        if (doUsuario.getQuantidade() > 0) {
+            return segundosRestantes(doUsuario);
         }
 
-        RegistroTentativa doIp = registros.get(chaveIp(ip));
-
-        if (doIp == null) {
-            return 0;
-        }
-
-        long restante = Duration.between(Instant.now(), doIp.expiraEm).getSeconds();
-
-        return Math.max(restante, 0);
+        return segundosRestantes(contadorStore.consultar(chaveIp(ip)));
     }
 
     /**
@@ -237,39 +215,7 @@ public class LoginAttemptService {
      * liberar todo mundo (por exemplo, depois de um alarme falso).
      */
     public void limpar() {
-        tentativas.clear();
-    }
-
-    /**
-     * Incrementa o contador de uma chave e renova a validade da janela.
-     */
-    private void incrementar(String chave) {
-
-        Instant agora = Instant.now();
-
-        // compute() calcula e atualiza o contador de forma atomica. Sem
-        // isso, duas threads que chegassem ao mesmo tempo poderiam
-        // sobrescrever uma a outra e perder uma tentativa.
-        tentativas.compute(chave, (k, existente) -> {
-            if (existente == null || existente.expirada(agora)) {
-                // primeira tentativa (ou a janela anterior ja venceu)
-                return new RegistroTentativa(1, agora.plus(Duration.ofMinutes(janelaMinutos)));
-            }
-            existente.contador.incrementAndGet();
-            // Cada nova falha renova a janela: e assim que o controle
-            // "deslizante" funciona (o atacante tem 5 falhas a cada 15
-            // minutos, nao 5 no total pra sempre).
-            existente.expiraEm = agora.plus(Duration.ofMinutes(janelaMinutos));
-            return existente;
-        });
-    }
-
-    /**
-     * Le a quantidade de falhas de uma chave (0 se nao houver registro).
-     */
-    private int contar(String chave) {
-        RegistroTentativa registro = registrosAtivos().get(chave);
-        return registro == null ? 0 : registro.contador.get();
+        contadorStore.limpar();
     }
 
     /**
@@ -300,93 +246,58 @@ public class LoginAttemptService {
     }
 
     /**
-     * Devolve os registros que ainda estao dentro da janela de tempo.
-     * Joga fora da memoria os que ja venceram (limpeza em tempo de
-     * acesso, pra nao precisar de um agendador).
+     * Le a quantidade de falhas de uma chave (0 se nao houver registro).
      */
-    private Map<String, RegistroTentativa> registrosAtivos() {
-
-        Instant agora = Instant.now();
-
-        // removeIf apaga do mapa as entradas vencidas.
-        tentativas.entrySet().removeIf(entry -> entry.getValue().expirada(agora));
-
-        return tentativas;
+    private int contar(String chave) {
+        return contadorStore.consultar(chave).getQuantidade();
     }
 
     /**
-     * Monta a chave do par (usuario, IP).
-     * O IP vem primeiro pra deixar a chave legivel no log.
+     * Converte o prazo de uma contagem em segundos restantes.
+     */
+    private long segundosRestantes(Contagem contagem) {
+
+        if (contagem.getQuantidade() == 0) {
+            return 0;
+        }
+
+        long restante = Duration.between(Instant.now(), contagem.getExpiraEm()).getSeconds();
+
+        return Math.max(restante, 0);
+    }
+
+    /**
+     * A chave do contador do par (usuario, IP).
+     *
+     * O usuario vem primeiro de proposito: assim, o contador de um
+     * usuario pode ser encontrado pelo prefixo, e zeres em todos os IPs
+     * de uma vez.
      */
     private String chaveUsuario(String ip, String usuario) {
-        return ip + SEPARADOR + (usuario == null ? "" : usuario);
+        return PREFIXO_USUARIO + (usuario == null ? "" : usuario) + ":ip:" + ip;
     }
 
     /**
-     * Monta a chave do IP (contagem agregada de todas as tentativas).
+     * A chave do contador do IP (somando todos os usuarios).
      */
     private String chaveIp(String ip) {
-        return "ip" + SEPARADOR + ip;
+        return PREFIXO_IP + ip;
     }
 
     /**
-     * Tarefa agendada que limpa periodicamente os registros expirados.
+     * Remove os contadores cuja janela ja venceu.
      *
-     * A limpeza em tempo de acesso (registrosAtivos) ja resolve o
-     * crescimento da estrutura. Esta tarefa e a rede de seguranca: garante
-     * que a memoria seja liberada mesmo quando ninguem mais faz
-     * requisicao (de madrugada, com o servidor ocioso e o contador
-     * parado).
-     *
-     * A anotacao @Scheduled exige que a aplicacao tenha @EnableScheduling.
-     * Ver LeilaoApplication.
+     * Roda de tempos em tempos, para a estrutura nao crescer sem
+     * limite. Sem isso, cada IP que tentasse um login deixaria um
+     * registro para sempre.
      */
-    @Scheduled(fixedDelayString = "${app.security.rate-limit.cleanup-interval-ms:60000}")
+    @Scheduled(fixedDelayString = "${app.security.rate-limit.cleanup-interval-ms:60000}",
+            initialDelayString = "${app.security.rate-limit.cleanup-interval-ms:60000}")
     public void limparExpirados() {
+        int removidos = contadorStore.limparExpirados();
 
-        int antes = tentativas.size();
-        registrosAtivos();
-
-        if (antes != tentativas.size()) {
-            LOG.debug("Limpeza do controle de tentativas: {} registros expirados removidos.",
-                    antes - tentativas.size());
-        }
-    }
-
-    /**
-     * Registro de tentativas (classe interna).
-     *
-     * Junta o contador (quantas falhas) com a validade (ate quando vale).
-     * O contador e um AtomicInteger porque varias threads podem falhar ao
-     * mesmo tempo no mesmo par (usuario, IP).
-     */
-    private static class RegistroTentativa {
-
-        /** Quantidade de falhas registradas dentro da janela atual. */
-        private final AtomicInteger contador;
-
-        /** Instante em que a janela expira (a contagem zera). */
-        private volatile Instant expiraEm;
-
-        /**
-         * Construtor do registro.
-         *
-         * @param contador valor inicial do contador
-         * @param expiraEm instante de expiracao da janela
-         */
-        RegistroTentativa(int contador, Instant expiraEm) {
-            this.contador = new AtomicInteger(contador);
-            this.expiraEm = expiraEm;
-        }
-
-        /**
-         * Diz se a janela de tempo desta tentativa ja venceu.
-         *
-         * @param agora instante de referencia
-         * @return true se o registro pode ser descartado
-         */
-        boolean expirada(Instant agora) {
-            return agora.isAfter(expiraEm);
+        if (removidos > 0) {
+            LOG.debug("Contadores de tentativa expirados removidos: {}", removidos);
         }
     }
 }

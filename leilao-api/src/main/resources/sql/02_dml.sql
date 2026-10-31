@@ -73,7 +73,7 @@ INSERT INTO tb_unidade (nome) VALUES
 --   senha   -> hash (nunca texto puro)
 -- -----------------------------------------------------------------------------
 INSERT INTO tb_empresa
-    (razao_social, cnpj, logadouro, municipio, numero, complemento,
+    (razao_social, cnpj, logradouro, municipio, numero, complemento,
      quantidade, cep, telefone, email, site, usuario, senha) VALUES
     ('Metalurgica Aurora Ltda',              '11422377000155', 'Rua das Industrias',   'Sao Paulo',        '1200', 'Bloco A', 120, '01310-100', '1130001100', 'contato@metalurgicaaurora.com.br',  'https://www.metalurgicaaurora.com.br',  'admin.aurora',   '$2a$10$U5nhn1Beb0lJjcfhGYPYbeyv6m6LI0za9cntAUZ0EYJMuft7y17JO'),
     ('Transportes Vale Verde S.A.',           '11422377000236', 'Avenida das Palmeiras', 'Campinas',         '450',  'Galpao 3', 85,  '13045-220', '1932040500', 'vendas@valeverde.com.br',            'https://valeverde.com.br',              'operador.valverde','$2a$10$fE0RlbYIvPdHAbYQHqFcHObPN0tpr6hJEzElFMho7sIMbecsQvnDC'),

@@ -55,6 +55,21 @@ public class LoteBO {
     }
 
     /**
+     * Lista os lotes que uma empresa pode ver.
+     *
+     * O lote herda o acesso do leilao a que pertence.
+     *
+     * @param empresaId id da empresa
+     * @return os lotes visiveis
+     */
+    public List<LoteResponse> buscarTodosParaEmpresa(Integer empresaId) {
+        return loteRepository.findVisiveisParaEmpresa(empresaId)
+                .stream()
+                .map(this::paraResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Lista os lotes de um leilao especifico.
      *
      * Este e o metodo derivado do nome do metodo no Spring Data: o
@@ -149,7 +164,7 @@ public class LoteBO {
      */
     private Lote buscarEntidade(Integer id) {
         return loteRepository.findById(id)
-                .orElseThrow(() -> new RegistroNaoEncontradoException("Lote com id " + id + " nao encontrado."));
+                .orElseThrow(() -> new RegistroNaoEncontradoException("Lote com id " + id + " não encontrado."));
     }
 
     /**

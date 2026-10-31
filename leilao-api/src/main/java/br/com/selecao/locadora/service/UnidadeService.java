@@ -1,5 +1,6 @@
 package br.com.selecao.locadora.service;
 
+import br.com.selecao.locadora.business.AutorizacaoBO;
 import br.com.selecao.locadora.business.UnidadeBO;
 import br.com.selecao.locadora.dto.UnidadeRequest;
 import br.com.selecao.locadora.dto.UnidadeResponse;
@@ -39,6 +40,12 @@ public class UnidadeService {
     private UnidadeBO unidadeBO;
 
     /**
+     * Regras de acesso.
+     */
+    @Autowired
+    private AutorizacaoBO autorizacaoBO;
+
+    /**
      * GET /unidades - lista todas as unidades.
      *
      * O codigo 200 (OK) e o esperado. Se a lista vier vazia, ainda e
@@ -69,6 +76,7 @@ public class UnidadeService {
      */
     @PostMapping
     public ResponseEntity<UnidadeResponse> incluir(@Valid @RequestBody UnidadeRequest request) {
+        autorizacaoBO.exigirAdministrador("cadastrar unidades");
         UnidadeResponse resposta = unidadeBO.salvar(request, null);
         // HTTP 201 Created: informa que um recurso novo foi criado.
         return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
@@ -80,6 +88,7 @@ public class UnidadeService {
     @PutMapping("/{id}")
     public ResponseEntity<UnidadeResponse> alterar(@PathVariable Integer id,
                                                     @Valid @RequestBody UnidadeRequest request) {
+        autorizacaoBO.exigirAdministrador("alterar unidades");
         return ResponseEntity.ok(unidadeBO.salvar(request, id));
     }
 
@@ -88,6 +97,7 @@ public class UnidadeService {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Integer id) {
+        autorizacaoBO.exigirAdministrador("excluir unidades");
         unidadeBO.excluir(id);
         // HTTP 204 No Content: sucesso, sem corpo de resposta.
         return ResponseEntity.noContent().build();

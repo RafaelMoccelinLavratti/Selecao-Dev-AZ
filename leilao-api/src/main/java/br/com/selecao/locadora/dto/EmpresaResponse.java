@@ -30,7 +30,7 @@ public class EmpresaResponse {
     private String cnpj;
 
     /** Logradouro. */
-    private String logadouro;
+    private String logradouro;
 
     /** Municipio. */
     private String municipio;

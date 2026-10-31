@@ -1,6 +1,7 @@
 package br.com.selecao.locadora.service;
 
 import br.com.selecao.locadora.business.AuditoriaBO;
+import br.com.selecao.locadora.business.AutorizacaoBO;
 import br.com.selecao.locadora.dto.AuditoriaResponse;
 import br.com.selecao.locadora.entity.Auditoria;
 import br.com.selecao.locadora.repository.AuditoriaRepository;
@@ -53,6 +54,12 @@ public class AuditoriaService {
     private AuditoriaRepository auditoriaRepository;
 
     /**
+     * Regras de acesso.
+     */
+    @Autowired
+    private AutorizacaoBO autorizacaoBO;
+
+    /**
      * GET /auditoria - lista os registros da trilha.
      *
      * @param limite    numero maximo de registros (padrao 50, maximo 200)
@@ -63,6 +70,11 @@ public class AuditoriaService {
     public ResponseEntity<List<AuditoriaResponse>> listar(
             @RequestParam(defaultValue = "50") int limite,
             @RequestParam(required = false) String usuario) {
+
+        // A trilha registra quem fez o que, de onde e com qual
+        // resultado. E o historico de uso da API inteira - inclusive os
+        // IPs dos usuarios. E do administrador.
+        autorizacaoBO.exigirAdministrador("ler a trilha de auditoria");
 
         int tamanho = Math.min(Math.max(limite, 1), TAMANHO_MAXIMO_PAGINA);
 
@@ -92,6 +104,8 @@ public class AuditoriaService {
     @GetMapping("/verificar")
     public ResponseEntity<Map<String, Object>> verificar(
             @RequestParam(defaultValue = "1") long aPartirDe) {
+
+        autorizacaoBO.exigirAdministrador("verificar a integridade da trilha");
 
         AuditoriaBO.ResultadoVerificacao resultado = auditoriaBO.verificar(aPartirDe);
 

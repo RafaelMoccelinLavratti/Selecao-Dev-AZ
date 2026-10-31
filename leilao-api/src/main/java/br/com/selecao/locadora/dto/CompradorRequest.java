@@ -23,14 +23,14 @@ public class CompradorRequest {
      *
      * @NotNull - e obrigatorio.
      */
-    @NotNull(message = "A empresa e obrigatoria.")
+    @NotNull(message = "A empresa é obrigatória.")
     private Integer empresa;
 
     /**
      * Id do leilao comprado.
      *
-     * @NotNull - e obrigatorio.
+     * @NotNull - é obrigatorio.
      */
-    @NotNull(message = "O leilao e obrigatorio.")
+    @NotNull(message = "O leilão é obrigatório.")
     private Integer leilao;
 }

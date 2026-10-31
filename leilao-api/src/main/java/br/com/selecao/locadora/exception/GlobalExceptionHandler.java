@@ -9,11 +9,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
-import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Tratamento global de erros.
@@ -78,6 +76,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RegraNegocioException.class)
     public ResponseEntity<Map<String, Object>> tratarRegraNegocio(RegraNegocioException ex) {
         return montarErro(HttpStatus.CONFLICT, "Regra de negocio violada", ex.getMessage());
+    }
+
+    /**
+     * Acesso negado -> HTTP 403 (proibido).
+     *
+     * A pessoa esta autenticada, mas nao pode tocar no recurso pedido.
+     * E o que acontece quando uma empresa tenta ver os leiloes de outra
+     * ou o historico de auditoria, que e do administrador.
+     */
+    @ExceptionHandler(AcessoNegadoException.class)
+    public ResponseEntity<Map<String, Object>> tratarAcessoNegado(AcessoNegadoException ex) {
+        return montarErro(HttpStatus.FORBIDDEN, "Acesso negado", ex.getMessage());
     }
 
     /**

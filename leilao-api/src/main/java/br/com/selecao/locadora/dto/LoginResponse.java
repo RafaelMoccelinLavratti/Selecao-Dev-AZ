@@ -11,6 +11,12 @@ import lombok.NoArgsConstructor;
  * acesso e o nome do usuario. Nao ha campo de senha aqui - nem em texto
  * puro, nem o hash: a autenticacao entrega um token, nunca devolve a
  * credencial.
+ *
+ * Os campos "papel", "empresaId" e "administrador" sao o vinculo com a
+ * empresa. Eles vao aqui, alem do token, para que o frontend nao
+ * precise decodificar o JWT para saber o que a pessoa pode fazer - o
+ * token continua sendo a autoridade, mas a interface mostra o botao
+ * certo sem adivinhar.
  */
 @Data
 @NoArgsConstructor
@@ -41,4 +47,19 @@ public class LoginResponse {
      * Usuario autenticado.
      */
     private String usuario;
+
+    /**
+     * Papel do usuario (ROLE_ADMIN ou ROLE_EMPRESA).
+     */
+    private String papel;
+
+    /**
+     * Id da empresa do usuario. Nulo para o administrador.
+     */
+    private Integer empresaId;
+
+    /**
+     * O usuario e' o administrador da API?
+     */
+    private boolean administrador;
 }

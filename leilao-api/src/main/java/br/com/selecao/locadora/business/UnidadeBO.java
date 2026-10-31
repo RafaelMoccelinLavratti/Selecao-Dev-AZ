@@ -70,10 +70,10 @@ public class UnidadeBO {
         // gravação pra devolver uma mensagem clara, em vez de deixar o
         // banco recusar com uma excecao tecnica.
         if (id == null && unidadeRepository.existsByNome(request.getNome())) {
-            throw new RegraNegocioException("Ja existe uma unidade cadastrada com o nome '" + request.getNome() + "'.");
+            throw new RegraNegocioException("Já existe uma unidade cadastrada com o nome '" + request.getNome() + "'.");
         }
         if (id != null && unidadeRepository.existsByNomeAndIdNot(request.getNome(), id)) {
-            throw new RegraNegocioException("Ja existe outra unidade cadastrada com o nome '" + request.getNome() + "'.");
+            throw new RegraNegocioException("Já existe outra unidade cadastrada com o nome '" + request.getNome() + "'.");
         }
 
         Unidade unidade = (id == null) ? new Unidade() : buscarEntidade(id);
@@ -111,7 +111,7 @@ public class UnidadeBO {
      */
     private Unidade buscarEntidade(Integer id) {
         return unidadeRepository.findById(id)
-                .orElseThrow(() -> new RegistroNaoEncontradoException("Unidade com id " + id + " nao encontrada."));
+                .orElseThrow(() -> new RegistroNaoEncontradoException("Unidade com id " + id + " não encontrada."));
     }
 
     /**

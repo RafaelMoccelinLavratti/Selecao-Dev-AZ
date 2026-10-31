@@ -50,6 +50,19 @@ public class LeilaoBO {
     }
 
     /**
+     * Lista os leiloes que uma empresa pode ver, ja com o total.
+     *
+     * A consulta escopada vem do banco: a empresa ve os leiloes que
+     * vende e os leiloes em que esta inscrita como compradora.
+     *
+     * @param empresaId id da empresa
+     * @return os leiloes visiveis
+     */
+    public List<LeilaoResumoDTO> buscarResumoParaEmpresa(Integer empresaId) {
+        return leilaoRepository.findResumoVisivelParaEmpresa(empresaId);
+    }
+
+    /**
      * Lista os leiloes em formato simples (sem o total).
      */
     public List<LeilaoResponse> buscarTodos() {
@@ -61,7 +74,28 @@ public class LeilaoBO {
 
     /**
      * Busca um leilao pelo id.
+     *
+     * O "readOnly = true" e' obrigatorio, e nao cosmetico.
+     *
+     * O "vendedor" e' uma relacao "LAZY": o Hibernate devolve um
+     * proxy, e o proxy so' busca os dados de verdade quando o codigo
+     * chama um metodo dele - como o "getRazaoSocial()" do
+     * "paraResponse". Essa busca acontece porem na sessao do banco, e a
+     * sessao fecha quando o metodo devolve.
+     *
+     * Como o "open-in-view" esta' desligado (e' a configuracao
+     * correta - segurar a sessao durante a serializacao e' o que causa
+     * o N+1), o proxy perde a sessao e explode com
+     * "LazyInitializationException" - que o frontend recebia como HTTP
+     * 500.
+     *
+     * O "@Transactional(readOnly = true)" mantem a sessao aberta
+     * durante o mapeamento, sem abrir transacao de escrita.
+     *
+     * A lista ("buscarResumo") nao tinha esse problema porque a
+     * consulta JPQL projeta o "razaoSocial" direto no banco.
      */
+    @Transactional(readOnly = true)
     public LeilaoResponse buscarPorId(Integer id) {
         return paraResponse(buscarEntidade(id));
     }
@@ -115,7 +149,7 @@ public class LeilaoBO {
      */
     private Leilao buscarEntidade(Integer id) {
         return leilaoRepository.findById(id)
-                .orElseThrow(() -> new RegistroNaoEncontradoException("Leilao com id " + id + " nao encontrado."));
+                .orElseThrow(() -> new RegistroNaoEncontradoException("Leilão com id " + id + " não encontrado."));
     }
 
     /**

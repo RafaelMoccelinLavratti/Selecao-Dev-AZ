@@ -1,6 +1,8 @@
 package br.com.selecao.locadora.service;
 
+import br.com.selecao.locadora.business.AutorizacaoBO;
 import br.com.selecao.locadora.business.LoteBO;
+import br.com.selecao.locadora.config.UsuarioAtual;
 import br.com.selecao.locadora.dto.LoteRequest;
 import br.com.selecao.locadora.dto.LoteResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,13 +34,29 @@ public class LoteService {
     private LoteBO loteBO;
 
     /**
+     * Regras de acesso.
+     */
+    @Autowired
+    private AutorizacaoBO autorizacaoBO;
+
+    /**
      * GET /lotes - lista todos os lotes.
      *
      * @return a lista de lotes
      */
     @GetMapping
     public ResponseEntity<List<LoteResponse>> buscarTodos() {
-        return ResponseEntity.ok(loteBO.buscarTodos());
+
+        // O lote herda o acesso do leilao: o filtro vem do banco.
+        // O escopo nulo significa "sem restricao": administrador ou
+        // perfil de desenvolvimento.
+        Integer escopo = UsuarioAtual.escopoEmpresa();
+
+        if (escopo == null) {
+            return ResponseEntity.ok(loteBO.buscarTodos());
+        }
+
+        return ResponseEntity.ok(loteBO.buscarTodosParaEmpresa(escopo));
     }
 
     /**
@@ -49,6 +67,7 @@ public class LoteService {
      */
     @GetMapping("/leilao/{leilaoId}")
     public ResponseEntity<List<LoteResponse>> buscarPorLeilao(@PathVariable Integer leilaoId) {
+        autorizacaoBO.exigirLeituraLeilao(leilaoId);
         return ResponseEntity.ok(loteBO.buscarPorLeilao(leilaoId));
     }
 
@@ -60,6 +79,7 @@ public class LoteService {
      */
     @GetMapping("/{id}")
     public ResponseEntity<LoteResponse> buscarPorId(@PathVariable Integer id) {
+        autorizacaoBO.exigirLeituraLote(id);
         return ResponseEntity.ok(loteBO.buscarPorId(id));
     }
 
@@ -71,6 +91,8 @@ public class LoteService {
      */
     @PostMapping
     public ResponseEntity<LoteResponse> incluir(@Valid @RequestBody LoteRequest request) {
+        // So o vendedor do leilao acrescenta lotes.
+        autorizacaoBO.exigirEscritaLeilao(request.getLeilao());
         LoteResponse resposta = loteBO.salvar(request, null);
         return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
     }
@@ -78,13 +100,17 @@ public class LoteService {
     /**
      * PUT /lotes/{id} - altera o lote do id informado.
      *
+     * A alteracao nao pode mudar o leilao do lote para um leilao de
+     * outra empresa: o lote continua pertencendo a quem o pode mexer.
+     *
      * @param id      id do lote a alterar
      * @param request novos dados
      * @return o lote alterado
      */
     @PutMapping("/{id}")
     public ResponseEntity<LoteResponse> alterar(@PathVariable Integer id,
-                                                @Valid @RequestBody LoteRequest request) {
+                                                 @Valid @RequestBody LoteRequest request) {
+        autorizacaoBO.exigirEscritaLoteComLeilao(id, request.getLeilao());
         return ResponseEntity.ok(loteBO.salvar(request, id));
     }
 
@@ -95,6 +121,7 @@ public class LoteService {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Integer id) {
+        autorizacaoBO.exigirEscritaLote(id);
         loteBO.excluir(id);
         return ResponseEntity.noContent().build();
     }

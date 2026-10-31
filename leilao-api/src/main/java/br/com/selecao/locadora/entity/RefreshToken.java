@@ -9,7 +9,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Index;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -37,10 +36,30 @@ public class RefreshToken implements Serializable {
 
     /**
      * Identificador interno do registro.
+     *
+     * A estrategia e' "IDENTITY", e nao "SEQUENCE" com nome proprio.
+     *
+     * Por que? A coluna "id" da tabela e' BIGSERIAL, e o BIGSERIAL do
+     * PostgreSQL ja' cria a propria sequencia ("tb_refresh_token_id_seq")
+     * e ja' liga o DEFAULT nela. Com "IDENTITY", o Hibernate entrega
+     * o id para o banco preencher, e o banco usa o DEFAULT - que e' a
+     * sequencia que existe de fato.
+     *
+     * Com "SEQUENCE" e um "@SequenceGenerator" apontando para
+     * "seq_refresh_token", o Hibernate tentaria ler a sequencia com
+     * esse nome - que nao existe, porque o DDL nunca a criou. O
+     * resultado e' um erro 500 no primeiro login ("relation
+     * seq_refresh_token does not exist"): a autenticacao inteira
+     * quebrada em producao, e o login nem e' coberto por teste, porque
+     * os testes nao usam banco.
+     *
+     * A regra que evita a repeticao do problema: a estrategia de
+     * geracao da entidade tem que concordar com o DEFAULT da coluna
+     * no DDL. Ver o teste "ValidadeDasQueriesTest", que checa essa
+     * concordancia.
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_refresh_token")
-    @SequenceGenerator(name = "seq_refresh_token", sequenceName = "seq_refresh_token", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
 
