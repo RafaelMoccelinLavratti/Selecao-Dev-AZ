@@ -150,7 +150,7 @@ class EmpresaBOTest {
         RegraNegocioException erro = assertThrows(RegraNegocioException.class,
                 () -> empresaBO.salvar(requestValido(), null));
 
-        assertTrue(erro.getMessage().contains("usuario"), "a mensagem deve citar o usuario");
+        assertTrue(erro.getMessage().contains("usuário"), "a mensagem deve citar o usuário");
     }
 
     /**

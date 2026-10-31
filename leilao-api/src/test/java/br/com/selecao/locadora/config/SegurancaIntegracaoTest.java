@@ -1,6 +1,10 @@
 package br.com.selecao.locadora.config;
 
 import br.com.selecao.locadora.business.AuditoriaBO;
+import br.com.selecao.locadora.repository.CompradorRepository;
+import br.com.selecao.locadora.repository.LeilaoRepository;
+import br.com.selecao.locadora.repository.LoteRepository;
+import br.com.selecao.locadora.business.AutorizacaoBO;
 import br.com.selecao.locadora.dto.UnidadeResponse;
 import br.com.selecao.locadora.service.UnidadeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +46,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({
         SecurityConfig.class,
         PasswordEncoderConfig.class,
+        UsuarioDetailsServiceEmpresa.class,
+        ContadorMemoria.class,
+        AutorizacaoBO.class,
         LoginAttemptService.class,
         AuthenticationAuditHandler.class,
         JsonAuthenticationEntryPoint.class,
@@ -75,6 +82,24 @@ class SegurancaIntegracaoTest {
     /** Duble da camada de negocio (o banco nao e necessario aqui). */
     @MockBean
     private br.com.selecao.locadora.business.UnidadeBO unidadeBO;
+
+    /**
+     * Dubles dos repositorios, usados pelas regras de acesso.
+     *
+     * A AutorizacaoBO consulta os repositorios para saber se a empresa
+     * do usuario tem relacao com o leilao pedido. Neste recorte de
+     * teste o banco nao existe, entao os repositorios sao dubles - e
+     * como o usuario dos testes e' o administrador, o acesso e'
+     * liberado antes de qualquer consulta.
+     */
+    @MockBean
+    private LeilaoRepository leilaoRepository;
+
+    @MockBean
+    private CompradorRepository compradorRepository;
+
+    @MockBean
+    private LoteRepository loteRepository;
 
     /**
      * Duble da trilha de auditoria selada por hash.

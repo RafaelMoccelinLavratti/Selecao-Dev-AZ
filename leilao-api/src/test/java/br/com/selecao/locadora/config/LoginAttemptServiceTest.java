@@ -31,6 +31,10 @@ class LoginAttemptServiceTest {
 
         loginAttemptService = new LoginAttemptService();
 
+        // O servico delega a contagem para um "ContadorStore". Aqui vai
+        // o de memoria, que e' o que a aplicacao usa por padrao.
+        ReflectionTestUtils.setField(loginAttemptService, "contadorStore", new ContadorMemoria());
+
         ReflectionTestUtils.setField(loginAttemptService, "habilitado", true);
         ReflectionTestUtils.setField(loginAttemptService, "maxTentativasPorUsuario", 3);
         ReflectionTestUtils.setField(loginAttemptService, "maxTentativasPorIp", 10);

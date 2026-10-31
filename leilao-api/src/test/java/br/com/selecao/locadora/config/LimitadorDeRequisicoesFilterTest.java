@@ -34,6 +34,10 @@ class LimitadorDeRequisicoesFilterTest {
 
         filtro = new LimitadorDeRequisicoesFilter();
 
+        // O filtro delega a contagem para um "ContadorStore". Aqui vai o
+        // de memoria, que e' o que a aplicacao usa por padrao.
+        ReflectionTestUtils.setField(filtro, "contadorStore", new ContadorMemoria());
+
         // Configuracao minima: 3 requisicoes por janela de 60 segundos.
         ReflectionTestUtils.setField(filtro, "habilitado", true);
         ReflectionTestUtils.setField(filtro, "maximoRequisicoes", 3);
