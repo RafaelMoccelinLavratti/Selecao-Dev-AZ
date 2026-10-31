@@ -43,7 +43,7 @@
             <v-col cols="12" md="8">
               <v-text-field
                 v-model="formulario.razaoSocial"
-                label="Razao social *"
+                label="Razão social *"
                 :rules="[regras.razaoSocial]"
                 :counter="84"
                 maxlength="84"
@@ -74,7 +74,7 @@
             <!-- logradouro -->
             <v-col cols="12" md="6">
               <v-text-field
-                v-model="formulario.logadouro"
+                v-model="formulario.logradouro"
                 label="Logradouro"
                 :counter="84"
                 maxlength="84"
@@ -87,7 +87,7 @@
             <v-col cols="6" md="2">
               <v-text-field
                 v-model="formulario.numero"
-                label="Numero"
+                label="Número"
                 :counter="10"
                 maxlength="10"
                 outlined
@@ -113,7 +113,7 @@
             <v-col cols="12" md="5">
               <v-text-field
                 v-model="formulario.municipio"
-                label="Municipio"
+                label="Município"
                 :counter="64"
                 maxlength="64"
                 outlined
@@ -225,7 +225,7 @@
             <v-col cols="12" md="4">
               <v-text-field
                 v-model="formulario.usuario"
-                label="Usuario"
+                label="Usuário"
                 :rules="[regras.usuario]"
                 :counter="20"
                 maxlength="20"
@@ -242,7 +242,7 @@
                 label="Senha"
                 :type="mostrarSenha ? 'text' : 'password'"
                 :rules="[regras.senha]"
-                :hint="emEdicao ? 'Deixe em branco para manter a senha atual.' : 'Minimo de 8 caracteres.'"
+                :hint="emEdicao ? 'Deixe em branco para manter a senha atual.' : 'Mínimo de 8 caracteres.'"
                 persistent-hint
                 outlined
                 dense
@@ -474,6 +474,21 @@ export default {
     }
   },
 
+  /**
+   * Recarrega o registro quando a sessao muda.
+   *
+   * A tela carrega os dados quando nasce, e nesse instante ainda nao ha
+   * token - a primeira carga volta 401. Observando o contador de
+   * geracao da sessao, a tela recarrega assim que o login termina.
+   */
+  watch: {
+    '$store.state.geracaoSessao': function () {
+      if (this.emEdicao) {
+        this.carregar();
+      }
+    }
+  },
+
   methods: {
     /**
      * Objeto de formulario vazio (usado na criacao e ao limpar).
@@ -488,7 +503,7 @@ export default {
       return {
         razaoSocial: '',
         cnpj: '',
-        logadouro: '',
+        logradouro: '',
         numero: '',
         complemento: '',
         municipio: '',
@@ -523,13 +538,19 @@ export default {
      *     o hash, e o usuario so digita uma senha se quiser trocar a atual.
      */
     async carregar() {
+      // A API exige credencial e ainda nao ha sessao? Nao pede os
+      // dados (a tela de login e' quem mostra o que falta fazer).
+      if (!this.$store.getters.podeCarregarDados) {
+        return;
+      }
+
       try {
         const empresa = await api.get('/empresas/' + this.id);
 
         this.formulario = Object.assign(this.formularioVazio(), {
           razaoSocial: empresa.razaoSocial || '',
           cnpj: mascaraCnpj(empresa.cnpj || ''),
-          logadouro: empresa.logradouro || '',
+          logradouro: empresa.logradouro || '',
           numero: empresa.numero || '',
           complemento: empresa.complemento || '',
           municipio: empresa.municipio || '',
@@ -559,7 +580,7 @@ export default {
       // valida no navegador: o "validate()" percorre todos os campos e as
       // mensagens aparecem abaixo de cada input
       if (!this.$refs.formulario.validate()) {
-        this.notificar('error', 'Verifique os campos destacados do formulario.');
+        this.notificar('error', 'Verifique os campos destacados do formulário.');
         return;
       }
 
@@ -573,7 +594,7 @@ export default {
       const corpo = {
         razaoSocial: this.formulario.razaoSocial.trim(),
         cnpj: this.formulario.cnpj,
-        logadouro: this.formulario.logradouro,
+        logradouro: this.formulario.logradouro,
         numero: this.formulario.numero,
         complemento: this.formulario.complemento,
         municipio: this.formulario.municipio,
