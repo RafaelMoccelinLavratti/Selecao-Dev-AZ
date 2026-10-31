@@ -27,9 +27,27 @@
       container_name: "leilao-postgres"
 
       ports:
-        # "5432:5432" = porta 5432 do container liberada na porta 5432 da
-        # maquina. E por isso que a API conecta em "localhost:5432".
-        - "5432:5432"
+        # "127.0.0.1:5432:5432" = porta 5432 do container liberada na
+        # porta 5432 da maquina, MAS SO NO LOOPBACK.
+        #
+        # Por que o "127.0.0.1" na frente:
+        #
+        # Um "5432:5432" sem endereco faz o Docker publicar a porta em
+        # TODAS as interfaces de rede da maquina - o 0.0.0.0. Num
+        # notebook ligado na rede do escritorio, o Postgres fica
+        # acessivel para qualquer pessoa da mesma rede, com a senha do
+        # arquivo ".env" (que, em desenvolvimento, e publica).
+        #
+        # Com o "127.0.0.1" antes dos dois pontos, a porta so escuta na
+        # propria maquina. A API roda na maquina (via "mvn
+        # spring-boot:run"), entao continua conectando em
+        # "localhost:5432" sem nenhuma mudanca - e o banco deixa de
+        # estar exposto na rede.
+        #
+        # Quem precisar acessar de outra maquina da rede - o caso de
+        # outro.container, por exemplo - troque por "5432:5432" de
+        # proposito, sabendo o que esta abrindo.
+        - "127.0.0.1:5432:5432"
 
       volumes:
         # 1) Volume nomeado: guarda os dados do banco mesmo que o container
@@ -41,7 +59,7 @@
         - "./leilao-api/src/main/resources/sql:/docker-entrypoint-initdb.d:ro"
 
       env_file:
-        - "variables.env"
+        - ".env"
 
       # Fica aguardando: o container so considera "pronto" quando o
       # PostgreSQL aceitar conexoes de verdade.

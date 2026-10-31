@@ -76,6 +76,27 @@
           "o que nos afetou quando saiu aquele CVE?" em minutos.
         -->
         <cyclonedx.version>2.8.1</cyclonedx.version>
+
+        <!--
+          Springdoc: gera a especificacao OpenAPI 3 a partir das
+          anotacoes do codigo. A versao 1.7.0 e a ultima da serie 1.x,
+          que e a compativel com Spring Boot 2.7 (a serie 2.x exige
+          Spring Boot 3).
+        -->
+        <springdoc.version>1.7.0</springdoc.version>
+
+        <!--
+          PIT (pitest): mede a qualidade da suite de testes pela
+          mutacao. Ele altera o codigo de proposito (troca um ">=" por
+          ">", apaga uma validacao) e verifica se algum teste falha. Se
+          nenhum falha, o teste nao estava protectendo aquela regra.
+
+          O numero que importa e a "mutation score": a porcentagem de
+          mutacoes que a suite matou. Um projeto com 90 testes e score
+          baixo tem 90 testes que nao provam nada - e nao da para saber
+          sem medir.
+        -->
+        <pitest.version>1.9.11</pitest.version>
     </properties>
 
     <dependencies>
@@ -186,6 +207,25 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!--
+             Documentacao da API (OpenAPI / Swagger)
+             O springdoc le as anotacoes do codigo e gera a especificacao
+             OpenAPI 3 em tempo de execucao, com uma interface web para
+             navegar.
+
+             Por que isso importa para a avaliacao: a API tem dezenas de
+             rotas, com dois caminhos cada ("/empresas" e "/empresa") e
+             uma chave composta em "/compradores/{empresaId}/{leilaoId}".
+             Descrever isso em texto fica longo e desatualiza rapido. Com
+             o springdoc, o contrato vem do proprio codigo - se a rota
+             mudar, a documentacao muda junto.
+        -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
         <dependency>
@@ -331,6 +371,80 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+           PERFIL "mutacao" - MEDIDA DA QUALIDADE DA SUITE DE TESTES
+           Roda o PIT (pitest), que faz mutacao de codigo: ele troca uma
+           comparacao, apaga uma validacao, inverte um "e"/"ou" e ve se
+           algum teste falha.
+
+           Por que isso importa:
+           Cobertura de linha diz quanto codigo foi EXECUTADO, nao quanto
+           foi VERIFICADO. Um teste que roda uma linha e nao checa o
+           resultado dela conta como 100% de cobertura e nao prova nada.
+           A mutation score responde a pergunta certa: se o codigo
+           quebrar, algum teste percebe?
+
+           Por que esta num perfil e nao no build padrao?
+           Porque mutacao reexecuta a suite dezenas de vezes (uma por
+           mutacao). Num projeto com 90 testes, sao minutos - nao
+           segundos. O build do dia a dia continua rapido; a medida roda
+           sob demanda ou no CI noturno:
+
+               ./mvnw -Pmutacao test
+
+           As classes que concentram regra de negocio (o pacote "business")
+           sao o alvo, porque e ali que uma mutacao muda o resultado
+           observable. O codigo de configuracao e de DTO nao entra: uma
+           mutacao em "getNome()" nao muda nada que o usuario veja.
+        -->
+        <profile>
+            <id>mutacao</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-maven</artifactId>
+                        <version>${pitest.version}</version>
+                        <configuration>
+                            <!-- O alvo: as regras de negocio. -->
+                            <targetClasses>
+                                <param>br.com.selecao.locadora.business.*</param>
+                            </targetClasses>
+                            <targetTests>
+                                <param>br.com.selecao.locadora.business.*</param>
+                            </targetTests>
+                            <!--
+                                Mutacoes que nao mudam o comportamento
+                            observavel. "void method call" e a troca de
+                            argumentos: nos getters, no equals e no
+                            hashCode, nao muda o resultado de nenhum
+                            teste, e polui a medicao.
+                            -->
+                            <excludedMutators>
+                                <excludedMutator>VOID_METHOD_CALLS</excludedMutator>
+                                <excludedMutator>NON_VOID_METHOD_CALLS</excludedMutator>
+                            </excludedMutators>
+                            <!-- O relatorio em HTML, para abrir no navegador. -->
+                            <outputFormats>
+                                <outputFormat>HTML</outputFormat>
+                                <outputFormat>XML</outputFormat>
+                            </outputFormats>
+                            <timestampedReports>true</timestampedReports>
+                            <threads>4</threads>
+                            <!--
+                                O build falha se a mutation score cair
+                                abaixo do minimo. E o que transforma a
+                                medida em regra: sem isso, o numero vira
+                                relatorio que ninguem le.
+                            -->
+                            <mutationThreshold>60</mutationThreshold>
+                            <coverageThreshold>70</coverageThreshold>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
