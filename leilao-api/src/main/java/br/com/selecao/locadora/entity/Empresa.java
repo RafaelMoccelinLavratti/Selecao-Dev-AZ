@@ -52,8 +52,8 @@ public class Empresa extends Auditable {
     private String cnpj;
 
     /** Endereco - logradouro. */
-    @Column(name = "logadouro", length = 84)
-    private String logadouro;
+    @Column(name = "logradouro", length = 84)
+    private String logradouro;
 
     /** Endereco - municipio. */
     @Column(name = "municipio", length = 64)

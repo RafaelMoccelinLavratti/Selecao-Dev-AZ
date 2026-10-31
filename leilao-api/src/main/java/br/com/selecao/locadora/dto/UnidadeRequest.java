@@ -24,7 +24,7 @@ public class UnidadeRequest {
      * Nome da unidade. Obrigatorio (asterisco no diagrama) e com no
      * maximo de 128 caracteres (tamanho da coluna no banco).
      */
-    @NotBlank(message = "O nome da unidade e obrigatorio.")
-    @Size(max = 128, message = "O nome da unidade deve ter no maximo 128 caracteres.")
+    @NotBlank(message = "O nome da unidade é obrigatório.")
+    @Size(max = 128, message = "O nome da unidade deve ter no máximo 128 caracteres.")
     private String nome;
 }

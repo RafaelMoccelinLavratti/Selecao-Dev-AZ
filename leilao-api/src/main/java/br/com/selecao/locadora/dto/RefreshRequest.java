@@ -24,7 +24,7 @@ public class RefreshRequest {
     /**
      * Token de renovacao a ser trocado por um novo par de tokens.
      */
-    @NotBlank(message = "O token de renovacao e obrigatorio.")
-    @Size(max = 4096, message = "O token de renovacao e invalido.")
+    @NotBlank(message = "O token de renovação é obrigatório.")
+    @Size(max = 4096, message = "O token de renovação é inválido.")
     private String tokenRenovacao;
 }

@@ -29,7 +29,7 @@ public class LoteRequest {
      *
      * @Min(1) impede que o valor seja zero ou negativo.
      */
-    @Min(value = 1, message = "O numero do lote deve ser maior que zero.")
+    @Min(value = 1, message = "O número do lote deve ser maior que zero.")
     private Integer numeroLote;
 
     /**
@@ -39,7 +39,7 @@ public class LoteRequest {
      * O limite aqui e o que impede o envio de um texto gigante que
      * nao entraria na coluna (e o banco recusaria com um erro feio).
      */
-    @Size(max = 80, message = "A descricao deve ter no maximo 80 caracteres.")
+    @Size(max = 80, message = "A descrição deve ter no máximo 80 caracteres.")
     private String descricao;
 
     /**
@@ -59,7 +59,7 @@ public class LoteRequest {
      * @DecimalMin("0.0") garante que o preco nunca seja negativo.
      * Dinheiro negativo nao faz sentido em um leilao.
      */
-    @DecimalMin(value = "0.0", message = "O valor inicial nao pode ser negativo.")
+    @DecimalMin(value = "0.0", message = "O valor inicial não pode ser negativo.")
     private BigDecimal valorInicial;
 
     /**
@@ -67,19 +67,19 @@ public class LoteRequest {
      *
      * @Size(max = 128) respeita a coluna do banco.
      */
-    @Size(max = 128, message = "A unidade deve ter no maximo 128 caracteres.")
+    @Size(max = 128, message = "A unidade deve ter no máximo 128 caracteres.")
     private String unidade;
 
     /**
      * Id do leilao ao qual o lote pertence.
      *
-     * @NotNull - e obrigatorio (asterisco no diagrama).
+     * @NotNull - é obrigatorio (asterisco no diagrama).
      *
      * O "@NotNull" garante que o campo chegou preenchido. Ele nao
      * garante que o leilao exista no banco - isso e regra de negocio,
      * verificada na camada de negocio (LoteBO), que lanca
      * RegraNegocioException com uma mensagem clara pro usuario.
      */
-    @NotNull(message = "O leilao e obrigatorio.")
+    @NotNull(message = "O leilão é obrigatório.")
     private Integer leilao;
 }

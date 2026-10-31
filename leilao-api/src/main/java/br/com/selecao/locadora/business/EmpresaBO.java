@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,22 @@ public class EmpresaBO {
     }
 
     /**
+     * Lista a empresa de um usuario de empresa.
+     *
+     * O usuario de uma empresa so ve os proprios dados. A listagem
+     * completa (com CNPJ, telefone, e-mail e nome de usuario de todo
+     * mundo) e' do administrador.
+     *
+     * @param empresaId id da empresa
+     * @return a lista com a propria empresa
+     */
+    public List<EmpresaResponse> buscarTodasDaEmpresa(Integer empresaId) {
+        return empresaRepository.findById(empresaId)
+                .map(empresa -> Collections.singletonList(paraResponse(empresa)))
+                .orElseGet(Collections::emptyList);
+    }
+
+    /**
      * Busca uma empresa pelo id (GET /empresas/:id).
      */
     public EmpresaResponse buscarPorId(Integer id) {
@@ -72,22 +89,22 @@ public class EmpresaBO {
         // id != null -> estamos alterando (o proprio registro nao conta).
         if (id == null) {
             if (empresaRepository.existsByCnpj(cnpj)) {
-                throw new RegraNegocioException("Ja existe uma empresa cadastrada com o CNPJ " + cnpj + ".");
+                throw new RegraNegocioException("Já existe uma empresa cadastrada com o CNPJ " + cnpj + ".");
             }
         } else {
             if (empresaRepository.existsByCnpjAndIdNot(cnpj, id)) {
-                throw new RegraNegocioException("Ja existe outra empresa cadastrada com o CNPJ " + cnpj + ".");
+                throw new RegraNegocioException("Já existe outra empresa cadastrada com o CNPJ " + cnpj + ".");
             }
         }
 
         if (usuario != null && !usuario.isEmpty()) {
             if (id == null) {
                 if (empresaRepository.existsByUsuario(usuario)) {
-                    throw new RegraNegocioException("Ja existe uma empresa cadastrada com o usuario '" + usuario + "'.");
+                    throw new RegraNegocioException("Já existe uma empresa cadastrada com o usuário '" + usuario + "'.");
                 }
             } else {
                 if (empresaRepository.existsByUsuarioAndIdNot(usuario, id)) {
-                    throw new RegraNegocioException("Ja existe outra empresa cadastrada com o usuario '" + usuario + "'.");
+                    throw new RegraNegocioException("Já existe outra empresa cadastrada com o usuário '" + usuario + "'.");
                 }
             }
         }
@@ -97,7 +114,7 @@ public class EmpresaBO {
 
         empresa.setRazaoSocial(request.getRazaoSocial().trim());
         empresa.setCnpj(cnpj);
-        empresa.setLogadouro(request.getLogadouro());
+        empresa.setLogradouro(request.getLogradouro());
         empresa.setMunicipio(request.getMunicipio());
         empresa.setNumero(request.getNumero());
         empresa.setComplemento(request.getComplemento());
@@ -156,7 +173,7 @@ public class EmpresaBO {
      */
     private Empresa buscarEntidade(Integer id) {
         return empresaRepository.findById(id)
-                .orElseThrow(() -> new RegistroNaoEncontradoException("Empresa com id " + id + " nao encontrada."));
+                .orElseThrow(() -> new RegistroNaoEncontradoException("Empresa com id " + id + " não encontrada."));
     }
 
     /**
@@ -178,7 +195,7 @@ public class EmpresaBO {
                 .id(empresa.getId())
                 .razaoSocial(empresa.getRazaoSocial())
                 .cnpj(empresa.getCnpj())
-                .logadouro(empresa.getLogadouro())
+                .logradouro(empresa.getLogradouro())
                 .municipio(empresa.getMunicipio())
                 .numero(empresa.getNumero())
                 .complemento(empresa.getComplemento())

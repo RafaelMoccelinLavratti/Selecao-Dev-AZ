@@ -158,7 +158,7 @@ public class ChaveJwtProvider {
     private void carregarDaPasta(Path pasta) {
 
         if (!Files.isDirectory(pasta)) {
-            throw new IllegalStateException("A pasta de chaves JWT nao existe: " + pasta);
+            throw new IllegalStateException("A pasta de chaves JWT não existe: " + pasta);
         }
 
         try (Stream<Path> arquivos = Files.list(pasta)) {
@@ -216,7 +216,7 @@ public class ChaveJwtProvider {
                             + "'app.security.jwt.keys-dir'.");
 
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("RSA nao disponivel nesta JVM", e);
+            throw new IllegalStateException("RSA não disponível nesta JVM", e);
         }
     }
 
@@ -231,7 +231,7 @@ public class ChaveJwtProvider {
             byte[] conteudoDecodificado = Base64.getDecoder().decode(conteudo);
             return KeyFactory.getInstance(ALGORITMO).generatePrivate(new PKCS8EncodedKeySpec(conteudoDecodificado));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new IllegalStateException("Chave privada JWT invalida em " + arquivo, e);
+            throw new IllegalStateException("Chave privada JWT inválida em " + arquivo, e);
         }
     }
 
@@ -246,7 +246,7 @@ public class ChaveJwtProvider {
             byte[] conteudoDecodificado = Base64.getDecoder().decode(conteudo);
             return KeyFactory.getInstance(ALGORITMO).generatePublic(new X509EncodedKeySpec(conteudoDecodificado));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new IllegalStateException("Chave publica JWT invalida em " + arquivo, e);
+            throw new IllegalStateException("Chave pública JWT inválida em " + arquivo, e);
         }
     }
 

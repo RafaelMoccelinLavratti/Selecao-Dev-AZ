@@ -24,10 +24,10 @@ public final class ClientIpResolver {
     public static final String CABECALHO_X_REAL_IP = "X-Real-IP";
 
     /**
-     * Classe utilitaria: nao pode ser instanciada.
+     * Classe utilitária: nao pode ser instanciada.
      */
     private ClientIpResolver() {
-        throw new IllegalStateException("Classe utilitaria: nao deve ser instanciada.");
+        throw new IllegalStateException("Classe utilitária: não deve ser instanciada.");
     }
 
     /**
@@ -70,7 +70,7 @@ public final class ClientIpResolver {
                 String ipConfiavel = ultimoIpDaCadeia(cadeia);
 
                 if (ipConfiavel != null) {
-                    return ipConfiavel;
+                    return normalizar(ipConfiavel);
                 }
             }
 
@@ -78,16 +78,71 @@ public final class ClientIpResolver {
             String ipReal = request.getHeader(CABECALHO_X_REAL_IP);
 
             if (ipReal != null && !ipReal.trim().isEmpty()) {
-                return ipReal.trim();
+                return normalizar(ipReal.trim());
             }
         }
 
         // Por ultimo: o IP do socket. Nao pode ser falsificado pelo
-        // cliente, e e o que usamos quando nao existe proxy confiavel na
+        // cliente, e e' o que usamos quando nao existe proxy confiavel na
         // frente da aplicacao.
         String remoto = request.getRemoteAddr();
 
-        return (remoto == null || remoto.trim().isEmpty()) ? "desconhecido" : remoto;
+        if (remoto == null || remoto.trim().isEmpty()) {
+            return "desconhecido";
+        }
+
+        return normalizar(remoto.trim());
+    }
+
+    /**
+     * Normaliza o endereco para que o mesmo cliente tenha sempre a
+     * mesma chave de contagem.
+     *
+     * O caso que importa: o "localhost" resolve para os dois loopbacks
+     * ao mesmo tempo - "127.0.0.1" (IPv4) e "::1" (IPv6). O navegador
+     * escolhe um deles, e o outro fica sem contagem.
+     *
+     * Isso nao e' um detalhe teorico. Como o IP e' a chave do controle
+     * anti-forca-bruta e do limitador de requisicoes, um atacante (ou
+     * so' um usuario legitimo) que alternasse entre os dois enderecos
+     * teria o dobro de tentativas e o dobro de requisicoes sem nunca
+     * esbarrar no limite.
+     *
+     * Por isso os loopbacks sao normalizados para uma unica
+     * representacao.
+     *
+     * @param ip o endereco bruto
+     * @return o endereco normalizado
+     */
+    public static String normalizar(String ip) {
+
+        if (ip == null) {
+            return "desconhecido";
+        }
+
+        String limpo = ip.trim();
+
+        // O loopback IPv4 (127.0.0.0/8 - toda a faixa) e o IPv6
+        // (::1) sao o mesmo host.
+        if ("::1".equals(limpo) || "0:0:0:0:0:0:0:1".equals(limpo)) {
+            return "127.0.0.1";
+        }
+
+        if (limpo.startsWith("127.")) {
+            return "127.0.0.1";
+        }
+
+        // O IPv4 mapeado em IPv6 ("::ffff:127.0.0.1") e' o mesmo host
+        // que o loopback IPv4.
+        if (limpo.toLowerCase().startsWith("::ffff:")) {
+            String mapeado = limpo.substring("::ffff:".length());
+
+            if ("127.0.0.1".equals(mapeado)) {
+                return "127.0.0.1";
+            }
+        }
+
+        return limpo;
     }
 
     /**

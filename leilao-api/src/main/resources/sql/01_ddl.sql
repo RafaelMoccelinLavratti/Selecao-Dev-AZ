@@ -50,6 +50,22 @@ DROP TABLE IF EXISTS tb_leilao    CASCADE;
 DROP TABLE IF EXISTS tb_unidade   CASCADE;
 DROP TABLE IF EXISTS tb_empresa   CASCADE;
 
+-- As tabelas de seguranca tambem precisam ser derrubadas.
+--
+-- Sem estes DROP, a segunda execucao do script falha em
+-- "tb_refresh_token already exists" - e o script para ali, sem chegar
+-- ao fim. Isso quebra a promessa do comentario acima ("pra este
+-- script poder ser executado varias vezes sem erro") e atrapalha quem
+-- reexecuta o script na mao, como o README orienta.
+--
+-- A ordem importa: as tabelas de seguranca referenciam as de negocio,
+-- entao precisam cair depois delas (o CASCADE cuidaria, mas a ordem
+-- explicita evita depender dele).
+DROP TABLE IF EXISTS tb_auditoria          CASCADE;
+DROP TABLE IF EXISTS tb_contador_seguranca CASCADE;
+DROP TABLE IF EXISTS tb_token_revogado     CASCADE;
+DROP TABLE IF EXISTS tb_refresh_token      CASCADE;
+
 DROP SEQUENCE IF EXISTS seq_empresa CASCADE;
 DROP SEQUENCE IF EXISTS seq_leilao  CASCADE;
 DROP SEQUENCE IF EXISTS seq_lote    CASCADE;
@@ -120,7 +136,7 @@ CREATE TABLE tb_empresa (
     id           INTEGER       NOT NULL DEFAULT nextval('seq_empresa'),
     razao_social VARCHAR(84)  NOT NULL,
     cnpj         VARCHAR(32)  NOT NULL,
-    logadouro    VARCHAR(84),
+    logradouro    VARCHAR(84),
     municipio    VARCHAR(64),
     numero       VARCHAR(10),
     complemento  VARCHAR(84),
@@ -297,6 +313,73 @@ CREATE INDEX tb_refresh_token_expiracao_idx ON tb_refresh_token (data_expiracao)
 
 -- -----------------------------------------------------------------------------
 -- PASSO 8b - Tabela AUDITORIA (trilha a prova de adulteracao)
+-- -----------------------------------------------------------------------------
+-- Tokens revogados (lista de bloqueio).
+--
+-- O token de acesso e um JWT stateless: o servidor nao guarda o estado dele,
+-- e so confere a assinatura e a validade. E isso que o torna barato, mas
+-- tem um preco: quando o usuario faz logout, o token continua valido ate
+-- expirar (15 minutos).
+--
+-- Para resolver, o token de acesso carrega o identificador da familia de
+-- sessao (claim "fam"). Quando a sessao e revogada - no logout ou na
+-- deteccao de reuso do token de renovacao - a familia entra nesta tabela.
+-- A partir dai, qualquer token de acesso dessa familia e recusado, mesmo
+-- que ainda esteja dentro do prazo.
+--
+-- A chave da tabela e a familia, e nao o token. Isso e proposital: a
+-- revogacao de uma sessao e sempre em lote (todos os tokens que a
+-- renovacao gerou), e nao token por token.
+--
+-- "expira_em" e' quando o registro pode ser apagado: nenhum token da
+-- familia pode valer alem desse instante, entao o registro ja nao serve
+-- para nada. Sem isso, a tabela cresceria para sempre.
+-- -----------------------------------------------------------------------------
+CREATE TABLE tb_token_revogado (
+    chave        VARCHAR(36) NOT NULL,
+    usuario      VARCHAR(100),
+    revogado_em  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expira_em    TIMESTAMP   NOT NULL,
+
+    CONSTRAINT tb_token_revogado_pk PRIMARY KEY (chave)
+);
+
+-- Limpeza periodica: remove os registros cujo prazo ja passou.
+CREATE INDEX tb_token_revogado_expiracao_idx ON tb_token_revogado (expira_em);
+
+-- -----------------------------------------------------------------------------
+-- Contadores de seguranca (anti-forca-bruta e limitador de requisicoes).
+--
+-- Esta tabela so e usada quando app.security.rate-limit.store=banco.
+--
+-- Por que ela existe:
+-- O anti-forca-bruta e o limitador de requisicoes contam "quantas vezes
+-- isso aconteceu". Com o contador na memoria da aplicacao, cada replica
+-- da API conta por conta: com duas replicas atras do balanceador, o
+-- limite efetivo por IP dobra, e o atacante so precisa distribuir as
+-- tentativas entre elas. O limite por usuario, que depende do IP, some
+-- de vez.
+--
+-- Com o contador no banco, o limite vale para a API inteira.
+--
+-- O "chave" e um texto livre porque cada controle usa o seu proprio
+-- formato:
+--     tentativa:usuario:<usuario>:ip:<ip>   - falhas de um usuario num IP
+--     tentativa:ip:<ip>                     - falhas totais de um IP
+--     requisicao:<ip>                       - requisicoes de um IP
+-- O prefixo impede que um controle interfira no contador do outro.
+-- -----------------------------------------------------------------------------
+CREATE TABLE tb_contador_seguranca (
+    chave       VARCHAR(200) NOT NULL,
+    contador    INTEGER      NOT NULL,
+    expira_em   TIMESTAMP    NOT NULL,
+
+    CONSTRAINT tb_contador_seguranca_pk PRIMARY KEY (chave)
+);
+
+-- Limpeza periodica: remove os registros cuja janela ja venceu.
+CREATE INDEX tb_contador_seguranca_expiracao_idx ON tb_contador_seguranca (expira_em);
+
 -- -----------------------------------------------------------------------------
 -- Registra as operacoes que alteram dados (POST, PUT, PATCH, DELETE).
 --

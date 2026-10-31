@@ -64,6 +64,15 @@ public class AutenticacaoBO {
     private RefreshTokenRepository refreshTokenRepository;
 
     /**
+     * Lista de bloqueio das sessoes revogadas.
+     *
+     * E o que faz o logout encerrar a sessao de verdade: sem ela, o
+     * token de acesso continua valendo ate expirar.
+     */
+    @Autowired(required = false)
+    private TokenRevogadoBO tokenRevogadoBO;
+
+    /**
      * Controle de tentativas de login.
      *
      * O login por JSON (este metodo) e o login por HTTP Basic sao dois
@@ -117,7 +126,7 @@ public class AutenticacaoBO {
             // usuario: o contador so cresceria no caminho do HTTP Basic.
             loginAttemptService.registrarFalha(ip, request.getUsuario());
 
-            throw new TokenInvalidoException("Credenciais invalidas");
+            throw new TokenInvalidoException("Credenciais inválidas");
         }
 
         // Login valido: zera o contador do usuario.
@@ -125,7 +134,36 @@ public class AutenticacaoBO {
 
         LOG.info("AUTENTICACAO | SUCESSO | usuario={} ip={}", request.getUsuario(), ip);
 
-        return emitirParDeTokens(usuario.getUsername(), UUID.randomUUID().toString(), ip);
+        // O vinculo com a empresa (quando existe) vai para dentro do
+        // token: e ele que permite saber, em cada requisicao, de quem
+        // e a sessao e o que a pessoa pode acessar.
+        UsuarioAutenticado autenticado = comoUsuarioAutenticado(usuario);
+
+        return emitirParDeTokens(
+                autenticado.getUsername(),
+                UUID.randomUUID().toString(),
+                ip,
+                autenticado.getEmpresaId(),
+                autenticado.getPapel());
+    }
+
+    /**
+     * Converte o UserDetails em UsuarioAutenticado.
+     *
+     * O servico de usuarios ja devolve um UsuarioAutenticado, mas o
+     * metodo recebe o tipo generico. Se vier outro tipo (um "User" do
+     * Spring, por exemplo), o vinculo com a empresa e' perdido e a
+     * pessoa e' tratada como administradora - que e' o pior erro
+     * possivel nesta camada. Por isso a conversao e' explicita: quando
+     * nao ha empresa, o papel e' o de empresa, nunca o de administrador.
+     */
+    private UsuarioAutenticado comoUsuarioAutenticado(UserDetails usuario) {
+
+        if (usuario instanceof UsuarioAutenticado) {
+            return (UsuarioAutenticado) usuario;
+        }
+
+        return new UsuarioAutenticado(usuario.getUsername(), usuario.getPassword(), null, Papeis.EMPRESA);
     }
 
     /**
@@ -153,7 +191,7 @@ public class AutenticacaoBO {
             // do controle de tentativas, e uma tentativa a mais.
             loginAttemptService.registrarFalha(ip, nomeUsuario);
 
-            throw new TokenInvalidoException("Credenciais invalidas");
+            throw new TokenInvalidoException("Credenciais inválidas");
         }
     }
 
@@ -176,7 +214,7 @@ public class AutenticacaoBO {
 
         // Procura o registro do token.
         RefreshToken registro = refreshTokenRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new TokenInvalidoException("Token de renovacao desconhecido"));
+                .orElseThrow(() -> new TokenInvalidoException("Token de renovação desconhecido"));
 
         // Deteccao de reuso.
         // Um token que JA foi usado esta sendo apresentado de novo: e a
@@ -186,6 +224,12 @@ public class AutenticacaoBO {
 
             int revogados = refreshTokenRepository.revogarFamilia(
                     registro.getFamilia(), LocalDateTime.now());
+
+            // Alem de revogar os tokens de renovacao, a sessao entra na
+            // lista de bloqueio. Sem isso, o token de acesso que o
+            // atacante conseguiu roubar continuaria valendo ate
+            // expirar - e a deteccao de reuso nao encerraria nada.
+            revogarTokensDeAcesso(registro.getFamilia(), usuario);
 
             LOG.warn("AUTENTICACAO | REUSO DE TOKEN DETECTADO | usuario={} ip={} "
                             + "familia={} tokens_revogados={}",
@@ -197,12 +241,12 @@ public class AutenticacaoBO {
 
         // Token ja revogado (logout anterior ou revogacao em lote).
         if (registro.getDataRevogacao() != null) {
-            throw new TokenInvalidoException("Token de renovacao revogado");
+            throw new TokenInvalidoException("Token de renovação revogado");
         }
 
         // Token expirado.
         if (registro.getDataExpiracao().isBefore(LocalDateTime.now())) {
-            throw new TokenInvalidoException("Token de renovacao expirado");
+            throw new TokenInvalidoException("Token de renovação expirado");
         }
 
         // O token antigo e consumido. A partir daqui ele nunca mais serve -
@@ -212,8 +256,15 @@ public class AutenticacaoBO {
         refreshTokenRepository.save(registro);
 
         // O par novo nasce na mesma familia: e a continuacao da mesma
-        // sessao, nao uma nova.
-        return emitirParDeTokens(usuario, registro.getFamilia(), ip);
+        // sessao, nao uma nova. O vinculo com a empresa e o papel vem
+        // do token original, para a sessao nao mudar de dono no meio
+        // do caminho.
+        return emitirParDeTokens(
+                usuario,
+                registro.getFamilia(),
+                ip,
+                empresaDoToken(claims),
+                papelDoToken(claims));
     }
 
     /**
@@ -230,19 +281,92 @@ public class AutenticacaoBO {
             int revogados = refreshTokenRepository.revogarFamilia(
                     registro.getFamilia(), LocalDateTime.now());
 
+            // O token de acesso da sessao tambem para de valer. Sem
+            // isso, o logout encerraria a renovacao mas deixaria o
+            // token de acesso vivo ate expirar (15 minutos) - o logout
+            // seria so uma sugestao.
+            revogarTokensDeAcesso(registro.getFamilia(), registro.getUsuario());
+
             LOG.info("AUTENTICACAO | LOGOUT | usuario={} familia={} tokens_revogados={}",
                     registro.getUsuario(), registro.getFamilia(), revogados);
         });
     }
 
     /**
+     * Revoga os tokens de acesso de uma familia de sessao.
+     *
+     * O token de acesso e um JWT stateless: enquanto ele for valido,
+     * ninguem precisa consultar nada para usa-lo. E o que o torna
+     * barato, mas deixa o logout sem efeito pratico.
+     *
+     * A solucao e a lista de bloqueio: a familia entra nela, e o filtro
+     * de JWT passa a recusar qualquer token da familia. O bloqueio
+     * vale ate o token de acesso mais antigo expirar - depois disso,
+     * o registro e apagado.
+     *
+     * @param familia identificador da familia de sessao
+     * @param usuario dono da sessao, para o log
+     */
+    private void revogarTokensDeAcesso(String familia, String usuario) {
+
+        if (tokenRevogadoBO == null) {
+            // Situacao de teste, em que o BO e' montado na mao sem a
+            // lista de bloqueio. Sem ela, a revogacao dos tokens de
+            // acesso simplesmente nao acontece.
+            return;
+        }
+
+        tokenRevogadoBO.revogarFamilia(
+                familia,
+                usuario,
+                LocalDateTime.now().plus(tokenJwtBO.getValidadeTokenAcesso()));
+    }
+
+    /**
+     * O id da empresa que vem dentro do token.
+     *
+     * @param claims as claims do token
+     * @return o id da empresa, ou nulo
+     */
+    private Integer empresaDoToken(Claims claims) {
+
+        Object valor = claims.get(TokenJwtBO.CLAIM_EMPRESA);
+
+        if (valor instanceof Number) {
+            return ((Number) valor).intValue();
+        }
+
+        return null;
+    }
+
+    /**
+     * O papel que vem dentro do token.
+     *
+     * @param claims as claims do token
+     * @return o papel, ou nulo
+     */
+    private String papelDoToken(Claims claims) {
+
+        Object valor = claims.get(TokenJwtBO.CLAIM_PAPEL);
+
+        return valor instanceof String ? (String) valor : null;
+    }
+
+    /**
      * Emite um par de tokens (acesso + renovacao) e registra o token de
      * renovacao no banco.
      */
-    private LoginResponse emitirParDeTokens(String usuario, String familia, String ip) {
+    private LoginResponse emitirParDeTokens(String usuario,
+                                            String familia,
+                                            String ip,
+                                            Integer empresaId,
+                                            String papel) {
 
-        String tokenAcesso = tokenJwtBO.emitirTokenAcesso(usuario);
-        String tokenRenovacao = tokenJwtBO.emitirTokenRenovacao(usuario);
+        // Os dois tokens carregam a familia: e o que permite revogar a
+        // sessao inteira de uma vez, tanto no logout quanto na deteccao
+        // de reuso.
+        String tokenAcesso = tokenJwtBO.emitirTokenAcesso(usuario, familia, empresaId, papel);
+        String tokenRenovacao = tokenJwtBO.emitirTokenRenovacao(usuario, familia, empresaId, papel);
 
         LocalDateTime agora = LocalDateTime.now();
 
@@ -262,7 +386,10 @@ public class AutenticacaoBO {
                 tokenRenovacao,
                 "Bearer",
                 tokenJwtBO.getValidadeTokenAcesso().getSeconds(),
-                usuario);
+                usuario,
+                papel,
+                empresaId,
+                Papeis.ADMIN.equals(papel));
     }
 
     /**

@@ -46,6 +46,30 @@ public class TokenJwtBO {
     public static final String TIPO_RENOVACAO = "refresh";
 
     /**
+     * Claim com o identificador da familia de sessao.
+     *
+     * Todos os tokens que uma renovacao gerou pertencem a mesma familia.
+     * O claim e' o que permite revogar a sessao inteira de uma vez: no
+     * logout, a familia entra na lista de bloqueio e o filtro de JWT
+     * recusa os tokens de acesso dela, mesmo antes de expirarem.
+     */
+    public static final String CLAIM_FAMILIA = "fam";
+
+    /**
+     * Claim com o id da empresa do usuario.
+     *
+     * E o que liga a requisicao ao tenant: sem ele, o servidor nao
+     * saberia de qual empresa e a sessao, e nao conseguiria impedir que
+     * uma empresa veja os dados de outra.
+     */
+    public static final String CLAIM_EMPRESA = "emp";
+
+    /**
+     * Claim com o papel do usuario (ROLE_ADMIN ou ROLE_EMPRESA).
+     */
+    public static final String CLAIM_PAPEL = "rol";
+
+    /**
      * Leitor de JSON usado pra ler o cabecalho do token.
      *
      * E uma instancia unica e imutavel: o Jackson e seguro pra uso
@@ -81,13 +105,32 @@ public class TokenJwtBO {
     private Duration validadeTokenRenovacao;
 
     /**
-     * Emite um token de acesso.
+     * Emite um token de acesso sem familia nem empresa.
+     *
+     * Serve para os casos em que o token nao pertence a uma sessao de
+     * empresa - e o que os testes usam.
      *
      * @param usuario identificacao do usuario autenticado
      * @return o token assinado, no formato compacto do JWT
      */
     public String emitirTokenAcesso(String usuario) {
-        return emitir(usuario, TIPO_ACESSO, validadeTokenAcesso);
+        return emitir(usuario, TIPO_ACESSO, validadeTokenAcesso, null, null, null);
+    }
+
+    /**
+     * Emite um token de acesso de uma sessao de empresa.
+     *
+     * @param usuario   identificacao do usuario autenticado
+     * @param familia   identificador da familia de sessao (claim "fam")
+     * @param empresaId id da empresa do usuario (claim "emp")
+     * @param papel     papel do usuario (claim "rol")
+     * @return o token assinado, no formato compacto do JWT
+     */
+    public String emitirTokenAcesso(String usuario,
+                                    String familia,
+                                    Integer empresaId,
+                                    String papel) {
+        return emitir(usuario, TIPO_ACESSO, validadeTokenAcesso, familia, empresaId, papel);
     }
 
     /**
@@ -97,20 +140,45 @@ public class TokenJwtBO {
      * @return o token assinado, no formato compacto do JWT
      */
     public String emitirTokenRenovacao(String usuario) {
-        return emitir(usuario, TIPO_RENOVACAO, validadeTokenRenovacao);
+        return emitir(usuario, TIPO_RENOVACAO, validadeTokenRenovacao, null, null, null);
+    }
+
+    /**
+     * Emite um token de renovacao de uma sessao de empresa.
+     *
+     * @param usuario   identificacao do usuario autenticado
+     * @param familia   identificador da familia de sessao (claim "fam")
+     * @param empresaId id da empresa do usuario (claim "emp")
+     * @param papel     papel do usuario (claim "rol")
+     * @return o token assinado, no formato compacto do JWT
+     */
+    public String emitirTokenRenovacao(String usuario,
+                                        String familia,
+                                        Integer empresaId,
+                                        String papel) {
+        return emitir(usuario, TIPO_RENOVACAO, validadeTokenRenovacao, familia, empresaId, papel);
     }
 
     /**
      * Emite um token do tipo informado.
+     *
+     * @param usuario   identificacao do usuario autenticado (claim "sub")
+     * @param tipo      tipo do token (claim "typ")
+     * @param validade  prazo de validade do token
+     * @param familia   familia de sessao (claim "fam"), pode ser nula
+     * @param empresaId id da empresa (claim "emp"), pode ser nulo
+     * @param papel     papel do usuario (claim "rol"), pode ser nulo
+     * @return o token assinado, no formato compacto do JWT
      */
-    private String emitir(String usuario, String tipo, Duration validade) {
+    private String emitir(String usuario, String tipo, Duration validade,
+                          String familia, Integer empresaId, String papel) {
 
         Instant agora = Instant.now();
         Instant expira = agora.plus(validade);
 
         ChaveJwtProvider.Chave chave = chaveJwtProvider.getChaveAtiva();
 
-        return Jwts.builder()
+        io.jsonwebtoken.JwtBuilder construtor = Jwts.builder()
                 .setSubject(usuario)
                 .setIssuer(emissor)
                 .setId(UUID.randomUUID().toString())
@@ -118,9 +186,24 @@ public class TokenJwtBO {
                 .setExpiration(Date.from(expira))
                 .claim("typ", tipo)
                 // O "kid" no cabecalho e o que permite rotacionar a chave.
-                .setHeaderParam("kid", chave.getId())
-                .signWith(chave.getPrivada(), Jwts.SIG.RS256)
-                .compact();
+                .setHeaderParam("kid", chave.getId());
+
+        // Os claims abaixo so entram quando tem valor. Um token sem
+        // familia nao pode ser revogado em lote, e um token sem empresa
+        // nao pertence a nenhum tenant.
+        if (familia != null && !familia.isEmpty()) {
+            construtor.claim(CLAIM_FAMILIA, familia);
+        }
+
+        if (empresaId != null) {
+            construtor.claim(CLAIM_EMPRESA, empresaId);
+        }
+
+        if (papel != null && !papel.isEmpty()) {
+            construtor.claim(CLAIM_PAPEL, papel);
+        }
+
+        return construtor.signWith(chave.getPrivada(), Jwts.SIG.RS256).compact();
     }
 
     /**
@@ -198,7 +281,7 @@ public class TokenJwtBO {
         } catch (JwtException | IllegalArgumentException e) {
             // JwtException cobre: expirado, assinatura invalida, malformado.
             LOG.debug("JWT | Token recusado: {}", e.getMessage());
-            throw new TokenInvalidoException("Token invalido ou expirado");
+            throw new TokenInvalidoException("Token inválido ou expirado");
         }
     }
 
@@ -241,7 +324,7 @@ public class TokenJwtBO {
         } catch (TokenInvalidoException e) {
             throw e;
         } catch (java.io.IOException | IllegalArgumentException e) {
-            throw new TokenInvalidoException("Cabecalho do token ilegivel");
+            throw new TokenInvalidoException("Cabeçalho do token ilegível");
         }
     }
 
@@ -271,7 +354,7 @@ public class TokenJwtBO {
             return hexadecimal.toString();
 
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 nao disponivel nesta JVM", e);
+            throw new IllegalStateException("SHA-256 não disponível nesta JVM", e);
         }
     }
 

@@ -16,6 +16,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -145,7 +146,26 @@ public class AuditoriaBO {
             // Monta o registro.
             Auditoria registro = new Auditoria();
             registro.setSequencia(sequencia);
-            registro.setDataEvento(LocalDateTime.now());
+
+            // O instante e' truncado para MICROSSEGUNDOS, e nao deixado
+            // como o "now()" devolve.
+            //
+            // Isso e' obrigatorio: o "LocalDateTime.now()" do Java tem
+            // precisao de NANOSSEGUNDOS (9 casas), mas a coluna
+            // "data_evento" do PostgreSQL e' do tipo TIMESTAMP, que
+            // guarda MICROSSEGUNDOS (6 casas). O banco arredonda na
+            // gravacao.
+            //
+            // O hash selado usa o texto do instante. Se ele selar
+            // "2026-10-30T21:47:46.326483800" (9 casas) e o banco
+            // devolver "2026-10-30T21:47:46.326484" (6 casas), os dois
+            // textos nunca coincidem - e a verificacao acusaria
+            // adulteracao em TODOS os registros, mesmo intactos.
+            //
+            // Truncar aqui faz o valor selado ser exatamente o valor que
+            // o banco vai devolver.
+            registro.setDataEvento(LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
+
             registro.setUsuario(usuario);
             registro.setIpOrigem(ipOrigem);
             registro.setMetodoHttp(metodoHttp);
@@ -285,7 +305,7 @@ public class AuditoriaBO {
         } catch (java.security.GeneralSecurityException ex) {
             // Nao ha o que fazer se o algoritmo HMAC nao existir: e um
             // erro de plataforma, nao de negocio.
-            throw new IllegalStateException("Nao foi possivel calcular o HMAC da trilha de auditoria.", ex);
+            throw new IllegalStateException("Não foi possível calcular o HMAC da trilha de auditoria.", ex);
         }
     }
 

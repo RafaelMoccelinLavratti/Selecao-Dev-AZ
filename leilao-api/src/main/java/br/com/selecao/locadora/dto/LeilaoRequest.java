@@ -20,15 +20,15 @@ import java.time.LocalDateTime;
 public class LeilaoRequest {
 
     /** Codigo do leilao. Obrigatorio (asterisco no diagrama). */
-    @NotNull(message = "O codigo do leilao e obrigatorio.")
+    @NotNull(message = "O código do leilão é obrigatório.")
     private Integer codigo;
 
     /** Descricao. Tamanho maximo 80. */
-    @Size(max = 80, message = "A descricao deve ter no maximo 80 caracteres.")
+    @Size(max = 80, message = "A descrição deve ter no máximo 80 caracteres.")
     private String descricao;
 
     /** Id da empresa vendedora. Obrigatorio (asterisco no diagrama). */
-    @NotNull(message = "O vendedor e obrigatorio.")
+    @NotNull(message = "O vendedor é obrigatório.")
     private Integer vendedor;
 
     /** Data e hora previstas para o inicio do leilao. */

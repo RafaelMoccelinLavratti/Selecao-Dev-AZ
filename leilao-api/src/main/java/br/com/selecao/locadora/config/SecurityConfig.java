@@ -8,11 +8,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
@@ -50,18 +45,6 @@ public class SecurityConfig {
      */
     @Value("${app.security.mode:basic}")
     private String modoSeguranca;
-
-    /**
-     * Usuario da autenticacao HTTP Basic (perfil de producao).
-     */
-    @Value("${app.security.username:admin}")
-    private String usuarioPadrao;
-
-    /**
-     * Senha da autenticacao HTTP Basic (perfil de producao).
-     */
-    @Value("${app.security.password:troque-esta-senha}")
-    private String senhaPadrao;
 
     /**
      * Filtro que bloqueia IPs que estouraram o limite de tentativas de
@@ -152,6 +135,29 @@ public class SecurityConfig {
                     // senao nao haveria como obter o token.
                     .antMatchers("/auth/login", "/auth/refresh",
                                  "/autenticacao/login", "/autenticacao/refresh").permitAll()
+                    // O "/auth/me" tambem e' publico, e' de proposito.
+                    //
+                    // E' o endpoint que responde "a API exige credencial?"
+                    // e "quem esta autenticado?". Sem ele ser publico, o
+                    // frontend nunca descobriria que o login e' necessario:
+                    // a chamada voltaria 401 antes de o navegador saber
+                    // que precisa entrar, e a tela de login nunca
+                    // apareceria.
+                    //
+                    // Isso nao abre brecha: o endpoint nao devolve dado
+                    // protegido. Sem token, ele responde que nao ha
+                    // sessao - e so. Quem tem token recebe os proprios
+                    // dados, que ele ja conhece.
+                    .antMatchers("/auth/me", "/autenticacao/me").permitAll()
+                    // A documentacao da API e publica de proposito.
+                    //
+                    // O que ela mostra e o contrato das rotas (metodo,
+                    // caminho, parametros, formato da resposta). Nao mostra
+                    // dado nenhum: o swagger faz as chamadas de verdade,
+                    // com o cabecalho Authorization do usuario. E um
+                    // cliente so de documentacao, como o actuator.
+                    .antMatchers("/v3/api-docs/**", "/swagger-ui/**",
+                                 "/swagger-ui.html", "/webjars/**").permitAll()
                     .anyRequest().authenticated()
                     .and()
                 // "acesso negado" sempre em JSON, no mesmo formato do
@@ -237,31 +243,16 @@ public class SecurityConfig {
     }
 
     /**
-     * Usuario em memoria para o modo de producao.
+     * Onde os usuarios vem.
      *
-     * Num sistema real este usuario viria de um banco de dados ou de um
-     * provedor de identidade (Keycloak, Azure AD, Google). Aqui ele
-     * existe pra demonstrar o controle de acesso sem depender de
-     * infraestrutura externa.
+     * O acesso e' do UsuarioDetailsServiceEmpresa, que junta as duas
+     * origens: o administrador da API (que vem da configuracao) e os
+     * usuarios das empresas cadastradas (que vemem da tabela
+     * tb_empresa, pelas colunas "usuario" e "senha").
      *
-     * A senha e guardada com hash (Argon2id) - o Spring Security compara
-     * o hash, nunca a senha em texto puro. O encoder e o mesmo bean
-     * entregue pelo PasswordEncoderConfig, pra comparacao usar
-     * exatamente o mesmo algoritmo dos hashes gravados no banco.
-     *
-     * O usuario existe mesmo com a autenticacao desligada porque o
-     * endpoint POST /auth/login precisa funcionar, para dar pra testar o
-     * fluxo de token. Com a autenticacao desligada as rotas estao abertas
-     * de qualquer jeito: a presenca do usuario aqui nao abre porta
-     * nenhuma, so permite emitir um token de demonstracao.
+     * Antes, o projeto tinha so o administrador em memoria. As colunas
+     * de acesso da tb_empresa eram gravadas, mas nao serviam para
+     * ninguem entrar: o modelo de dados era multi-empresa e o controle
+     * de acesso nao.
      */
-    @Bean
-    public UserDetailsService usuarioEmMemoria(PasswordEncoder encoder) {
-        UserDetails usuario = User.builder()
-                .username(usuarioPadrao)
-                .password(encoder.encode(senhaPadrao))
-                .roles("ADMIN")
-                .build();
-        return new InMemoryUserDetailsManager(usuario);
-    }
 }
