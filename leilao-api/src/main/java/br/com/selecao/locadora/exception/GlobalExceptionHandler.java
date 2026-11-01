@@ -1,7 +1,9 @@
 package br.com.selecao.locadora.exception;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -98,6 +100,64 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> treatableTipo(MethodArgumentTypeMismatchException ex) {
         return montarErro(HttpStatus.BAD_REQUEST, "Parametro invalido",
                 "O valor '" + ex.getValue() + "' nao e valido para o parametro '" + ex.getName() + "'.");
+    }
+
+    /**
+     * Corpo da requisicao que nao bate com o que o DTO espera -> HTTP 400.
+     *
+     * Exemplo: mandar "vendedor": "Metalurgica Aurora Ltda" num campo que
+     * e' o ID da empresa. O Jackson lanca a excecao de conversao antes do
+     * controller, e sem este tratamento ela cairia no handler generico
+     * e voltaria como 500 - o que e' errado: nao foi erro do servidor,
+     * foi o cliente mandando dado invalido.
+     *
+     * A diferenca importa para quem consome a API: um 400 diz "corrige o
+     * teu dado"; um 500 diz "tenta de novo depois" e faz o cliente
+     * repetir a mesma requisição, que vai falhar igual.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> tratarCorpoInvalido(HttpMessageNotReadableException ex) {
+        // A mensagem do Jackson cita o campo, mas em ingles e com
+        // detalhes de implementacao. A mensagem daqui fala o que
+        // importa para quem consome a API.
+        String campo = extrairCampo(ex);
+
+        return montarErro(HttpStatus.BAD_REQUEST, "Dados invalidos",
+                campo != null
+                        ? "O campo '" + campo + "' tem um valor invalido. Confira o tipo do dado enviado."
+                        : "O corpo da requisicao tem um valor invalido. Confira os dados enviados.");
+    }
+
+    /**
+     * Descobre qual campo do corpo falhou, a partir da mensagem do
+     * Jackson.
+     *
+     * O Jackson escreve algo como:
+     *     JSON parse error: Cannot deserialize value of type `java.lang.Integer`
+     *     from String "Metalurgica Aurora Ltda": not a valid `Integer` value
+     *
+     * O nome do campo vem antes, na forma "through reference chain".
+     */
+    private String extrairCampo(HttpMessageNotReadableException ex) {
+        Throwable causa = ex.getCause();
+
+        if (causa instanceof InvalidFormatException) {
+            // O caminho do campo vem na mensagem do proprio Jackson.
+            String mensagem = causa.getMessage();
+            if (mensagem != null) {
+                java.util.regex.Matcher m = java.util.regex.Pattern
+                        .compile("through reference chain: .*?\\[([^\\]]+)\\]")
+                        .matcher(mensagem);
+
+                if (m.find()) {
+                    // O Jackson devolve o campo com aspas: "\"vendedor\"".
+                    // As aspas nao ajudam quem le a mensagem.
+                    return m.group(1).replace("\"", "");
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
