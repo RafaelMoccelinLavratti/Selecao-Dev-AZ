@@ -107,6 +107,27 @@ conferir a precisão do timestamp (é o único lugar onde o arredondamento do
 banco aparece). Sem o banco, esse teste é **pulado**, não reprovado: o build
 passa igual.
 
+### A pasta `sql/`
+
+```
+leilao-api/src/main/resources/sql/
+├── 01_ddl.sql              estrutura das 5 tabelas
+├── 02_dml.sql              massa de dados inicial
+├── database.png            o diagrama do enunciado
+├── seguranca/
+│   └── 03_permissoes.sql   usuário de banco com menor privilégio (opcional)
+└── exemplos/
+    └── spcript.sql         script original do starter, só como referência
+```
+
+A subpasta `exemplos/` não é opcional, e o motivo é prático: o container do
+PostgreSQL executa automaticamente todo `.sql` que está **diretamente** na
+pasta montada em `/docker-entrypoint-initdb.d` (o utilitário do container usa
+`maxdepth 1` e não entra em subpastas). O `spcript.sql` do starter cria
+`tb_unidade` e `seq_unidade`, que o `01_ddl.sql` já cria — se ele rodasse
+automatically, o container abortaria com `relation tb_unidade already
+exists` e o banco nem subiria.
+
 ## Arquitetura
 
 O enunciado pede 4 camadas, e cada uma tem uma responsabilidade só:
