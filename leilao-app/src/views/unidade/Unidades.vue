@@ -100,55 +100,85 @@
           Celula "nome": vira campo de edicao quando a linha esta em edicao
           (ou e a linha de inclusao); senao mostra o texto.
         -->
-        <template v-slot:item.nome="{ item }">
-          <!-- edicao de um registro existente -->
-          <v-edit-field
-            v-if="editando === item.id"
-            v-model="editado.nome"
-            :rules="[regras.nome]"
-            label="Nome"
-            single-line
-            dense
-            @save="salvarEdicao"
-            @cancel="cancelarEdicao"
-          ></v-edit-field>
+          <template v-slot:item.nome="{ item }">
+            <!--
+              A ordem das condicoes importa: a linha de inclusao tem
+              "id === null", e o "editando" comeca como "null" tambem.
+              Com "editando === item.id" primeiro, a linha de inclusao
+              abria o campo de edicao de um registro que nao existe.
+            -->
 
-          <!-- inclusao (a linha nova do topo) -->
-          <v-edit-field
-            v-else-if="item.id === null"
-            v-model="novo.nome"
-            :rules="[regras.nome]"
-            label="Nome da nova unidade"
-            single-line
-            dense
-            autofocus
-            @save="salvarNova"
-            @cancel="cancelarInclusao"
-          ></v-edit-field>
+            <!-- inclusao (a linha nova do topo) -->
+            <!--
+              O "v-model" fica em "novoNome", e nao em "novo.nome". O
+              "v-model" do Vue 2 escreve de volta na expressao
+              "novo.nome" chamando o setter de "novo" - e nao existe
+              setter para isso. O valor chegava no "novo.nome", mas a
+              tela lia o "novo.nome" antigo (vazio), e a inclusao nunca
+              gravava.
+            -->
+            <v-edit-field
+              v-if="item.id === null"
+              v-model="novoNome"
+              :rules="[regras.nome]"
+              label="Nome da nova unidade"
+              single-line
+              dense
+              autofocus
+              @save="salvarNova"
+              @cancel="cancelarInclusao"
+            ></v-edit-field>
 
-          <!-- consulta -->
-          <span v-else>{{ item.nome }}</span>
-        </template>
+            <!-- edicao de um registro existente -->
+            <!--
+              O "v-model" fica em "editadoNome", e nao em "editado.nome".
+              O "v-model" do Vue 2 escreve de volta na expressao
+              "editado.nome" chamando o setter de "editado" - e nao
+              existe setter para isso. O valor chegava no "editado.nome",
+              mas a tela lia o "editado.nome" antigo, e a alteracao nunca
+              era enviada.
+            -->
+            <v-edit-field
+              v-else-if="editando === item.id"
+              v-model="editadoNome"
+              :rules="[regras.nome]"
+              label="Nome"
+              single-line
+              dense
+              @save="salvarEdicao"
+              @cancel="cancelarEdicao"
+            ></v-edit-field>
+
+            <!-- consulta -->
+            <span v-else>{{ item.nome }}</span>
+          </template>
 
         <!--
           Celula de acoes. Quando a linha esta em edicao, os botoes viram
           salvar e cancelar.
         -->
         <template v-slot:item.actions="{ item }">
-          <template v-if="editando === item.id">
-            <v-btn icon color="success" title="Salvar" @click="salvarEdicao">
-              <v-icon>mdi-check</v-icon>
-            </v-btn>
-            <v-btn icon color="warning" title="Cancelar" @click="cancelarEdicao">
-              <v-icon>mdi-close</v-icon>
-            </v-btn>
-          </template>
-
-          <template v-else-if="item.id === null">
+          <!--
+            A ordem das condicoes importa: a linha de inclusao tem
+            "id === null", e o "editando" comeca como "null" tambem.
+            Com "editando === item.id" primeiro, a linha de inclusao
+            entrava no modo de edicao - e o "salvar" mandava o nome
+            errado (ou vazio) para a API.
+          -->
+          <template v-if="item.id === null">
             <v-btn icon color="success" title="Cadastrar" @click="salvarNova">
               <v-icon>mdi-check</v-icon>
             </v-btn>
             <v-btn icon color="warning" title="Cancelar" @click="cancelarInclusao">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </template>
+
+          <template v-else-if="editando === item.id">
+            <v-btn icon color="success" title="Salvar" @click="salvarEdicao">
+              <v-icon>mdi-check</v-icon>
+            </v-btn>
+            <v-btn icon color="warning" title="Cancelar" @click="cancelarEdicao">
               <v-icon>mdi-close</v-icon>
             </v-btn>
           </template>
@@ -238,9 +268,20 @@ export default {
       // Copia da linha em edicao (ver o cabecalho deste arquivo).
       editado: { id: null, nome: '' },
 
+      // O nome que o campo de edicao esta editando.
+      //
+      // Fica separado do "editado.nome" por causa do "v-model": o Vue 2
+      // escreve de volta na expressao "editado.nome" chamando o setter
+      // de "editado", e nao existe setter para isso. Com o valor em uma
+      // propriedade simples, o "v-model" funciona.
+      editadoNome: '',
+
       // Objeto da linha de inclusao. O "id: null" e a marca de que esta
       // linha ainda nao existe no banco.
       novo: { id: null, nome: null },
+
+      // O nome da linha de inclusao (mesmo motivo do "editadoNome").
+      novoNome: null,
 
       // Linha que o usuario pediu para excluir, aguardando confirmacao.
       paraExcluir: null
@@ -261,17 +302,17 @@ export default {
     /**
      * As linhas que a tabela exibe.
      *
-     * Se houver inclusao em andamento (novo.nome !== null), ela aparece
+     * Se houver inclusao em andamento (novoNome !== null), ela aparece
      * primeiro, no topo da tabela. Caso contrario, e so a lista real.
      *
-     * O teste e em "novo.nome" e nao em "novo.id" porque o id e null tanto
+     * O teste e' em "novoNome" e nao em "novo.id" porque o id e null tanto
      * na linha vazia quanto depois de cancelar. Ja o nome comeca como null
      * e vira string (mesmo vazia) quando o usuario comeca a digitar - e
      * isso que faz a linha aparecer e sumir na hora certa.
      */
     linhasExibidas() {
-      if (this.novo.nome !== null) {
-        return [this.novo].concat(this.unidades);
+      if (this.novoNome !== null) {
+        return [{ id: null, nome: this.novoNome }].concat(this.unidades);
       }
       return this.unidades;
     },
@@ -365,9 +406,15 @@ export default {
      *
      * Repare no "nome: ''" (string vazia) e nao null: e isso que faz a
      * linha aparecer e o campo receber o foco com o cursor pronto.
+     *
+     * O "novoNome" e' zerado em separado porque e' ele que o "v-model"
+     * usa (ver o comentario do "v-model" no template). Se ele ficasse
+     * com o valor antigo, a linha apareceria ja preenchida com o
+     * cadastro anterior.
      */
     comecarInclusao() {
       this.novo = { id: null, nome: '' };
+      this.novoNome = '';
     },
 
     /**
@@ -378,16 +425,19 @@ export default {
      * contornado), mas fazer dos dois lados evita ida e volta ao servidor
      * por causa de um espaco.
      */
-    async salvarNova() {
-      if (!this.novo.nome || !this.novo.nome.trim()) {
+    async salvarNova(valor) {
+      const nome = valor !== undefined ? valor : this.novoNome;
+
+      if (!nome || !nome.trim()) {
         this.notificar('error', 'Informe o nome da unidade.');
         return;
       }
 
       try {
-        await api.post('/unidades', { nome: this.novo.nome.trim() });
+        await api.post('/unidades', { nome: nome.trim() });
         // Zera a linha de inclusao (some da tela).
         this.novo = { id: null, nome: null };
+        this.novoNome = null;
         this.notificar('success', 'Unidade cadastrada com sucesso.');
         // Recarrega pra tabela mostrar o registro novo, com o id que o
         // banco gerou.
@@ -400,26 +450,30 @@ export default {
     // Cancela a inclusao. Volta o "nome" pra null e a linha some sozinha.
     cancelarInclusao() {
       this.novo = { id: null, nome: null };
+      this.novoNome = null;
     },
 
     // Coloca a linha em modo de edicao, copiando os valores pra "editado".
     comecarEdicao(item) {
       this.editando = item.id;
       this.editado = { id: item.id, nome: item.nome };
+      this.editadoNome = item.nome;
     },
 
     /**
      * Envia a edicao para a API. O PUT leva o id na URL e os dados novos
      * no corpo, que e o padrao REST para alteracao.
      */
-    async salvarEdicao() {
-      if (!this.editado.nome || !this.editado.nome.trim()) {
+    async salvarEdicao(valor) {
+      const nome = valor !== undefined ? valor : this.editadoNome;
+
+      if (!nome || !nome.trim()) {
         this.notificar('error', 'Informe o nome da unidade.');
         return;
       }
 
       try {
-        await api.put('/unidades/' + this.editado.id, { nome: this.editado.nome.trim() });
+        await api.put('/unidades/' + this.editado.id, { nome: nome.trim() });
         // Sai do modo de edicao (a linha volta a mostrar texto).
         this.editando = null;
         this.notificar('success', 'Unidade alterada com sucesso.');
@@ -434,6 +488,7 @@ export default {
     cancelarEdicao() {
       this.editando = null;
       this.editado = { id: null, nome: '' };
+      this.editadoNome = '';
     },
 
     // Guarda o registro escolhido antes de abrir o dialogo.

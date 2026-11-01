@@ -82,7 +82,7 @@
  * propriedade inexistente):
  *
  *     <v-edit-field
- *       v-model="editado.nome"
+ *       v-model="editadoNome"
  *       :rules="[regras.nome]"
  *       label="Nome"
  *       @save="salvarEdicao"
@@ -188,8 +188,17 @@ export default {
      * Salva, se o valor passar nas regras.
      *
      * A validacao e' feita pelo "v-form" interno do "v-text-field", que
-     * expoe o metodo "validate()". Ele devolve um array com os erros -
-     * vazio quando tudo passou.
+     * expoe o metodo "validate()".
+     *
+     * O "validate()" do Vuetify 2 devolve um BOOLEAN ("true" quando
+     * passou, "false" quando deu erro) - e nao a lista de erros. A
+     * versao anterior deste codigo tratava o retorno como array e
+     * testava "erros.length > 0": com "false", "false.length" e'
+     * "undefined", e "undefined > 0" e' falso - o campo vazio passava
+     * pela validacao e o "save" era emitido com nome em branco.
+     *
+     * A lista de erros fica em "errorMessages", que e' o que o campo
+     * mostra em vermelho.
      */
     salvar() {
       if (this.salvando) {
@@ -197,9 +206,9 @@ export default {
       }
 
       const campo = this.$refs.campo;
-      const erros = campo && campo.validate ? campo.validate() : [];
+      const valido = campo && campo.validate ? campo.validate() : false;
 
-      if (erros && erros.length > 0) {
+      if (!valido) {
         // Com erro, o campo fica marcado e o foco volta para ele. O
         // usuario ve onde esta o problema, sem perder o que digitou.
         return;
