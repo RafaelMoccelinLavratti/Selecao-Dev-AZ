@@ -71,6 +71,32 @@ Depois:
 | <http://localhost:8081/swagger-ui.html> | A documentação da API |
 | <http://localhost:8081/actuator/health> | O health check |
 
+### Como entrar
+
+O `iniciar.ps1` sobe com a autenticação ligada, e a tela de login
+aparece. As credenciais são de desenvolvimento e estão na massa de
+dados (`02_dml.sql`):
+
+| Perfil | Usuário | Senha | O que vê |
+|---|---|---|---|
+| Administrador | `admin` | `SenhaForteAdmin123` | tudo, de todas as empresas |
+| Empresa | `admin.aurora` | `Senha@1` | só os dados da Metalúrgica Aurora |
+
+> **O usuário `admin` não está no banco.** Ele é criado pelo
+> `iniciar.ps1`, a partir da variável `SECURITY_USERNAME` /
+> `SECURITY_PASSWORD`. A senha do administrador é a do script — o
+> `SECURITY_PASSWORD` que ele exporta.
+
+O login como empresa existe para mostrar a **autorização por empresa**: o
+mesmo backend, visões diferentes. O `admin.aurora` só enxerga os
+leilões que a Aurora vende ou em que está inscrita como compradora.
+
+Se preferir não lidar com login, o script sobe com as rotas abertas:
+
+```powershell
+.\iniciar.ps1 -SemLogin
+```
+
 ### O caminho oficial (Docker)
 
 ```bash
@@ -100,7 +126,7 @@ Os testes não precisam de banco:
 cd leilao-api && mvn test
 ```
 
-São 159 testes. 158 rodam sem PostgreSQL (dublês do Mockito, `@WebMvcTest` ou
+São mais de 160 testes. Quase todos rodam sem PostgreSQL (dublês do Mockito, `@WebMvcTest` ou
 `@DataJpaTest` sem conexão) e **1 exige o banco no ar** — o
 `AuditoriaPrecisaoTimestampTest`, que grava num PostgreSQL de verdade para
 conferir a precisão do timestamp (é o único lugar onde o arredondamento do
@@ -496,7 +522,7 @@ exigir autenticação existe, está testado e liga por variável de ambiente.
 
 ## Testes
 
-159 testes. 158 rodam sem banco de dados (dublês do Mockito, `@WebMvcTest` ou
+Mais de 160 testes. Quase todos rodam sem banco de dados (dublês do Mockito, `@WebMvcTest` ou
 `@DataJpaTest` sem conexão). O `AuditoriaPrecisaoTimestampTest` é a
 exceção: ele grava num PostgreSQL de verdade e relê, porque é o único lugar
 onde a perda de precisão do timestamp aparece — o `LocalDateTime` do Java
@@ -582,7 +608,7 @@ O total do leilão 1001, por exemplo: `5 × 12.500,00 + 2 × 8.750,00 = 80.000,0
 
 | Comando | Para quê |
 |---|---|
-| `mvn test` | 159 testes. 158 sem depender de banco; 1 exige PostgreSQL (é pulado se não houver). |
+| `mvn test` | Mais de 160 testes. Quase todos sem depender de banco; 1 exige PostgreSQL (é pulado se não houver). |
 | `mvn package -DskipTests` | Gera o SBOM em `target/bom.json`. |
 | `mvn -Psecurity-scan verify` | Varredura de CVEs. Requer `NVD_API_KEY`. |
 | `mvn -Pmutacao test` | Mede a qualidade dos testes por mutação (PIT). |
@@ -592,7 +618,7 @@ O CI (`.github/workflows/`) roda quatro camadas de segurança:
 
 | Workflow | O que faz |
 |----------|-----------|
-| `ci.yml` | Compila, roda os 159 testes e gera o SBOM. |
+| `ci.yml` | Compila, roda a suíte de testes e gera o SBOM. |
 | `dast.yml` | **Varredura dinâmica** com o OWASP ZAP: sobe a API e a varre como um atacante faria, olhando as respostas. |
 | `security-scan` (perfil Maven) | Varredura de CVEs das dependências (OWASP Dependency-Check). |
 | `dependabot.yml` | Acompanha as atualizações de segurança das dependências. |

@@ -131,6 +131,34 @@ $env:PGPASSWORD = "postgres"
 # pode ficar esperando.
 $saidaPsql = Join-Path $env:TEMP "az-leilao-psql.out.log"
 
+# ----------------------------------------------------------------------------
+# O banco aceita conexao?
+#
+# O PostgreSQL responde "the database system is starting up" nos
+# primeiros segundos depois de subir. A porta esta' aberta, mas o
+# servidor ainda nao aceita query. Sem esta espera, o script segue
+# adiante, a consulta de schema falha, e o script morre no meio -
+# com o banco ja' no ar e a API nem tendo comecado.
+# ----------------------------------------------------------------------------
+$bancoAceitaConexao = $false
+
+for ($tentativa = 1; $tentativa -le 30; $tentativa++) {
+    Start-Sleep -Seconds 1
+
+    $teste = (& $psql -h localhost -U postgres -d az -tAc "SELECT 1;" 2>$null | Out-String).Trim()
+
+    if ($teste -eq "1") {
+        $bancoAceitaConexao = $true
+        break
+    }
+}
+
+if (-not $bancoAceitaConexao) {
+    Write-Host "  [ERRO] O PostgreSQL nao aceitou conexao apos 30 tentativas." -ForegroundColor Red
+    Write-Host "         Se ele sobe agora, e' so' o tempo de inicializacao - rode o script de novo." -ForegroundColor DarkGray
+    exit 1
+}
+
 $temTabelas = (& $psql -h localhost -U postgres -d az -tAc "SELECT count(*) FROM information_schema.tables WHERE table_name = 'tb_empresa'" 2>$null | Out-String).Trim()
 
 if ($temTabelas -ne "1") {

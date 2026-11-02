@@ -204,6 +204,12 @@ Use as credenciais de uma empresa da massa de teste:
 | Metalúrgica Aurora Ltda | `admin.aurora` | `Senha@1` |
 | Transportes Vale Verde S.A. | `operador.valverde` | `Senha@2` |
 
+E o **administrador** (vê os dados de todas as empresas):
+
+| Papel | Usuário | Senha | De onde vem |
+|---|---|---|---|
+| Administrador | `admin` | `SenhaForteAdmin123` | Da configuração (`SECURITY_USERNAME` / `SECURITY_PASSWORD`), não do banco |
+
 Depois do login, a barra superior mostra quem está logado, o menu lateral
 mostra o papel, e a tela carrega os dados **daquela empresa** — o
 administrador vê a lista toda, a empresa vê só a sua.
@@ -302,7 +308,7 @@ cd leilao-api
 mvn test
 ```
 
-159 testes. 158 rodam sem precisar de banco de dados, em menos de 30 segundos.
+Mais de 160 testes. Quase todos rodam sem precisar de banco de dados, em menos de 30 segundos.
 O `AuditoriaPrecisaoTimestampTest` é a exceção: ele grava num PostgreSQL de
 verdade (é o único lugar onde a perda de precisão do timestamp aparece) e é
 **pulado** — não reprovado — quando o banco não está no ar.
