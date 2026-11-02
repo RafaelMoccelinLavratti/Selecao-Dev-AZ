@@ -90,3 +90,11 @@ leilao-api/.vscode/
 # Git, quem rodar "npm install" recebe a mesma arvore de dependencias
 # testada aqui - sem risco de uma versao nova quebrar o build.
 !leilao-app/package-lock.json
+
+# A chave HMAC que a aplicacao esta' usando na trilha de auditoria.
+#
+# O arquivo guarda qual chave selou os registros ja gravados. Se a chave
+# mudar, a trilha precisa recomecar - e e' esse arquivo que permite
+# saber isso. Ele e' local de proposito: em producao a chave vem do
+# secret do orquestrador, e nao de um arquivo no disco.
+.audit-hmac.state

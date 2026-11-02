@@ -172,6 +172,60 @@ if (Conferir-Porta -Porta 8081 -Nome "API") {
         Write-Host "  Credenciais da empresa: admin.aurora / Senha@1" -ForegroundColor DarkGray
     }
 
+    # A chave que fecha a trilha de auditoria.
+    #
+    # Sem ela, a aplicacao gera uma chave aleatoria na subida. O
+    # funcionamento fica correto, mas a trilha gravada antes de um
+    # reinicio nao da mais para verificar - e a API avisa isso com
+    # todas as letras.
+    #
+    # Aqui a chave e' FIXA de proposito: e' o mesmo desenvolvimento de
+    # sempre, a mesma senha do admin, e e' assim que a trilha sobrevive
+    # ao reinicio. Em producao, essa chave vem de um secret do
+    # orquestrador - nunca de um arquivo no Git.
+    #
+    # 64 caracteres hex = 32 bytes, o minimo que a OWASP pede para
+    # uma chave HMAC.
+    if (-not $env:AUDIT_HMAC_KEY) {
+        $env:AUDIT_HMAC_KEY = "9f2c4a7b1e8d5f3a6c9b2e4d7a1f8b5c3e9d6a2f7b4c1e8d3a6f9b2c5e7d1a4f8b"
+        Write-Host "  Chave HMAC da auditoria: a de desenvolvimento (a trilha sobrevive ao reinicio)" -ForegroundColor DarkGray
+    }
+
+    # A trilha so verifica se os registros foram selados com a MESMA
+    # chave. Quando a chave muda (ou quando e' a primeira vez), os
+    # registros antigos nao batem - e a verificacao acusaria
+    # "adulteracao" onde nao houve.
+    #
+    # Numa auditoria real, a chave NUNCA muda: e' por isso que a
+    # adulteracao e' detectavel. Em desenvolvimento, a chave pode
+    # mudar - e ai o certo e recomecar a trilha, com o aviso claro.
+    $ArqEstadoChave = Join-Path $PSScriptRoot ".audit-hmac.state"
+    $ChaveDoArquivo = ""
+
+    if (Test-Path $ArqEstadoChave) {
+        $ChaveDoArquivo = (Get-Content $ArqEstadoChave -Raw -ErrorAction SilentlyContinue).Trim()
+    }
+
+    if ($ChaveDoArquivo -ne $env:AUDIT_HMAC_KEY) {
+        Write-Host "  A trilha de auditoria vai recomecar (a chave HMAC mudou)" -ForegroundColor Yellow
+        $Psql = Join-Path (Split-Path -Parent $PSScriptRoot) "_tools\pgsql\bin\psql.exe"
+        if (-not (Test-Path $Psql)) {
+            $Psql = "C:\Users\Rafael\Documents\AZ\_tools\pgsql\bin\psql.exe"
+        }
+
+        $env:PGPASSWORD = "postgres"
+        try {
+            & $Psql -h 127.0.0.1 -U postgres -d az -c "TRUNCATE TABLE tb_auditoria RESTART IDENTITY;" 2>&1 | Out-Null
+            Write-Host "  Trilha limpa. Os registros novos serao selados com a chave atual." -ForegroundColor DarkGray
+        } catch {
+            Write-Host "  (nao deu para limpar a trilha - a API vai avisar que a chave e' efemera)" -ForegroundColor DarkGray
+        }
+
+        Set-Content -Path $ArqEstadoChave -Value $env:AUDIT_HMAC_KEY -Encoding ascii -NoNewline
+    } else {
+        Write-Host "  Trilha de auditoria preservada (a chave HMAC nao mudou)" -ForegroundColor DarkGray
+    }
+
     # O Maven fica em uma janela propria, para o log ficar limpo e o
     # processo poder ser derrubado com "parar.ps1".
     $apiLog = Join-Path $env:TEMP "az-leilao-api.log"
