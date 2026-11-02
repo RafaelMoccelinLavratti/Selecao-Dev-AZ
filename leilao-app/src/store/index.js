@@ -251,11 +251,12 @@ export default new Vuex.Store({
     /**
      * O usuario logado e' o administrador da API?
      *
-     * Quando nao ha sessao, a resposta e' true: no perfil de desenvolvimento
-     * (a autenticacao desligada) nao ha restricao de acesso, e o frontend
-     * precisa se comportar como se houvesse.
+     * Quando nao ha sessao e a autenticacao esta desligada (perfil de
+     * desenvolvimento), a resposta e' true: nao ha restricao de acesso.
+     * Quando a autenticacao esta ligada e nao ha sessao, a resposta e'
+     * false.
      */
-    administrador: state => (state.usuario ? state.usuario.administrador === true : true),
+    administrador: state => (state.usuario ? state.usuario.administrador === true : !state.autenticacaoAtiva),
 
     /**
      * O nome do usuario logado, pra mostrar no menu.
@@ -614,6 +615,8 @@ export default new Vuex.Store({
      * @param {object} payload { tokenAcesso, tokenRenovacao, usuario, papel, empresaId, administrador }
      */
     entrar({ commit, dispatch }, payload) {
+      commit('DEFINIR_AUTENTICACAO_ATIVA', true);
+
       commit('GUARDAR_TOKENS', {
         tokenAcesso: payload.tokenAcesso,
         tokenRenovacao: payload.tokenRenovacao,
@@ -700,6 +703,8 @@ export default new Vuex.Store({
 
       commit('GUARDAR_TOKENS', {});
       commit('GUARDAR_USUARIO', null);
+      commit('DEFINIR_AUTENTICACAO_ATIVA', true);
+      commit('ABRIR_LOGIN', true);
       commit('SESSAO_MUDOU');
     }
   }

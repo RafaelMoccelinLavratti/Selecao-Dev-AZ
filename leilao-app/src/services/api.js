@@ -106,9 +106,25 @@ api.interceptors.response.use(
     // a pagina com o token de acesso vencido, a consulta descobre que
     // ele nao vale, troca por um novo e segue - em vez de expulsar a
     // pessoa para a tela de login.
+    //
+    // EXCECAO: o logout nunca renova.
+    //
+    // O logout e' a unica chamada em que o token e' removido de
+    // proposito (veja o interceptor de requisicao). Se ele voltasse 401
+    // e o interceptor tentasse renovar, teriamos um laco: 401 renova,
+    // a renovacao devolve 401, renova de novo... Cada volta consome
+    // uma vaga do limite de taxa, e o usuario ve o console enchendo de
+    // erro. Alem disso, o logout nao faz sentido com token novo: o
+    // que se quer e' revogar a sessao atual.
+    //
+    // O logout trata o erro la (o "catch" do componente), e limpa a
+    // sessao local de qualquer jeito - que e' o que o usuario pediu.
+    const ehLogout = /^\/(auth|autenticacao)\/logout/.test((error.config && error.config.url) || '');
+
     if (resposta.status === 401
       && store.state.tokenAcesso
-      && store.state.tokenRenovacao) {
+      && store.state.tokenRenovacao
+      && !ehLogout) {
 
       // "renovarSeNecessario" devolve a promessa da renovacao em
       // andamento, ou cria uma. Se duas requisicoes voltaram 401
@@ -134,7 +150,12 @@ api.interceptors.response.use(
     // ligada. No perfil de desenvolvimento (desligada), um 401 significa
     // outra coisa - e o logout local nao-help-nem-harms, mas vale
     // manter o comportamento previsivel.
-    if (resposta.status === 401 && store.state.tokenAcesso) {
+    //
+    // No logout, este bloco NAO roda: quem chamou (o componente) ja'
+    // limpa a sessao local, e limpar duas vezes abriria a tela de
+    // login no meio do logout - o que parece um defeito para quem
+    // esta' tentando sair.
+    if (resposta.status === 401 && store.state.tokenAcesso && !ehLogout) {
       store.commit('GUARDAR_TOKENS', {});
       store.commit('GUARDAR_USUARIO', null);
       store.commit('ABRIR_LOGIN', true);

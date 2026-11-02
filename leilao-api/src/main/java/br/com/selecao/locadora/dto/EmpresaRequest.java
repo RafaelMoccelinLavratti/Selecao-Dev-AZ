@@ -56,6 +56,10 @@ public class EmpresaRequest {
     @Size(max = 84, message = "O complemento deve ter no máximo 84 caracteres.")
     private String complemento;
 
+    /** Bairro do endereco (campo do diagrama). Tamanho maximo 64. */
+    @Size(max = 64, message = "O bairro deve ter no máximo 64 caracteres.")
+    private String bairro;
+
     /** Quantidade. Nao pode ser negativa (a coluna tem CHECK no banco). */
     @Min(value = 0, message = "A quantidade não pode ser negativa.")
     private Integer quantidade;
@@ -104,7 +108,8 @@ public class EmpresaRequest {
             message = "Telefone inválido. Use (00) 0000-0000.")
     private String telefone;
 
-    /** E-mail. @Email valida o formato; @Size respeita a coluna (254). */
+    /** E-mail. Obrigatorio (asterisco no diagrama). @Email valida o formato; @Size respeita a coluna (254). */
+    @NotBlank(message = "O e-mail é obrigatório.")
     @Email(message = "E-mail inválido.")
     @Size(max = 254, message = "O e-mail deve ter no máximo 254 caracteres.")
     private String email;
@@ -116,7 +121,8 @@ public class EmpresaRequest {
     @Size(max = 254, message = "O site deve ter no máximo 254 caracteres.")
     private String site;
 
-    /** Nome de usuario para login. Unico no banco. Tamanho maximo 20. */
+    /** Nome de usuario para login. Obrigatorio e unico no banco. Tamanho maximo 20. */
+    @NotBlank(message = "O usuário é obrigatório.")
     @Size(max = 20, message = "O usuário deve ter no máximo 20 caracteres.")
     private String usuario;
 

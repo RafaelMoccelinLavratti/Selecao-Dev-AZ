@@ -24,8 +24,11 @@ leilao-app/dist
 iniciar.ps1
 parar.ps1
 
-# O script que mostra o banco de dados.
-scripts/mostrar-banco.ps1
+# Os scripts locais de demonstracao e apresentacao.
+scripts/
+testar-ataque-403.bat
+testar-erro-400.bat
+.claude/
 
 # O painel de testes (a ferramenta de apresentacao).
 painel-testes/

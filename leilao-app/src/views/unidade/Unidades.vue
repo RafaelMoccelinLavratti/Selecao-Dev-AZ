@@ -388,6 +388,9 @@ export default {
       // precisa fazer. Depois do login, a mudanca da sessao dispara a
       // recarga.
       if (!this.$store.getters.podeCarregarDados) {
+        this.unidades = [];
+        this.cancelarInclusao();
+        this.cancelarEdicao();
         return;
       }
 

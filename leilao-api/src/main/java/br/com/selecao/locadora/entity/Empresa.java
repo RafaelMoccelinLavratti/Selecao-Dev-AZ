@@ -67,7 +67,11 @@ public class Empresa extends Auditable {
     @Column(name = "complemento", length = 84)
     private String complemento;
 
-    /** Quantidade (campo do diagrama). */
+    /** Endereco - bairro (campo do diagrama). */
+    @Column(name = "bairro", length = 64)
+    private String bairro;
+
+    /** Quantidade. */
     @Column(name = "quantidade")
     private Integer quantidade;
 
@@ -79,16 +83,16 @@ public class Empresa extends Auditable {
     @Column(name = "telefone", length = 32)
     private String telefone;
 
-    /** E-mail de contato. */
-    @Column(name = "email", length = 254)
+    /** E-mail de contato. Obrigatorio (asterisco no diagrama). */
+    @Column(name = "email", nullable = false, length = 254)
     private String email;
 
     /** Site. */
     @Column(name = "site", length = 254)
     private String site;
 
-    /** Nome de usuario para login. Unico (sublinhado no diagrama). */
-    @Column(name = "usuario", length = 20, unique = true)
+    /** Nome de usuario para login. Obrigatorio e unico (asterisco + sublinhado no diagrama). */
+    @Column(name = "usuario", nullable = false, length = 20, unique = true)
     private String usuario;
 
     /**

@@ -59,6 +59,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         // Liga a autenticacao (o padrao do projeto tem ela desligada, pra
         // o avaliador testar as rotas sem login).
         "app.security.enabled=true",
+        "app.security.mode=basic",
         "app.security.username=admin",
         "app.security.password=SenhaForteDeTeste123",
         // Limites baixos, para o teste de bloqueio ser rapido.

@@ -118,6 +118,7 @@ public class EmpresaBO {
         empresa.setMunicipio(request.getMunicipio());
         empresa.setNumero(request.getNumero());
         empresa.setComplemento(request.getComplemento());
+        empresa.setBairro(request.getBairro());
         empresa.setQuantidade(request.getQuantidade());
         empresa.setCep(cep);
         empresa.setTelefone(telefone);
@@ -199,6 +200,7 @@ public class EmpresaBO {
                 .municipio(empresa.getMunicipio())
                 .numero(empresa.getNumero())
                 .complemento(empresa.getComplemento())
+                .bairro(empresa.getBairro())
                 .quantidade(empresa.getQuantidade())
                 .cep(empresa.getCep())
                 .telefone(empresa.getTelefone())

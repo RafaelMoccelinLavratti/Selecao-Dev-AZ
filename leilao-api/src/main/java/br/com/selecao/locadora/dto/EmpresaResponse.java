@@ -41,6 +41,9 @@ public class EmpresaResponse {
     /** Complemento. */
     private String complemento;
 
+    /** Bairro. */
+    private String bairro;
+
     /** Quantidade. */
     private Integer quantidade;
 

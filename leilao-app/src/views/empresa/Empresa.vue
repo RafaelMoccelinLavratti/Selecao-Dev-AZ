@@ -109,8 +109,20 @@
           </v-row>
 
           <v-row dense>
+            <!-- bairro -->
+            <v-col cols="12" md="3">
+              <v-text-field
+                v-model="formulario.bairro"
+                label="Bairro"
+                :counter="64"
+                maxlength="64"
+                outlined
+                dense
+              />
+            </v-col>
+
             <!-- municipio -->
-            <v-col cols="12" md="5">
+            <v-col cols="12" md="3">
               <v-text-field
                 v-model="formulario.municipio"
                 label="Município"
@@ -122,7 +134,7 @@
             </v-col>
 
             <!-- cep (com mascara) -->
-            <v-col cols="6" md="3">
+            <v-col cols="6" md="2">
               <v-text-field
                 v-model="formulario.cep"
                 label="CEP"
@@ -184,11 +196,11 @@
               />
             </v-col>
 
-            <!-- email (validacao de formato) -->
+            <!-- email (obrigatorio e validacao de formato) -->
             <v-col cols="12" md="4">
               <v-text-field
                 v-model="formulario.email"
-                label="E-mail"
+                label="E-mail *"
                 type="email"
                 placeholder="empresa@dominio.com.br"
                 :rules="[regras.email]"
@@ -196,6 +208,7 @@
                 maxlength="254"
                 outlined
                 dense
+                required
               />
             </v-col>
 
@@ -221,16 +234,17 @@
           </div>
 
           <v-row dense>
-            <!-- usuario (unico no banco) -->
+            <!-- usuario (obrigatorio e unico no banco) -->
             <v-col cols="12" md="4">
               <v-text-field
                 v-model="formulario.usuario"
-                label="Usuário"
+                label="Usuário *"
                 :rules="[regras.usuario]"
                 :counter="20"
                 maxlength="20"
                 outlined
                 dense
+                required
                 prepend-inner-icon="mdi-account"
               />
             </v-col>
@@ -446,12 +460,14 @@ export default {
           || (cnpjValido(value) || 'O CNPJ deve ter 14 digitos.'),
         cep: value => cepValido(value) || 'O CEP deve ter 8 digitos (00000-000).',
         telefone: value => telefoneValido(value) || 'Informe um telefone valido com DDD.',
-        email: value => emailValido(value) || 'Informe um e-mail valido.',
+        email: value => obrigatorio(value) || 'O e-mail e obrigatorio.'
+          || (emailValido(value) || 'Informe um e-mail valido.'),
         site: value => urlValida(value) || 'O site deve comecar com http:// ou https://',
         quantidade: value => (value === '' || value === null || Number(value) >= 0)
           || 'A quantidade nao pode ser negativa.',
-        usuario: value => (value === '' || value === null || value.length <= 20)
-          || 'O usuario deve ter no maximo 20 caracteres.',
+        usuario: value => obrigatorio(value) || 'O usuario e obrigatorio.'
+          || ((value === '' || value === null || value.length <= 20)
+          || 'O usuario deve ter no maximo 20 caracteres.'),
         // "!value" cobre vazio, null e indefinido: na alteracao, deixar a
         // senha em branco significa "manter a senha atual".
         senha: value => (!value || value.length >= 8)
@@ -506,6 +522,7 @@ export default {
         logradouro: '',
         numero: '',
         complemento: '',
+        bairro: '',
         municipio: '',
         quantidade: '',
         cep: '',
@@ -541,6 +558,7 @@ export default {
       // A API exige credencial e ainda nao ha sessao? Nao pede os
       // dados (a tela de login e' quem mostra o que falta fazer).
       if (!this.$store.getters.podeCarregarDados) {
+        this.formulario = this.formularioVazio();
         return;
       }
 
@@ -553,6 +571,7 @@ export default {
           logradouro: empresa.logradouro || '',
           numero: empresa.numero || '',
           complemento: empresa.complemento || '',
+          bairro: empresa.bairro || '',
           municipio: empresa.municipio || '',
           quantidade: empresa.quantidade !== null && empresa.quantidade !== undefined ? empresa.quantidade : '',
           cep: mascaraCep(empresa.cep || ''),
@@ -597,6 +616,7 @@ export default {
         logradouro: this.formulario.logradouro,
         numero: this.formulario.numero,
         complemento: this.formulario.complemento,
+        bairro: this.formulario.bairro,
         municipio: this.formulario.municipio,
         quantidade: this.formulario.quantidade === '' ? null : Number(this.formulario.quantidade),
         cep: this.formulario.cep,

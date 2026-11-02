@@ -258,6 +258,7 @@ export default {
       // A API exige credencial e ainda nao ha sessao? Nao pede os
       // dados (a tela de login e' quem mostra o que falta fazer).
       if (!this.$store.getters.podeCarregarDados) {
+        this.empresas = [];
         return;
       }
 

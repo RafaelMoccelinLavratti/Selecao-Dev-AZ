@@ -73,6 +73,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @TestPropertySource(properties = {
         "app.security.enabled=true",
+        "app.security.mode=basic",
         "app.security.username=admin",
         "app.security.password=SenhaForteDeTeste123",
         "app.security.rate-limit.enabled=true",

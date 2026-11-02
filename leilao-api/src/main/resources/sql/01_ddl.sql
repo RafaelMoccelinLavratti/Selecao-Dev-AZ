@@ -118,11 +118,11 @@ CREATE TABLE tb_unidade (
 -- A empresa e a raiz do modelo: ela e vendedora (via leilao.vendedor) e
 -- tambem compradora (via tabela tb_comprador).
 --
--- Colunas com * no diagrama => NOT NULL: razaoSocial, cnpj.
+-- Colunas com * no diagrama => NOT NULL: razaoSocial, cnpj, email, usuario.
 -- Colunas sublinhadas no diagrama => UNIQUE: cnpj, usuario.
 --
--- Sobre `usuario` e `senha`: no desenho eles nao tem asterisco, entao aqui
--- ficam opcionais no banco (e o que o diagrama pede). Em contrapartida,
+-- Sobre `senha`: no desenho ela nao tem asterisco, entao aqui fica
+-- opcional no banco (e o que o diagrama pede). Em contrapartida,
 -- a senha nunca e gravada em texto puro - a aplicacao grava apenas o
 -- hash (Argon2id, com o prefixo "{argon2}" que identifica o algoritmo).
 -- Os hashes antigos em BCrypt continuam valendo: a aplicacao os reconhece
@@ -140,12 +140,13 @@ CREATE TABLE tb_empresa (
     municipio    VARCHAR(64),
     numero       VARCHAR(10),
     complemento  VARCHAR(84),
+    bairro       VARCHAR(64),
     quantidade   INTEGER,
     cep          VARCHAR(16),
     telefone     VARCHAR(32),
-    email        VARCHAR(254),
+    email        VARCHAR(254) NOT NULL,
     site         VARCHAR(254),
-    usuario      VARCHAR(20),
+    usuario      VARCHAR(20)  NOT NULL,
     senha        VARCHAR(128),
     created_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -149,6 +149,20 @@ public class SecurityConfig {
                     // sessao - e so. Quem tem token recebe os proprios
                     // dados, que ele ja conhece.
                     .antMatchers("/auth/me", "/autenticacao/me").permitAll()
+                    // O logout tambem e' publico, e' de proposito.
+                    //
+                    // O frontend remove o cabecalho "Authorization" da
+                    // chamada de logout de proposito - porque o motivo
+                    // de sair costuma ser o token vencido. Se o logout
+                    // exigisse credencial, ele voltaria 401 justamente
+                    // quando o token esta' ruim - que e' o caso mais
+                    // comum de quem quer sair.
+                    //
+                    // Isso nao abre brecha: o logout nao devolve dado
+                    // protegido. Ele revoga o token de renovacao que veio
+                    // no corpo - e revogar um token que a pessoa ja'
+                    // tem na mao nao da' acesso a nada.
+                    .antMatchers("/auth/logout", "/autenticacao/logout").permitAll()
                     // A documentacao da API e publica de proposito.
                     //
                     // O que ela mostra e o contrato das rotas (metodo,

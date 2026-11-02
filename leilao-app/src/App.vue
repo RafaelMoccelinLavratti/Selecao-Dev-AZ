@@ -197,7 +197,7 @@
       "aria-controls" do botao de recolher.
     -->
     <v-main id="conteudo-principal">
-      <v-container fluid class="pa-4">
+      <v-container fluid class="pa-4" v-show="!$store.getters.exigeLogin">
         <!--
           A trilha de navegacao, dentro da area de conteudo.
 

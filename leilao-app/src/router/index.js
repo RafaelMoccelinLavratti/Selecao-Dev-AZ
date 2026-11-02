@@ -51,7 +51,9 @@ const routes = [
     //
     // Esta rota precisa vir antes da rota "/empresa", senao o "id" e
     // interpretado como parte de outro caminho em vez de parametro.
+    // O alias "/leilao/:id" cobre o texto do enunciado do exercicio 8.
     path: '/empresa/:id',
+    alias: '/leilao/:id',
     name: 'EmpresaEditar',
     component: () => import(/* webpackChunkName: "empresa" */ '../views/empresa/Empresa.vue'),
     props: true
