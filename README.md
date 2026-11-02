@@ -39,29 +39,30 @@ Resumido. O passo a passo completo, com diagnóstico, está em
 
 ### O jeito mais rápido (Windows)
 
-Dois scripts cuidam de tudo: banco, API e frontend.
+O caminho oficial é o Docker. Dois comandos:
 
 ```powershell
-# Sobe tudo (e abre o navegador)
-.\iniciar.ps1
+# Sobe o banco (com a estrutura e a massa de dados já prontas)
+docker compose -f docker-database.yml up -d
 
-# Sobe sem exigir login na tela (como o enunciado do teste pede)
-.\iniciar.ps1 -SemLogin
+# Sobe a API
+cd leilao-api
+mvn spring-boot:run
 
-# Derruba a API e o frontend (o banco continua no ar, com os dados)
-.\parar.ps1
+# Em outro terminal, o frontend
+cd leilao-app
+npm install
+npm run serve
 ```
 
-O `iniciar.ps1` resolve dois detalhes que costumam travar a primeira
-execução:
+O `docker-database.yml` lê as variáveis do banco de
+[`.env.example`](.env.example) — não é preciso criar nenhum arquivo
+`.env`. Quem quiser outros valores (uma senha sua, um banco em outro
+lugar) copia esse arquivo, ajusta e aponta o `env_file` do compose para
+a cópia.
 
-- **Aponta o `JAVA_HOME` para o JDK 11.** O projeto é Spring Boot 2.7 /
-  Java 11, e o Lombok que vem com ele não compila no JDK 21 (erro
-  `NoSuchFieldError: JCImport.qualid`). O ajuste vale só para a sessão do
-  script.
-- **Sobe o PostgreSQL local**, se o Docker não estiver instalado — usando
-  o cluster que está em `_tools/pgsql`. O `docker-database.yml` continua
-  sendo o caminho oficial; o script é o atalho para esta máquina.
+O `MANUAL-OPERACAO.md` tem o passo a passo completo, com diagnóstico de
+cada problema que costuma travar a primeira execução.
 
 Depois:
 
@@ -73,28 +74,30 @@ Depois:
 
 ### Como entrar
 
-O `iniciar.ps1` sobe com a autenticação ligada, e a tela de login
-aparece. As credenciais são de desenvolvimento e estão na massa de
-dados (`02_dml.sql`):
+A autenticação está ligada por padrão, e a tela de login aparece. As
+credenciais são de desenvolvimento:
 
 | Perfil | Usuário | Senha | O que vê |
 |---|---|---|---|
 | Administrador | `admin` | `SenhaForteAdmin123` | tudo, de todas as empresas |
 | Empresa | `admin.aurora` | `Senha@1` | só os dados da Metalúrgica Aurora |
 
-> **O usuário `admin` não está no banco.** Ele é criado pelo
-> `iniciar.ps1`, a partir da variável `SECURITY_USERNAME` /
-> `SECURITY_PASSWORD`. A senha do administrador é a do script — o
-> `SECURITY_PASSWORD` que ele exporta.
+> **O usuário `admin` não está no banco.** Ele vem da configuração
+> (`SECURITY_USERNAME` / `SECURITY_PASSWORD`), não da massa de dados —
+> é o que explica por que ele não aparece na tabela `tb_empresa`.
 
 O login como empresa existe para mostrar a **autorização por empresa**: o
 mesmo backend, visões diferentes. O `admin.aurora` só enxerga os
 leilões que a Aurora vende ou em que está inscrita como compradora.
 
-Se preferir não lidar com login, o script sobe com as rotas abertas:
+### Sem login
+
+Para exercitar os endpoints do enunciado sem credencial, a segurança
+desliga por variável de ambiente:
 
 ```powershell
-.\iniciar.ps1 -SemLogin
+$env:SECURITY_ENABLED = "false"
+cd leilao-api && mvn spring-boot:run
 ```
 
 ### O caminho oficial (Docker)
@@ -469,7 +472,7 @@ esperar expirar.
   cosmética: um `5432:5432` sem endereço faz o Docker escutar em **todas**
   as interfaces da máquina — num notebook ligado na rede do escritório, o
   PostgreSQL fica acessível para qualquer pessoa da mesma rede, com a senha
-  do `.env` (que, em desenvolvimento, é pública). Com o `127.0.0.1`
+  do banco (que, em desenvolvimento, é pública). Com o `127.0.0.1`
   antes dos dois pontos, a porta só escuta na própria máquina, e a API
   continua conectando em `localhost:5432` sem nenhuma mudança.
 
@@ -511,7 +514,7 @@ exigir autenticação existe, está testado e liga por variável de ambiente.
 | **`spring-boot-starter-validation` adicionado** | Saiu do `spring-starter-web` no Spring Boot 2.3. Sem ele as anotações `@NotBlank`/`@Size`/`@Pattern` dos DTOs não são verificadas, e o exercício 8 depende delas. |
 | **`spring-security-crypto` + `spring-boot-starter-security`** | Hash de senha e cadeia de segurança configurável. Sem o starter, o Spring Boot geraria uma senha aleatória e bloquearia todos os endpoints. |
 | **`spring-boot-starter-actuator`** | Health check, que é o que um orquestrador consulta para saber se a aplicação está viva. |
-| **`POSTGRES_DB=az` no `.env`** | Sem isso o container cria só o banco `postgres` e a API falha com `database "az" does not exist`. |
+| **`POSTGRES_DB=az` no `.env.example`** | Sem isso o container cria só o banco `postgres` e a API falha com `database "az" does not exist`. O `docker-database.yml` lê esse arquivo. |
 | **Colunas em `snake_case`** | Padrão do mercado, com a ligação para o `camelCase` do diagrama explícita no `@Column`. |
 | **IDs `Integer`** | Bate com o `integer` do diagrama e evita a incompatibilidade de tipo do PostgreSQL (`integer` × `bigint`). |
 | **URLs em singular e plural** | O enunciado é inconsistente entre os exercícios 3 e 5 a 7. Aceitar as duas formas é mais robusto do que escolher uma. |
@@ -593,7 +596,7 @@ vira regra, com um mínimo que faz o build falhar.
 | Sintoma | Causa | Solução |
 |---------|-------|---------|
 | `ERR_OSSL_EVP_UNSUPPORTED` no `npm run serve` | Node 17+ removeu o MD4 do OpenSSL, usado pelo webpack 4 | Resolvido no projeto: Vue CLI 5 / webpack 5 |
-| `database "az" does not exist` | Faltou `POSTGRES_DB=az` no `.env` | Já corrigido no `.env` |
+| `database "az" does not exist` | Faltou `POSTGRES_DB=az` no `.env.example` | Já corrigido no `.env.example` |
 | `No mapping for GET /...` no console | URL que não existe na API | Confira a porta: a API é a 8081, o frontend é a 8080 |
 | Erro de CORS no console | Frontend e API em origens diferentes sem permissão | Ajuste `app.cors.origins` se mudar a porta do frontend |
 | `Connection refused` ao iniciar a API | PostgreSQL parado | `docker compose -f docker-database.yml up -d` |

@@ -249,6 +249,25 @@
         </dependency>
 
         <!--
+             O launcher do JUnit Platform, em versao de teste.
+
+             O Surefire injeta essa biblioteca em tempo de execucao, e por
+             isso ela nao aparece na classpath do projeto. Mas o runner
+             que roda os testes sem o Maven precisa dela declaradinha -
+             sem isso, o classpath de teste nao tem como encontrar o
+             motor de execucao.
+
+             A versao 1.8.2 e' a que o JUnit 5.8.2 (o do Spring Boot
+             2.7) usa. O Surefire 2.22.2 tambem e' dessa linha.
+             -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>1.8.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!--
              Seguranca - dependencia de teste
              spring-security-test traz os "request post processors" que
              permitem simular uma autenticacao valida dentro do MockMvc:

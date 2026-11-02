@@ -34,37 +34,52 @@ quebra com `NoSuchFieldError: JCImport.qualid`. Se a sua `JAVA_HOME`
 apontar para o 21, o erro aparece antes de qualquer outra coisa — e a
 solução é apontar para o 11.
 
-## 1.1 Atalho: os scripts
+## 1.1 Subir tudo na mão
 
-Se você está na máquina de desenvolvimento do projeto, dois scripts
-cuidam de tudo:
+Três processos, três terminais.
 
-```powershell
-cd Selecao-Dev-AZ
+### Terminal 1 — o banco
 
-# Sobe banco, API e frontend, e abre o navegador
-.\iniciar.ps1
-
-# Sobe sem exigir login na tela (como o enunciado do teste pede)
-.\iniciar.ps1 -SemLogin
-
-# Derruba a API e o frontend
-.\parar.ps1
+```bash
+docker compose -f docker-database.yml up -d
 ```
 
-O `iniciar.ps1` faz quatro coisas, nesta ordem:
+O `docker-database.yml` lê as variáveis do banco de `.env.example` — não
+é preciso criar nenhum arquivo `.env`. Na primeira subida o container
+executa `01_ddl.sql` e `02_dml.sql`, e o banco já fica pronto e
+populado.
 
-1. **Aponta o `JAVA_HOME` para o JDK 11**, dentro da sessão do script
-   (não altera a configuração do Windows). É o que resolve o problema do
-   Lombok com o Java 21.
-2. **Sobe o PostgreSQL**, se ele não estiver de pé. Usa o cluster local
-   em `_tools/pgsql` — para o caso de o Docker não estar instalado. Se o
-   banco já estiver no ar, pula essa etapa.
-3. **Confere o schema**: se as tabelas não existirem, aplica
-   `01_ddl.sql` e `02_dml.sql`. Se existirem, não faz nada (e não
-   apaga os dados).
-4. **Sobe a API e o frontend** em processos separados, com log em
-   `%TEMP%\az-leilao-api.log` e `%TEMP%\az-leilao-front.log`.
+Sem Docker? Crie o banco e rode os dois scripts:
+
+```bash
+createdb -U postgres az
+psql -U postgres -d az -f leilao-api/src/main/resources/sql/01_ddl.sql
+psql -U postgres -d az -f leilao-api/src/main/resources/sql/02_dml.sql
+```
+
+### Terminal 2 — a API
+
+```bash
+cd leilao-api
+mvn spring-boot:run
+```
+
+> **Se a sua `JAVA_HOME` apontar para o Java 21**, o build quebra antes
+> de qualquer coisa, com `NoSuchFieldError: JCImport.qualid` — é o
+> Lombok 1.18.24 (o do Spring Boot 2.7) que não suporta o JDK 21.
+> Aponte para o 11 só nesta sessão:
+>
+> ```powershell
+> $env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-11.0.32.101-hotspot"
+> ```
+
+### Terminal 3 — o frontend
+
+```bash
+cd leilao-app
+npm install
+npm run serve
+```
 
 Depois disso:
 
@@ -74,19 +89,17 @@ Depois disso:
 | <http://localhost:8081/swagger-ui.html> | A documentação da API |
 | <http://localhost:8081/actuator/health> | O health check |
 
-O `parar.ps1` derruba a API e o frontend, e **deixa o banco no ar** —
-ele guarda os dados, e derrubar e subir de novo não vale o trabalho.
+Para derrubar, feche os terminais ou use `Ctrl+C` em cada um. O banco
+pode ficar no ar: ele guarda os dados, e derrubar e subir de novo não
+vale o trabalho.
 
-Para ver os logs enquanto a aplicação roda:
+Para ver os logs enquanto a aplicação roda, use o `Ctrl+C` no terminal de
+cada processo, ou acompanhe a saída direto no terminal onde ele roda.
 
-```powershell
-Get-Content $env:TEMP\az-leilao-api.log -Wait
-Get-Content $env:TEMP\az-leilao-front.log -Wait
-```
-
-> O resto deste manual descreve o caminho oficial (Docker + Maven + npm
-> na mão). Vale a pena conhecer ele também — é o que a AZ vai pedir, e é
-> o que funciona em qualquer máquina. O script é o atalho para a sua.
+> O `mvn spring-boot:run` e o `npm run serve` rodam em primeiro plano: o
+> log aparece na hora, e `Ctrl+C` derruba. Se preferir em segundo plano,
+> redirecione a saída para um arquivo e acompanhe com
+> `Get-Content <arquivo> -Wait`.
 
 ## 2. Subir o banco de dados
 

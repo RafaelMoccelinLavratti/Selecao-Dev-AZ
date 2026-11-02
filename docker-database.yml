@@ -20,7 +20,7 @@
 
   services:
     postgresql:
-      # Versao 16 (LTS). O enunciado nao fixa versao; 16 e uma escolha
+      # Versio 16 (LTS). O enunciado nao fixa versao; 16 e uma escolha
       # estavel e com suporte longo.
       image: "postgres:16-alpine"
 
@@ -36,7 +36,7 @@
         # TODAS as interfaces de rede da maquina - o 0.0.0.0. Num
         # notebook ligado na rede do escritorio, o Postgres fica
         # acessivel para qualquer pessoa da mesma rede, com a senha do
-        # arquivo ".env" (que, em desenvolvimento, e publica).
+        # superusuario (que, em desenvolvimento, e publica).
         #
         # Com o "127.0.0.1" antes dos dois pontos, a porta so escuta na
         # propria maquina. A API roda na maquina (via "mvn
@@ -45,7 +45,7 @@
         # estar exposto na rede.
         #
         # Quem precisar acessar de outra maquina da rede - o caso de
-        # outro.container, por exemplo - troque por "5432:5432" de
+        # outro container, por exemplo - troque por "5432:5432" de
         # proposito, sabendo o que esta abrindo.
         - "127.0.0.1:5432:5432"
 
@@ -59,7 +59,7 @@
         - "./leilao-api/src/main/resources/sql:/docker-entrypoint-initdb.d:ro"
 
       env_file:
-        - ".env"
+        - ".env.example"
 
       # Fica aguardando: o container so considera "pronto" quando o
       # PostgreSQL aceitar conexoes de verdade.

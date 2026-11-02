@@ -16,8 +16,8 @@ Um sistema de gestão de leilões, em três camadas:
 ## Antes de mexer
 
 ```powershell
-# Sobe banco, API e frontend
-.\iniciar.ps1
+# Sobe o banco
+docker compose -f docker-database.yml up -d
 
 # Roda os testes
 cd leilao-api
@@ -85,8 +85,13 @@ Nenhum endpoint depende do frontend para proteger dado.
 ### O que não entra
 
 - **Nenhum segredo real.** Senha e chave vêm de variável de ambiente.
-  O `.env` versionado tem só a senha de desenvolvimento do PostgreSQL
-  (`postgres`), que é pública e está documentada no próprio arquivo.
+  O `.env.example` versionado tem só a senha de desenvolvimento do
+  PostgreSQL (`postgres`), que é pública e está documentada no próprio
+  arquivo. Em qualquer ambiente real, a senha vai para um secret do
+  orquestrador — nunca para um arquivo no Git.
+- **Nenhum script com caminho absoluto da minha máquina.** O que sobe o
+  ambiente local fica fora do repositório: quem clona precisa de um
+  caminho que funcione na máquina dele.
 - **Nenhum `node_modules`, `target` ou `dist` versionado.**
 - **Nenhuma alteração no `.gitattributes`** sem atualizar as regras de
   fim de linha junto — é o que mantém o diff limpo entre Windows e

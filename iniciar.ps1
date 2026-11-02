@@ -145,7 +145,20 @@ $bancoAceitaConexao = $false
 for ($tentativa = 1; $tentativa -le 30; $tentativa++) {
     Start-Sleep -Seconds 1
 
-    $teste = (& $psql -h localhost -U postgres -d az -tAc "SELECT 1;" 2>$null | Out-String).Trim()
+    # O psql escreve no stderr quando o banco ainda esta' subindo. Com
+    # o "$ErrorActionPreference = Stop" do script, isso viraria erro
+    # fatal e mataria o script - entao a chamada roda com a preferencia
+    # de erro suspensa por uma chamada so.
+    $teste = $null
+
+    try {
+        $ErrorActionPreference = 'Continue'
+        $teste = (& $psql -h localhost -U postgres -d az -tAc "SELECT 1;" 2>&1 | Out-String).Trim()
+        $ErrorActionPreference = 'Stop'
+    } catch {
+        $ErrorActionPreference = 'Stop'
+        $teste = ""
+    }
 
     if ($teste -eq "1") {
         $bancoAceitaConexao = $true

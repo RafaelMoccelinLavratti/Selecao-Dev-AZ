@@ -2,7 +2,35 @@
 leilao-app/node_modules
 leilao-app/dist
 
-# Arquivos de ambiente.
+# ---------------------------------------------------------------------------
+# Arquivos que sao da MAQUINA de desenvolvimento, e nao do projeto.
+#
+# Sao scripts que sobem o ambiente local completo, com caminhos
+# apontando para as ferramentas instaladas fora do repositorio (o
+# Maven, o PostgreSQL e o JDK em "C:\Users\...\Documents\AZ\_tools").
+# Nao fazem sentido para quem clona o projeto - e o caminho absoluto
+# no meio do repositorio entrega o nome da pasta e o nome do usuario.
+#
+# O "docker-database.yml" continua no Git: ele e' o caminho oficial
+# para subir o banco, e nao depende de nada da maquina.
+# ---------------------------------------------------------------------------
+
+# O ".env" real. Quem quiser rodar com outros valores copia o
+# ".env.example" (que esta' no Git) e aponta o "env_file" do compose
+# para a copia.
+.env
+
+# Os scripts que sobem o ambiente local completo.
+iniciar.ps1
+parar.ps1
+
+# O script que mostra o banco de dados.
+scripts/mostrar-banco.ps1
+
+# O painel de testes (a ferramenta de apresentacao).
+painel-testes/
+
+# Arquivos de ambiente do frontend.
 #
 # O padrao do projeto e' o mesmo em toda parte:
 #
@@ -20,11 +48,6 @@ leilao-app/dist
 leilao-app/.env.local
 leilao-app/.env.*.local
 
-# O ".env" da raiz (o do banco) tem a senha do PostgreSQL. Em
-# desenvolvimento ele esta versionado de proposito - as credenciais ali
-# sao publicas, e o avaliador precisa conseguir subir o banco com um
-# unico comando. Num ambiente real, e' este arquivo que sai do Git, e a
-# senha vem de um secret do orquestrador.
 .env.local
 
 # Os ".env.example" sao modelos: eles vao para o Git de proposito. As
@@ -50,7 +73,6 @@ leilao-app/*.ntvs*
 leilao-app/*.njsproj
 leilao-app/*.sln
 leilao-app/*.sw?
-
 
 leilao-api/iHELP.md
 leilao-api/target
@@ -82,8 +104,6 @@ leilao-api/build/
 
 ### VS Code ###
 leilao-api/.vscode/
-
-
 
 # O package-lock.json e versionado de proposito: e o arquivo que fixa
 # exatamente quais versoes de cada dependencia serao instaladas. Com ele no
