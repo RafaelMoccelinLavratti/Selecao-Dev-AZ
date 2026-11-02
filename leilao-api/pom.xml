@@ -83,7 +83,7 @@
           que e a compativel com Spring Boot 2.7 (a serie 2.x exige
           Spring Boot 3).
         -->
-        <springdoc.version>1.7.0</springdoc.version>
+        <springdoc.version>1.8.0</springdoc.version>
 
         <!--
           PIT (pitest): mede a qualidade da suite de testes pela
