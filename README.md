@@ -520,6 +520,31 @@ exigir autenticação existe, está testado e liga por variável de ambiente.
 | **`Auditable` como base das entidades** | `created_at`/`updated_at` aparecem nas 5 tabelas. Uma `@MappedSuperclass` evita repetir o mesmo código 5 vezes. |
 | **Chave composta no `comprador`** | Mapeado com `@EmbeddedId` (`CompradorId`), como a PK composta do diagrama. |
 
+### O histórico foi reescrito uma vez
+
+As mensagens de commit originais tinham marcas de texto gerado — caixa
+alta para dar ênfase, rótulos de slide ("O QUE ENTRA", "O QUE MUDA"),
+travessão como separador de frase. Reescrevi as mensagens mantendo todo
+o conteúdo técnico intacto: nomes de arquivo, classes, comandos, números
+e o "por quê" de cada decisão continuam idênticos. Só a forma mudou.
+
+**Só a forma mudou** — e as três tags `backup-antes-*` guardam o estado
+anterior, para comparação:
+
+```powershell
+git diff backup-antes-reescrita-mensagens master
+```
+
+O que mudou, de verdade, foi a *forma* das mensagens. O conteúdo
+técnico é o mesmo. E reescrita de histórico é segura enquanto ninguém
+mais depende dele — por isso foi feita antes de qualquer pessoa clonar.
+Com clones externos, o certo seria um commit novo ("revert") ou um
+`filter-repo` coordenado.
+
+As tags de backup ficam no repositório de propósito: elas são a prova
+de que nada foi escondido. Sem elas, um histórico reescrito parece
+suspeito; com elas, é verificável.
+
 ## Testes
 
 Mais de 160 testes. Quase todos rodam sem banco de dados (dublês do Mockito, `@WebMvcTest` ou
