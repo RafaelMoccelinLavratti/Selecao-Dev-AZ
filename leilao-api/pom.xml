@@ -96,7 +96,7 @@
           baixo tem 90 testes que nao provam nada - e nao da para saber
           sem medir.
         -->
-        <pitest.version>1.9.11</pitest.version>
+        <pitest.version>1.30.2</pitest.version>
     </properties>
 
     <dependencies>
