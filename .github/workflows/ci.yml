@@ -27,7 +27,7 @@ jobs:
       # "latest", uma mudanca no JDK poderia quebrar o build sem
       # ninguem ter mexido no codigo.
       - name: Instala o Java 11
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '11'
